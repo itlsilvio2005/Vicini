@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   Phone,
   Mail,
+  BellRing,
+  Flame,
 } from "lucide-react";
 import {
   agenziaById,
@@ -25,7 +27,7 @@ import {
   type OrdineFiori,
   type Pensiero,
 } from "./data";
-import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, SectionHeading, useToast } from "./lib";
+import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, useToast } from "./lib";
 
 /* ---------------- WhatsApp share ---------------- */
 
@@ -37,7 +39,139 @@ function waLink(m: Manifesto) {
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
-/* ---------------- Bacheca ---------------- */
+/* ---------------- Candela ---------------- */
+
+function Candle({ className = "h-32 sm:h-40" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 190" className={`w-auto ${className}`} aria-hidden="true">
+      <defs>
+        <radialGradient id="bc-glow" cx="50%" cy="42%" r="60%">
+          <stop offset="0%" stopColor="#ddc38d" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#ddc38d" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="bc-wax" x1="0" x2="1">
+          <stop offset="0%" stopColor="#2c4674" />
+          <stop offset="50%" stopColor="#172a4a" />
+          <stop offset="100%" stopColor="#101d33" />
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="62" r="52" fill="url(#bc-glow)" className="flame-glow" />
+      <g className="flame-flicker">
+        <path
+          d="M60 26c7 14 14 20 14 32a14 14 0 0 1-28 0c0-8 4.5-13 7.5-18.5 1.6 3.4 3.4 5.4 5.5 6C57.6 39.5 58.4 33 60 26Z"
+          fill="#ddc38d"
+        />
+        <path
+          d="M60 42c3.4 7 6.5 10 6.5 16a6.5 6.5 0 0 1-13 0c0-5 3.5-8 4.5-12 .8 2 1.6 3 2.6 3.4.6-2.6.5-4.8-.6-7.4Z"
+          fill="#b08a45"
+        />
+      </g>
+      <rect x="58.6" y="74" width="2.8" height="10" rx="1.4" fill="#0b1424" />
+      <rect x="42" y="84" width="36" height="92" rx="4" fill="url(#bc-wax)" stroke="#2c4674" />
+      <path d="M42 92c4 3 8 3 12 0 4-3 8-3 12 0 4 3 8 3 12 0v-4H42v4Z" fill="#21375f" />
+      <rect x="42" y="130" width="36" height="14" fill="#b08a45" opacity="0.9" />
+      <text x="60" y="140.5" textAnchor="middle" fontFamily="Cormorant Garamond, serif" fontSize="10" fontStyle="italic" fill="#0b1424">
+        Vicini
+      </text>
+      <ellipse cx="60" cy="178" rx="30" ry="5" fill="#101d33" />
+      <rect x="34" y="172" width="52" height="7" rx="2" fill="#172a4a" stroke="#2c4674" />
+    </svg>
+  );
+}
+
+const MASTHEAD_IMG =
+  "https://image.qwenlm.ai/generated-images/ddb71b0c-1804-4b23-a5c3-fdf4dcef67eb/_result.png";
+
+/* ---------------- Band di apertura (bacheca come albo pubblico) ---------------- */
+
+function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
+  const oggi = new Date().toLocaleDateString("it-IT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  return (
+    <div className="relative overflow-hidden bg-night-900 text-paper">
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-40"
+        style={{ backgroundImage: `url(${MASTHEAD_IMG})` }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(97deg, #0b1424 0%, rgba(11,20,36,0.9) 45%, rgba(11,20,36,0.55) 72%, rgba(16,29,51,0.75) 100%), linear-gradient(to top, #0b1424 6%, transparent 50%)",
+        }}
+        aria-hidden="true"
+      />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-bronze-500/70 to-transparent" />
+
+      <div className="relative mx-auto grid max-w-7xl gap-8 px-4 pb-8 pt-10 sm:px-6 lg:grid-cols-[1.3fr_0.7fr] lg:items-center">
+        <div>
+          <p className="flex flex-wrap items-center gap-3 text-[10.5px] font-semibold uppercase tracking-[0.26em] text-bronze-300">
+            <Flame size={13} className="text-bronze-400" />
+            Bacheca digitale del commiato · Provincia di Modena
+          </p>
+          <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.03] sm:text-5xl lg:text-[54px]">
+            Il commiato,
+            <em className="italic text-bronze-300"> in pubblica evidenza.</em>
+          </h1>
+          <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-mist">
+            Manifesti funebri aggiornati dalle imprese del luogo per i comuni di{" "}
+            <strong className="font-semibold text-paper/90">Modena, Nonantola, Vignola, Carpi, Formigine e Sassuolo</strong>:
+            camera ardente, cerimonia e destinazione finale, con invio fiori, cordogli e QR code.
+          </p>
+          <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] capitalize text-mist/90">
+            <span className="flex items-center gap-2">
+              <span className="blink-dot h-1.5 w-1.5 rounded-full bg-bronze-400" /> Modena, {oggi}
+            </span>
+            <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
+            <span>{manifesti.length} manifesti in pubblicazione</span>
+            <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
+            <span>14 imprese accreditate</span>
+          </p>
+        </div>
+        <div className="hidden items-end justify-end gap-6 lg:flex">
+          <Candle />
+          <div className="max-w-[230px] pb-2">
+            <p className="font-display text-lg italic leading-snug text-bronze-300">«La luce resta accesa per chi resta.»</p>
+            <p className="mt-2 text-[11.5px] leading-relaxed text-mist">
+              Ogni manifesto è raggiungibile anche da cellulare tramite il QR code affisso nei luoghi del commiato.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ticker ultime pubblicazioni */}
+      <div className="relative border-t border-night-700 bg-night-950/85">
+        <div className="mx-auto flex max-w-7xl items-stretch px-4 sm:px-6">
+          <p className="flex shrink-0 items-center gap-2 border-r border-night-700 py-2.5 pr-4 text-[10px] font-bold uppercase tracking-[0.2em] text-bronze-400">
+            <BellRing size={13} /> Ultime pubblicazioni
+          </p>
+          <div className="relative flex-1 overflow-hidden" aria-hidden="true">
+            <div className="ticker-track flex w-max items-center gap-10 whitespace-nowrap py-2.5 pl-8">
+              {[...manifesti, ...manifesti].map((m, i) => (
+                <span key={`${m.id}-${i}`} className="flex items-center gap-2 text-[12.5px] text-mist">
+                  <Landmark size={12} className="text-bronze-500/80" />
+                  <span className="font-display text-[15px] italic text-paper/90">{m.nome}</span>
+                  <span>· {m.comune} ·</span>
+                  <span className="text-paper/70">
+                    funerale {m.funerale.giorno.split(",")[0]}, ore {m.funerale.ora}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Bacheca (tab 1) ---------------- */
 
 export function Bacheca({
   manifesti,
@@ -59,23 +193,19 @@ export function Bacheca({
   const visibili = filtro === "Tutti" ? manifesti : manifesti.filter((m) => m.comune === filtro);
 
   return (
-    <section id="bacheca" className="scroll-mt-24 py-16 sm:py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeading
-          num="01"
-          kicker="Bacheca dei manifesti"
-          title={
-            <>
-              Manifesti in <em className="italic text-bronze-600">pubblicazione</em>
-            </>
-          }
-          sub="Ogni manifesto digitale riporta camera ardente, cerimonia e destinazione finale, con invio fiori, cordogli e QR code per la condivisione. Filtra per comune della provincia."
-        />
+    <div>
+      <BachecaBand manifesti={manifesti} />
 
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         {/* Filtri rapidi comuni */}
-        <Reveal className="mb-8 flex flex-wrap items-center gap-2">
+        <div className="mb-8 flex items-center gap-3">
+          <h2 className="font-display text-2xl font-semibold text-ink">Filtra per comune</h2>
+          <span className="h-px flex-1 bg-line" />
+        </div>
+        <Reveal className="mb-9 flex flex-wrap items-center gap-2">
           <button
             onClick={() => setFiltro("Tutti")}
+            aria-pressed={filtro === "Tutti"}
             className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
               filtro === "Tutti"
                 ? "border-night-800 bg-night-800 text-paper shadow-md"
@@ -102,21 +232,15 @@ export function Bacheca({
               </button>
             );
           })}
-          <span className="ml-auto hidden text-[12px] italic text-ink-faint md:block">
-            Aggiornato oggi alle 08:42 dalle agenzie partner
+          <span className="ml-auto hidden text-[12px] italic text-ink-faint xl:block">
+            Aggiornato oggi alle 08:42 dalle imprese del luogo
           </span>
         </Reveal>
 
         {/* Griglia manifesti */}
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {visibili.map((m, i) => (
-            <ManifestoCard
-              key={m.id}
-              m={m}
-              delay={(i % 3) * 90}
-              onOrdine={onNuovoOrdine}
-              onPensiero={onNuovoPensiero}
-            />
+            <ManifestoCard key={m.id} m={m} delay={(i % 3) * 90} onOrdine={onNuovoOrdine} onPensiero={onNuovoPensiero} />
           ))}
         </div>
 
@@ -126,11 +250,21 @@ export function Bacheca({
           </p>
         )}
       </div>
-    </section>
+    </div>
   );
 }
 
 /* ---------------- Card manifesto ---------------- */
+
+function initialsOf(nome: string) {
+  return nome
+    .replace(/ved\.|in |don |dott\.|sig\./gi, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 1 && /^[A-ZÀ-Ú]/i.test(w))
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+}
 
 function ManifestoCard({
   m,
@@ -152,17 +286,13 @@ function ManifestoCard({
   return (
     <Reveal as="article" delay={delay} className="flex">
       <div className="card-lift group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-card">
-        {/* bordo superiore bronzo */}
         <div className="h-[3px] w-full bg-gradient-to-r from-bronze-600 via-bronze-400 to-bronze-600" />
 
         <div className="flex-1 px-5 pb-4 pt-5 sm:px-6">
-          {/* intestazione */}
           <div className="flex items-start gap-4">
             <Monogram initials={initialsOf(m.nome)} />
             <div className="min-w-0">
-              <h3 className="font-display text-[24px] font-semibold leading-tight text-ink">
-                {m.nome}
-              </h3>
+              <h3 className="font-display text-[24px] font-semibold leading-tight text-ink">{m.nome}</h3>
               <p className="mt-0.5 text-[13px] text-ink-soft">
                 di anni {m.anni} · {m.nascita} — {m.morte}
               </p>
@@ -178,22 +308,17 @@ function ManifestoCard({
             </div>
           </div>
 
-          {/* separatore */}
           <div className="my-4 flex items-center gap-3" aria-hidden="true">
             <span className="h-px flex-1 bg-line" />
             <span className="h-1.5 w-1.5 rotate-45 border border-bronze-500 bg-bronze-300/40" />
             <span className="h-px flex-1 bg-line" />
           </div>
 
-          {/* blocchi orari e luoghi */}
           <div className="space-y-3.5">
             <InfoBlock
               icon={<Clock3 size={14} />}
               label="Camera Ardente"
-              rows={[
-                m.cameraArdente.luogo,
-                m.cameraArdente.indirizzo,
-              ]}
+              rows={[m.cameraArdente.luogo, m.cameraArdente.indirizzo]}
               orari={m.cameraArdente.orari}
               nota={m.cameraArdente.indicazioni}
             />
@@ -210,7 +335,6 @@ function ManifestoCard({
             />
           </div>
 
-          {/* ultimo pensiero */}
           {m.pensieri.length > 0 && (
             <blockquote className="mt-4 border-l-2 border-bronze-500 bg-paper px-3.5 py-2.5 text-[12.5px] italic leading-relaxed text-ink-soft">
               «{m.pensieri[0].testo}»
@@ -222,7 +346,6 @@ function ManifestoCard({
           )}
         </div>
 
-        {/* azioni */}
         <div className="border-t border-line-soft bg-paper px-5 py-3.5 sm:px-6">
           <div className="flex items-center gap-2">
             <button
@@ -262,7 +385,6 @@ function ManifestoCard({
             </button>
           </div>
 
-          {/* box QR code */}
           <div
             className={`grid transition-all duration-500 ease-out ${
               qrOpen ? "mt-3.5 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
@@ -272,9 +394,7 @@ function ManifestoCard({
               <div className="flex items-center gap-4 rounded-lg border border-dashed border-bronze-500/60 bg-card p-3.5">
                 <QrVisual seed={m.id + m.nome} />
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-bronze-700">
-                    QR Code Manifesto
-                  </p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-bronze-700">QR Code Manifesto</p>
                   <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">
                     Inquadra per inviare fiori o cordogli dal cellulare.
                   </p>
@@ -299,21 +419,10 @@ function ManifestoCard({
         </p>
       </div>
 
-      {/* modali */}
       <FioriModal manifesto={m} open={fioriOpen} onClose={() => setFioriOpen(false)} onSubmitOrder={onOrdine} />
       <CordoglioModal manifesto={m} open={cordoglioOpen} onClose={() => setCordoglioOpen(false)} onInvia={onPensiero} />
     </Reveal>
   );
-}
-
-function initialsOf(nome: string) {
-  return nome
-    .replace(/ved\.|in |don |dott\.|sig\./gi, "")
-    .split(/\s+/)
-    .filter((w) => w.length > 1 && /^[A-ZÀ-Ú]/i.test(w))
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
 }
 
 function InfoBlock({
@@ -363,7 +472,7 @@ function WhatsAppIcon() {
 
 /* ---------------- Modale Invia Fiori ---------------- */
 
-export function FioriModal({
+function FioriModal({
   manifesto,
   open,
   onClose,
@@ -372,7 +481,7 @@ export function FioriModal({
   manifesto: Manifesto;
   open: boolean;
   onClose: () => void;
-  onSubmitOrder?: (o: OrdineFiori) => void;
+  onSubmitOrder: (o: OrdineFiori) => void;
 }) {
   const toast = useToast();
   const [composizione, setComposizione] = useState(FIORI[0].nome);
@@ -386,16 +495,24 @@ export function FioriModal({
   const agenzia = agenziaById(manifesto.agenzia);
   const prezzo = FIORI.find((f) => f.nome === composizione)?.prezzo ?? 0;
 
+  const chiudi = () => {
+    onClose();
+    setTimeout(() => {
+      setDone(false);
+      setNome(""); setEmail(""); setTelefono(""); setNastro(""); setErrors({});
+    }, 300);
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (nome.trim().length < 2) errs.nome = "Inserisci il nome del mittente.";
-    if (!/^\S+@\S+\.\S+$/.test(email)) errs.email = "Inserisci un indirizzo email valido (obbligatorio per la fatturazione).";
-    if (telefono.replace(/\D/g, "").length < 8) errs.telefono = "Inserisci un numero di telefono valido (obbligatorio per la fatturazione).";
+    if (!/^\S+@\S+\.\S+$/.test(email)) errs.email = "Inserisci un'email valida: è obbligatoria per la fatturazione.";
+    if (telefono.replace(/\D/g, "").length < 8) errs.telefono = "Inserisci un telefono valido: è obbligatorio per la fatturazione.";
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    onSubmitOrder?.({
+    onSubmitOrder({
       id: `ord-${Date.now()}`,
       defunto: manifesto.nome,
       comune: manifesto.comune,
@@ -413,16 +530,11 @@ export function FioriModal({
     toast(`Richiesta fiori inviata a ${agenzia.nome}. Riceverai la fattura via email.`);
   };
 
-  const reset = () => {
-    setDone(false);
-    setNome(""); setEmail(""); setTelefono(""); setNastro(""); setErrors({});
-  };
-
   return (
-    <Modal open={open} onClose={() => { onClose(); setTimeout(reset, 300); }} labelledBy="fiori-title">
+    <Modal open={open} onClose={chiudi} labelledBy="fiori-title">
       <ModalHeader
         id="fiori-title"
-        onClose={() => { onClose(); setTimeout(reset, 300); }}
+        onClose={chiudi}
         title={<span className="flex items-center gap-2"><Flower2 size={20} className="text-bronze-600" /> Invia fiori</span>}
         sub={`In memoria di ${manifesto.nome} — ${manifesto.comune} · a cura di ${agenzia.nome}`}
       />
@@ -432,20 +544,17 @@ export function FioriModal({
           <CheckCircle2 size={44} className="mx-auto text-bronze-500" />
           <h4 className="mt-4 font-display text-2xl font-semibold text-ink">Richiesta inviata</h4>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
-            <strong>{agenzia.nome}</strong> preparerà «{composizione}» e ti contatterà per la
-            fatturazione all'indirizzo <strong>{email}</strong>.
+            <strong>{agenzia.nome}</strong> preparerà «{composizione}» e ti contatterà per la fatturazione all'indirizzo{" "}
+            <strong>{email}</strong>.
           </p>
           <div className="mx-auto mt-5 flex max-w-sm items-start gap-2.5 rounded-lg border border-bronze-600/40 bg-bronze-300/15 px-4 py-3 text-left text-[12.5px] text-bronze-700">
             <AlertTriangle size={15} className="mt-0.5 shrink-0" />
             <span>
-              I fiori devono essere ordinati almeno <strong>24 ore prima del funerale</strong>{" "}
-              (ore {manifesto.funerale.ora} del {manifesto.funerale.giorno}).
+              I fiori devono essere ordinati almeno <strong>24 ore prima del funerale</strong> (ore {manifesto.funerale.ora} del{" "}
+              {manifesto.funerale.giorno}).
             </span>
           </div>
-          <button
-            onClick={() => { onClose(); setTimeout(reset, 300); }}
-            className="mt-6 rounded-md bg-night-800 px-5 py-2.5 text-sm font-semibold text-paper transition hover:bg-night-700"
-          >
+          <button onClick={chiudi} className="mt-6 rounded-md bg-night-800 px-5 py-2.5 text-sm font-semibold text-paper transition hover:bg-night-700">
             Chiudi
           </button>
         </div>
@@ -454,9 +563,8 @@ export function FioriModal({
           <div className="flex items-start gap-2.5 rounded-lg border border-bronze-600/40 bg-bronze-300/15 px-4 py-3 text-[12.5px] leading-snug text-bronze-700">
             <AlertTriangle size={15} className="mt-0.5 shrink-0" />
             <p>
-              <strong>Avviso:</strong> i fiori devono essere ordinati almeno{" "}
-              <strong>24 ore prima del funerale</strong>. Funerale: {manifesto.funerale.giorno}, ore{" "}
-              {manifesto.funerale.ora}.
+              <strong>Avviso:</strong> i fiori devono essere ordinati almeno <strong>24 ore prima del funerale</strong>. Funerale:{" "}
+              {manifesto.funerale.giorno}, ore {manifesto.funerale.ora}.
             </p>
           </div>
 
@@ -494,17 +602,16 @@ export function FioriModal({
           </Field>
 
           <p className="text-[11.5px] leading-relaxed text-ink-faint">
-            I dati di fatturazione (email e telefono) saranno trasmessi esclusivamente a{" "}
-            {agenzia.nome} per l'emissione del documento fiscale. Importo indicativo:{" "}
-            <strong className="text-ink-soft">{prezzo} €</strong> IVA inclusa, consegna al luogo
-            della cerimonia compresa.
+            I dati di fatturazione (email e telefono) saranno trasmessi esclusivamente a {agenzia.nome} per l'emissione del
+            documento fiscale. Importo indicativo: <strong className="text-ink-soft">{prezzo} €</strong> IVA inclusa, consegna al
+            luogo della cerimonia compresa.
           </p>
 
           <button
             type="submit"
             className="flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 transition hover:bg-bronze-400 active:scale-[0.99]"
           >
-            <Send size={15} /> Invia richiesta all'agenzia
+            <Send size={15} /> Invia richiesta all'impresa
           </button>
         </form>
       )}
@@ -576,12 +683,13 @@ function CordoglioModal({
             <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-ink-faint">
               Pensieri già lasciati ({manifesto.pensieri.length})
             </p>
-            <ul className="max-h-44 space-y-2 overflow-y-auto nice-scroll pr-1">
+            <ul className="nice-scroll max-h-44 space-y-2 overflow-y-auto pr-1">
               {manifesto.pensieri.map((p, i) => (
                 <li key={i} className="rounded-md border border-line-soft bg-paper px-3.5 py-2.5 text-[12.5px] italic leading-relaxed text-ink-soft">
                   «{p.testo}»
                   <span className="mt-1 block text-[11px] not-italic text-ink-faint">
-                    — {p.nome}{p.relazione ? `, ${p.relazione}` : ""} · {p.quando}
+                    — {p.nome}
+                    {p.relazione ? `, ${p.relazione}` : ""} · {p.quando}
                   </span>
                 </li>
               ))}
@@ -589,12 +697,13 @@ function CordoglioModal({
           </div>
         )}
 
-        <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-md bg-night-800 px-4 py-3 text-sm font-semibold text-paper transition hover:bg-night-700 active:scale-[0.99]">
+        <button
+          type="submit"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-night-800 px-4 py-3 text-sm font-semibold text-paper transition hover:bg-night-700 active:scale-[0.99]"
+        >
           <Send size={15} /> Pubblica il pensiero
         </button>
       </form>
     </Modal>
   );
 }
-
-

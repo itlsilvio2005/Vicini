@@ -1,126 +1,244 @@
 import { useState } from "react";
-import { Building2, MoonStar, MapPin, Phone, Clock3, ArrowUpRight } from "lucide-react";
-import { LUOGHI, type Luogo } from "./data";
+import { Church, MoonStar, Cross, Building2, MapPin, Phone, Clock3, ExternalLink, ListFilter } from "lucide-react";
+import { CATEGORIE_LUOGHI, LUOGHI, type CatLuogo, type Luogo } from "./data";
 import { Badge, Modal, ModalHeader, Reveal, SectionHeading } from "./lib";
 
-type Filtro = "tutti" | "sanitarie" | "musulmano";
+const CAT_STYLES: Record<CatLuogo, { color: string; soft: string; label: string; Icon: React.ComponentType<{ size?: number | string; className?: string }> }> = {
+  chiese: { color: "#c7a262", soft: "rgba(199,162,98,0.14)", label: "Chiesa Cattolica", Icon: Church },
+  sanitarie: { color: "#8ea6c8", soft: "rgba(142,166,200,0.13)", label: "Ospedale / Casa Funeraria", Icon: Building2 },
+  ortodosso: { color: "#d8b25c", soft: "rgba(216,178,92,0.15)", label: "Luogo Ortodosso", Icon: Cross },
+  musulmano: { color: "#7fbf9a", soft: "rgba(127,191,154,0.13)", label: "Luogo Musulmano", Icon: MoonStar },
+};
 
 export function Luoghi() {
-  const [filtro, setFiltro] = useState<Filtro>("tutti");
-  const [sel, setSel] = useState<Luogo | null>(null);
+  const [cat, setCat] = useState<CatLuogo | "tutte">("tutte");
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const [sel, setSel] = useState<Luogo | null>(null);
 
-  const visibili = filtro === "tutti" ? LUOGHI : LUOGHI.filter((l) => l.categoria === filtro);
+  const visibili = cat === "tutte" ? LUOGHI : LUOGHI.filter((l) => l.categoria === cat);
 
   return (
-    <section id="luoghi" className="scroll-mt-24 bg-night-900 py-16 text-paper sm:py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <SectionHeading
-          light
-          num="02"
-          kicker="Mappa interattiva"
-          title={
-            <>
-              Luoghi <em className="italic text-bronze-300">vicini</em> a chi resta
-            </>
-          }
-          sub="Strutture sanitarie, case funerarie e luoghi di culto della provincia — inclusa la rete dedicata al rito musulmano. Seleziona un luogo per aprire la scheda completa."
-        />
+    <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+      <SectionHeading
+        num="03"
+        kicker="Mappa & Luoghi del Territorio"
+        title={
+          <>
+            I luoghi del <em className="italic text-bronze-600">commiato</em>
+          </>
+        }
+        sub="Chiese cattoliche di Modena, ospedali e case funerarie, luoghi di culto ortodossi e musulmani: una mappa interattiva del territorio per orientare le famiglie nel momento del bisogno."
+      />
 
-        {/* filtri */}
-        <Reveal className="mb-8 flex flex-wrap gap-2">
-          {(
-            [
-              ["tutti", "Tutti i luoghi"],
-              ["sanitarie", "Strutture sanitarie & case funerarie"],
-              ["musulmano", "Rito musulmano"],
-            ] as [Filtro, string][]
-          ).map(([k, label]) => (
+      {/* filtri categoria */}
+      <Reveal className="mb-9 flex flex-wrap gap-2">
+        {CATEGORIE_LUOGHI.map((c) => {
+          const n = c.id === "tutte" ? LUOGHI.length : LUOGHI.filter((l) => l.categoria === c.id).length;
+          const attivo = cat === c.id;
+          return (
             <button
-              key={k}
-              onClick={() => setFiltro(k)}
-              aria-pressed={filtro === k}
+              key={c.id}
+              onClick={() => setCat(c.id)}
+              aria-pressed={attivo}
               className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition ${
-                filtro === k
-                  ? "border-bronze-500 bg-bronze-500 text-night-950"
-                  : "border-night-600 bg-night-800 text-mist hover:border-bronze-500 hover:text-bronze-300"
+                attivo
+                  ? "border-night-800 bg-night-800 text-paper shadow-md"
+                  : "border-line bg-card text-ink-soft hover:border-bronze-500 hover:text-bronze-600"
               }`}
             >
-              {k === "musulmano" ? <MoonStar size={13} /> : k === "sanitarie" ? <Building2 size={13} /> : <MapPin size={13} />}
-              {label}
+              {c.id !== "tutte" && (
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ background: CAT_STYLES[c.id as CatLuogo].color }}
+                />
+              )}
+              {c.breve} <span className="opacity-70">{n}</span>
             </button>
-          ))}
+          );
+        })}
+      </Reveal>
+
+      <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+        {/* -------- Mappa -------- */}
+        <Reveal>
+          <figure className="overflow-hidden rounded-xl border border-night-700 bg-night-900 shadow-inner">
+            <figcaption className="flex flex-wrap items-center justify-between gap-3 border-b border-night-700 px-5 py-3.5">
+              <span className="font-display text-xl italic text-paper">Pianta schematica — Modena e provincia</span>
+              <span className="flex flex-wrap items-center gap-3 text-[10.5px] text-mist">
+                {Object.entries(CAT_STYLES).map(([k, v]) => (
+                  <span key={k} className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full" style={{ background: v.color }} />
+                    {v.label}
+                  </span>
+                ))}
+              </span>
+            </figcaption>
+
+            <svg viewBox="0 0 640 420" className="block w-full" role="img" aria-label="Mappa dei luoghi del commiato">
+              <defs>
+                <pattern id="graticule" width="32" height="32" patternUnits="userSpaceOnUse">
+                  <path d="M32 0H0V32" fill="none" stroke="#94a2b8" strokeOpacity="0.07" />
+                </pattern>
+              </defs>
+              <rect width="640" height="420" fill="#0b1424" />
+              <rect width="640" height="420" fill="url(#graticule)" />
+
+              {/* fiumi */}
+              <path d="M-20 128 C 130 96, 300 158, 470 122 S 660 96, 660 96" stroke="#2c4674" strokeWidth="15" fill="none" opacity="0.5" strokeLinecap="round" />
+              <path d="M-20 336 C 150 360, 320 318, 470 352 S 660 332, 660 332" stroke="#2c4674" strokeWidth="11" fill="none" opacity="0.4" strokeLinecap="round" />
+              <text x="36" y="116" fontSize="10" fill="#94a2b8" opacity="0.6" fontStyle="italic">fiume Secchia</text>
+              <text x="470" y="372" fontSize="10" fill="#94a2b8" opacity="0.6" fontStyle="italic">fiume Panaro</text>
+
+              {/* strade principali */}
+              <path d="M40 268 C 180 250, 300 246, 430 240 S 600 228, 640 224" stroke="#21375f" strokeWidth="3" fill="none" opacity="0.8" />
+              <text x="70" y="258" fontSize="9.5" fill="#94a2b8" opacity="0.55">Via Emilia</text>
+              <path d="M430 240 C 440 200, 448 160, 452 120" stroke="#21375f" strokeWidth="2" fill="none" opacity="0.6" />
+              <text x="458" y="150" fontSize="9.5" fill="#94a2b8" opacity="0.55">Viale Amendola</text>
+              <path d="M300 262 C 340 268, 380 260, 420 252" stroke="#21375f" strokeWidth="2" fill="none" opacity="0.6" />
+              <path d="M430 240 C 450 280, 470 300, 480 320" stroke="#21375f" strokeWidth="2" fill="none" opacity="0.6" />
+
+              {/* centri urbani */}
+              {[
+                { n: "Modena", x: 424, y: 238, r: 46 },
+                { n: "Carpi", x: 168, y: 118, r: 26 },
+                { n: "Sassuolo", x: 545, y: 330, r: 22 },
+                { n: "Vignola", x: 476, y: 352, r: 17 },
+                { n: "Formigine", x: 492, y: 288, r: 18 },
+                { n: "Nonantola", x: 540, y: 152, r: 16 },
+              ].map((c) => (
+                <g key={c.n}>
+                  <circle cx={c.x} cy={c.y} r={c.r} fill="#172a4a" opacity="0.6" />
+                  <circle cx={c.x} cy={c.y} r={c.r} fill="none" stroke="#2c4674" strokeDasharray="3 4" opacity="0.7" />
+                  <text x={c.x} y={c.y + 4} textAnchor="middle" fontSize="11.5" fill="#94a2b8" fontWeight="600" letterSpacing="1">
+                    {c.n.toUpperCase()}
+                  </text>
+                </g>
+              ))}
+
+              {/* rosa dei venti */}
+              <g transform="translate(54,58)" opacity="0.85">
+                <circle r="17" fill="none" stroke="#94a2b8" strokeOpacity="0.5" />
+                <path d="M0 -13 L3.5 0 L0 13 L-3.5 0 Z" fill="#c7a262" />
+                <text y="-23" textAnchor="middle" fontSize="10" fill="#ddc38d" fontStyle="italic">N</text>
+              </g>
+
+              {/* cornice */}
+              <rect x="6" y="6" width="628" height="408" fill="none" stroke="#c7a262" strokeOpacity="0.35" />
+              <rect x="12" y="12" width="616" height="396" fill="none" stroke="#c7a262" strokeOpacity="0.15" />
+
+              {/* pin */}
+              {visibili.map((l) => {
+                const st = CAT_STYLES[l.categoria];
+                const hot = hoverId === l.id;
+                return (
+                  <g
+                    key={l.id}
+                    transform={`translate(${l.x}, ${l.y})`}
+                    className="cursor-pointer"
+                    onMouseEnter={() => setHoverId(l.id)}
+                    onMouseLeave={() => setHoverId(null)}
+                    onClick={() => setSel(l)}
+                    role="button"
+                    aria-label={l.nome}
+                  >
+                    {hot && <circle r="13" fill={st.color} opacity="0.35" className="pin-pulse" />}
+                    <circle
+                      r={hot ? 9 : 6.5}
+                      fill={st.color}
+                      stroke="#0b1424"
+                      strokeWidth="2"
+                      style={{ transition: "r .2s ease" }}
+                    />
+                    <circle r={hot ? 2.6 : 1.8} fill="#0b1424" style={{ transition: "r .2s ease" }} />
+                    {hot && (
+                      <g transform="translate(0, -16)">
+                        <rect
+                          x={-Math.min(l.nome.length * 3.4, 150)}
+                          y="-24"
+                          width={Math.min(l.nome.length * 6.8, 300)}
+                          height="20"
+                          rx="4"
+                          fill="#070d18"
+                          stroke={st.color}
+                          strokeOpacity="0.6"
+                        />
+                        <text
+                          y="-10"
+                          textAnchor="middle"
+                          fontSize="10.5"
+                          fill="#f5f1e7"
+                          style={{ fontWeight: 600 }}
+                        >
+                          {l.nome.length > 44 ? l.nome.slice(0, 42) + "…" : l.nome}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+
+            <p className="flex items-center gap-2 border-t border-night-700 px-5 py-2.5 text-[11px] text-mist">
+              <MapPin size={12} className="text-bronze-400" />
+              Tocca un punto sulla mappa o un elemento dell'elenco per aprire la scheda completa del luogo.
+            </p>
+          </figure>
         </Reveal>
 
-        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          {/* lista interattiva */}
-          <Reveal className="order-2 lg:order-1">
-            <ul className="space-y-3">
-              {visibili.map((l, i) => {
-                const Icon = l.categoria === "musulmano" ? MoonStar : Building2;
+        {/* -------- Elenco -------- */}
+        <Reveal delay={120}>
+          <div className="flex h-full flex-col rounded-xl border border-line bg-card">
+            <div className="flex items-center justify-between border-b border-line-soft px-5 py-3.5">
+              <h3 className="flex items-center gap-2 font-display text-xl font-semibold text-ink">
+                <ListFilter size={16} className="text-bronze-600" />
+                {CATEGORIE_LUOGHI.find((c) => c.id === cat)?.nome}
+              </h3>
+              <span className="text-[12px] text-ink-faint">{visibili.length} luoghi</span>
+            </div>
+            <ul className="nice-scroll max-h-[560px] flex-1 divide-y divide-line-soft overflow-y-auto">
+              {visibili.map((l) => {
+                const st = CAT_STYLES[l.categoria];
+                const Ic = st.Icon;
                 return (
-                  <li key={l.id} style={{ transitionDelay: `${i * 40}ms` }}>
+                  <li key={l.id}>
                     <button
                       onClick={() => setSel(l)}
                       onMouseEnter={() => setHoverId(l.id)}
                       onMouseLeave={() => setHoverId(null)}
-                      className={`card-lift group w-full rounded-lg border bg-night-800 px-5 py-4 text-left transition ${
-                        hoverId === l.id || sel?.id === l.id
-                          ? "border-bronze-500"
-                          : "border-night-600 hover:border-night-500"
+                      className={`group flex w-full items-start gap-3.5 px-5 py-3.5 text-left transition ${
+                        hoverId === l.id ? "bg-bronze-300/15" : "hover:bg-paper"
                       }`}
                     >
-                      <div className="flex items-start gap-4">
-                        <span
-                          className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md border ${
-                            l.categoria === "musulmano"
-                              ? "border-bronze-500/60 bg-bronze-500/15 text-bronze-300"
-                              : "border-night-500 bg-night-700 text-mist"
-                          }`}
-                        >
-                          <Icon size={17} />
+                      <span
+                        className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full border"
+                        style={{ background: st.soft, borderColor: `${st.color}66`, color: st.color }}
+                      >
+                        <Ic size={16} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px] font-bold leading-snug text-ink group-hover:text-bronze-700">
+                          {l.nome}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="flex items-center justify-between gap-2 font-display text-lg font-semibold leading-tight text-paper">
-                            {l.nome}
-                            <ArrowUpRight size={16} className="shrink-0 text-bronze-400 opacity-0 transition group-hover:opacity-100" />
-                          </p>
-                          <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-mist">
-                            <MapPin size={12} className="shrink-0 text-bronze-500" /> {l.indirizzo}
-                          </p>
-                          <p className="mt-1.5 text-[12px] leading-relaxed text-mist/80 line-clamp-2">{l.descrizione}</p>
-                        </div>
-                      </div>
+                        <span className="mt-0.5 flex items-center gap-1.5 text-[12px] text-ink-faint">
+                          <MapPin size={11} /> {l.indirizzo}
+                        </span>
+                      </span>
+                      <span
+                        className="mt-1 h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: st.color }}
+                        aria-hidden="true"
+                      />
                     </button>
                   </li>
                 );
               })}
             </ul>
-          </Reveal>
-
-          {/* mappa schematica */}
-          <Reveal className="order-1 lg:order-2" delay={120}>
-            <div className="rounded-xl border border-night-600 bg-night-800/70 p-4 lg:sticky lg:top-24">
-              <MappaSchematica luoghi={visibili} onSeleziona={setSel} hoverId={hoverId} />
-              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-2 text-[11.5px] text-mist">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#2c4674] ring-1 ring-mist/40" /> Strutture sanitarie & case funerarie
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-bronze-500" /> Rito musulmano
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rotate-45 border border-mist/60" /> Comuni della provincia
-                </span>
-                <span className="ml-auto hidden italic sm:inline">Mappa schematica — non in scala</span>
-              </div>
-            </div>
-          </Reveal>
-        </div>
+          </div>
+        </Reveal>
       </div>
 
-      {/* modale dettaglio luogo */}
-      <Modal open={!!sel} onClose={() => setSel(null)} wide labelledBy="luogo-title">
+      {/* -------- Modale luogo -------- */}
+      <Modal open={!!sel} onClose={() => setSel(null)} labelledBy="luogo-title" wide>
         {sel && (
           <>
             <ModalHeader
@@ -128,196 +246,64 @@ export function Luoghi() {
               onClose={() => setSel(null)}
               title={sel.nome}
               sub={
-                <span className="flex items-center gap-1.5">
-                  <MapPin size={11} /> {sel.indirizzo}
+                <span className="flex flex-wrap items-center gap-2">
+                  <Badge tone="bronze">{CAT_STYLES[sel.categoria].label}</Badge>
+                  {sel.indirizzo}
                 </span>
               }
             />
-            <div className="px-6 py-5">
-              <div className="flex flex-wrap gap-2">
-                <Badge tone={sel.categoria === "musulmano" ? "bronze" : "night"}>
-                  {sel.categoria === "musulmano" ? <MoonStar size={11} /> : <Building2 size={11} />}
-                  {sel.categoria === "musulmano" ? "Luogo di culto · rito musulmano" : "Struttura sanitaria / casa funeraria"}
-                </Badge>
-                <Badge tone="neutral">
-                  <Clock3 size={11} /> {sel.orari}
-                </Badge>
-              </div>
-
-              <p className="mt-4 text-[14px] leading-relaxed text-ink-soft">{sel.descrizione}</p>
-
-              <div className="mt-5">
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink-faint">Servizi offerti</p>
-                <ul className="mt-2.5 grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-6 px-6 py-6 md:grid-cols-[1.2fr_0.8fr]">
+              <div>
+                <p className="text-[14px] leading-relaxed text-ink-soft">{sel.descrizione}</p>
+                <p className="mb-2.5 mt-6 text-[11px] font-bold uppercase tracking-[0.18em] text-ink-faint">
+                  Servizi offerti
+                </p>
+                <ul className="space-y-2">
                   {sel.servizi.map((s) => (
-                    <li key={s} className="flex items-start gap-2 rounded-md border border-line-soft bg-paper px-3 py-2 text-[13px] text-ink">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rotate-45 bg-bronze-500" />
+                    <li key={s} className="flex items-start gap-2.5 text-[13.5px] text-ink-soft">
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rotate-45 border border-bronze-500 bg-bronze-300/50" />
                       {s}
                     </li>
                   ))}
                 </ul>
               </div>
-
-              <div className="mt-5 flex flex-col gap-3 rounded-lg border border-night-700 bg-night-800 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-mist">Telefono / Contatti</p>
-                  <p className="mt-1 font-display text-xl font-semibold text-bronze-300">{sel.telefono}</p>
+              <div className="space-y-3.5">
+                <div className="rounded-lg border border-line bg-paper p-4">
+                  <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-faint">
+                    <MapPin size={13} className="text-bronze-600" /> Indirizzo
+                  </p>
+                  <p className="mt-1.5 text-[13.5px] font-semibold text-ink">{sel.indirizzo}</p>
+                </div>
+                <div className="rounded-lg border border-line bg-paper p-4">
+                  <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-faint">
+                    <Clock3 size={13} className="text-bronze-600" /> Orari
+                  </p>
+                  <p className="mt-1.5 text-[13.5px] font-semibold text-ink">{sel.orari}</p>
+                </div>
+                <div className="rounded-lg border border-line bg-paper p-4">
+                  <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-faint">
+                    <Phone size={13} className="text-bronze-600" /> Contatti
+                  </p>
+                  <a
+                    href={`tel:${sel.telefono.replace(/[^\d+]/g, "").slice(0, 12)}`}
+                    className="mt-1.5 block text-[13.5px] font-semibold text-bronze-700 hover:underline"
+                  >
+                    {sel.telefono}
+                  </a>
                 </div>
                 <a
-                  href={`tel:${sel.telefono.replace(/[^\d+]/g, "").slice(0, 12)}`}
-                  className="flex items-center justify-center gap-2 rounded-md bg-bronze-500 px-5 py-2.5 text-sm font-bold text-night-950 transition hover:bg-bronze-400"
+                  href={`https://www.google.com/maps/search/${encodeURIComponent(sel.nome + " " + sel.indirizzo)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-md bg-night-800 px-4 py-2.5 text-[13px] font-semibold text-paper transition hover:bg-night-700"
                 >
-                  <Phone size={15} /> Chiama ora
+                  <ExternalLink size={14} /> Indicazioni stradali
                 </a>
               </div>
             </div>
           </>
         )}
       </Modal>
-    </section>
-  );
-}
-
-/* ---------------- Mappa schematica della provincia ---------------- */
-
-const COMUNI_MAPPA = [
-  { nome: "Carpi", x: 468, y: 118 },
-  { nome: "Nonantola", x: 528, y: 212 },
-  { nome: "Modena", x: 428, y: 248 },
-  { nome: "Formigine", x: 432, y: 322 },
-  { nome: "Vignola", x: 316, y: 344 },
-  { nome: "Sassuolo", x: 505, y: 354 },
-];
-
-function MappaSchematica({
-  luoghi,
-  onSeleziona,
-  hoverId,
-}: {
-  luoghi: Luogo[];
-  onSeleziona: (l: Luogo) => void;
-  hoverId: string | null;
-}) {
-  return (
-    <svg viewBox="0 0 760 520" className="h-auto w-full select-none" role="img" aria-label="Mappa schematica della provincia di Modena con i luoghi del commiato">
-      <defs>
-        <pattern id="mapgrid" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M40 0H0V40" fill="none" stroke="#94a2b8" strokeOpacity="0.07" strokeWidth="1" />
-        </pattern>
-        <radialGradient id="maphalo" cx="56%" cy="47%" r="60%">
-          <stop offset="0%" stopColor="#21375f" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#101d33" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <rect width="760" height="520" rx="12" fill="#0f1b2e" />
-      <rect width="760" height="520" rx="12" fill="url(#mapgrid)" />
-      <rect width="760" height="520" rx="12" fill="url(#maphalo)" />
-
-      {/* contorno provincia (stilizzato) */}
-      <path
-        d="M140 172 L252 92 L362 62 L520 56 L642 100 L674 172 L652 262 L586 362 L470 456 L358 470 L254 430 L182 342 L150 252 Z"
-        fill="#17294a"
-        fillOpacity="0.55"
-        stroke="#2c4674"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M140 172 L252 92 L362 62 L520 56 L642 100 L674 172 L652 262 L586 362 L470 456 L358 470 L254 430 L182 342 L150 252 Z"
-        fill="none"
-        stroke="#c7a262"
-        strokeOpacity="0.35"
-        strokeWidth="1"
-        strokeDasharray="1 7"
-        strokeLinejoin="round"
-      />
-
-      {/* fiumi */}
-      <path d="M262 70 C300 160 322 240 340 300 C356 352 352 420 356 470" fill="none" stroke="#2c4674" strokeWidth="3" strokeLinecap="round" opacity="0.8" />
-      <path d="M560 78 C546 162 522 222 506 282 C492 342 482 404 472 466" fill="none" stroke="#2c4674" strokeWidth="3" strokeLinecap="round" opacity="0.8" />
-      <text x="300" y="140" fontSize="11" fontStyle="italic" fill="#94a2b8" opacity="0.65" transform="rotate(68 300 140)">f. Panaro</text>
-      <text x="548" y="150" fontSize="11" fontStyle="italic" fill="#94a2b8" opacity="0.65" transform="rotate(96 548 150)">f. Secchia</text>
-
-      {/* rosa dei venti + scala */}
-      <g transform="translate(52,60)" opacity="0.8">
-        <circle r="16" fill="none" stroke="#94a2b8" strokeOpacity="0.5" />
-        <path d="M0 -22 L4 0 L0 22 L-4 0 Z" fill="#c7a262" opacity="0.9" />
-        <text y="-28" textAnchor="middle" fontSize="11" fill="#ddc38d" fontFamily="Cormorant Garamond, serif" fontStyle="italic">N</text>
-      </g>
-      <g transform="translate(580,486)" opacity="0.8">
-        <path d="M0 0h120" stroke="#94a2b8" strokeWidth="1.5" />
-        <path d="M0 -4v8M60 -4v8M120 -4v8" stroke="#94a2b8" strokeWidth="1.5" />
-        <text x="60" y="-8" textAnchor="middle" fontSize="10" fill="#94a2b8">≈ 10 km</text>
-      </g>
-      <text x="52" y="498" fontSize="12" fill="#94a2b8" opacity="0.7" fontFamily="Cormorant Garamond, serif" fontStyle="italic">Provincia di Modena</text>
-
-      {/* comuni */}
-      {COMUNI_MAPPA.map((c) => (
-        <g key={c.nome}>
-          <rect
-            x={c.x - 4}
-            y={c.y - 4}
-            width="8"
-            height="8"
-            transform={`rotate(45 ${c.x} ${c.y})`}
-            fill="#0f1b2e"
-            stroke="#94a2b8"
-            strokeWidth="1.2"
-          />
-          <text
-            x={c.nome === "Modena" ? c.x - 14 : c.x + 12}
-            y={c.nome === "Modena" ? c.y - 12 : c.y + 4}
-            fontSize={c.nome === "Modena" ? 15 : 12.5}
-            fontWeight={c.nome === "Modena" ? 700 : 400}
-            fill={c.nome === "Modena" ? "#ecdcba" : "#94a2b8"}
-            fontFamily={c.nome === "Modena" ? "Cormorant Garamond, serif" : "Archivo, sans-serif"}
-            textAnchor={c.nome === "Modena" ? "middle" : "start"}
-          >
-            {c.nome}
-          </text>
-        </g>
-      ))}
-
-      {/* pin luoghi */}
-      {luoghi.map((l) => {
-        const isHover = hoverId === l.id;
-        const color = l.categoria === "musulmano" ? "#b08a45" : "#3d5a8f";
-        return (
-          <g
-            key={l.id}
-            transform={`translate(${l.x},${l.y})`}
-            className="cursor-pointer"
-            onClick={() => onSeleziona(l)}
-          >
-            <circle r="10" fill={color} opacity="0.28" className="pin-pulse" />
-            <circle r={isHover ? 9.5 : 7.5} fill={color} stroke="#ecdcba" strokeWidth="1.4" style={{ transition: "r .2s" }} />
-            {l.categoria === "musulmano" ? (
-              <path
-                d="M3.2 -0.2 A 3.4 3.4 0 1 1 -1.8 -3.4 A 2.7 2.7 0 1 0 3.2 -0.2 Z"
-                fill="#0f1b2e"
-                transform="translate(-0.5,0.4)"
-              />
-            ) : (
-              <path d="M0 -3.4V3.4M-3.4 0H3.4" stroke="#0f1b2e" strokeWidth="1.6" strokeLinecap="round" />
-            )}
-            <title>{l.nome}</title>
-            <text
-              y={-14}
-              textAnchor="middle"
-              fontSize="11"
-              fontWeight="600"
-              fill="#ecdcba"
-              opacity={isHover ? 1 : 0}
-              style={{ transition: "opacity .2s", pointerEvents: "none" }}
-            >
-              {l.nome.length > 30 ? l.nome.slice(0, 28) + "…" : l.nome}
-            </text>
-            {/* area cliccabile ampia */}
-            <circle r="16" fill="transparent" />
-          </g>
-        );
-      })}
-    </svg>
+    </div>
   );
 }
