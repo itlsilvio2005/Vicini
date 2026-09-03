@@ -138,8 +138,17 @@ export function Luoghi() {
                     onMouseEnter={() => setHoverId(l.id)}
                     onMouseLeave={() => setHoverId(null)}
                     onClick={() => setSel(l)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSel(l);
+                      }
+                    }}
+                    tabIndex={0}
+                    onFocus={() => setHoverId(l.id)}
+                    onBlur={() => setHoverId(null)}
                     role="button"
-                    aria-label={l.nome}
+                    aria-label={`Apri scheda: ${l.nome}`}
                   >
                     {hot && <circle r="13" fill={st.color} opacity="0.35" className="pin-pulse" />}
                     <circle

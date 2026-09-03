@@ -152,7 +152,7 @@ function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
             <BellRing size={13} /> Ultime pubblicazioni
           </p>
           <div className="relative flex-1 overflow-hidden" aria-hidden="true">
-            <div className="ticker-track flex w-max items-center gap-10 whitespace-nowrap py-2.5 pl-8">
+            <div className="ticker-track flex w-max items-center gap-10 whitespace-nowrap py-2.5 pl-10 pr-10">
               {[...manifesti, ...manifesti].map((m, i) => (
                 <span key={`${m.id}-${i}`} className="flex items-center gap-2 text-[12.5px] text-mist">
                   <Landmark size={12} className="text-bronze-500/80" />
