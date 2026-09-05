@@ -28,6 +28,7 @@ import {
   agenziaById,
   CHIESE_CERIMONIA,
   COMUNI,
+  GRUPPI_IMPRESE,
   MOSCHEE,
   PAESI_RIMPATRIO,
   RITI,
@@ -219,7 +220,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
               <option value="">— Seleziona l'impresa a cui affidare la gestione —</option>
               {AGENZIE.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.nome} · {a.gruppi.length > 1 ? "Modena e Vignola–Nonantola" : a.gruppi[0] === "modena" ? "Modena" : a.gruppi[0] === "vignola-nonantola" ? "Vignola & Nonantola" : a.gruppi[0][0].toUpperCase() + a.gruppi[0].slice(1)}
+                  {a.nome} · {a.gruppi.map((g) => GRUPPI_IMPRESE.find((x) => x.id === g)?.nome ?? g).join(" · ")}
                 </option>
               ))}
             </select>

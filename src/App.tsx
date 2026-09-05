@@ -109,7 +109,7 @@ function Shell() {
   return (
     <div className="paper-ambient flex min-h-screen flex-col">
       {/* ---------- Header sticky con Tab Bar ---------- */}
-      <header className="sticky top-0 z-50 border-b border-night-700 bg-night-900/97 shadow-lg shadow-night-950/30 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-night-700 bg-night-900/95 shadow-lg shadow-night-950/30 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pt-3 sm:px-6">
           <button onClick={() => vaiA("bacheca")} className="group flex items-center gap-3 text-left">
             <span className="grid h-10 w-10 place-items-center rounded-lg border border-bronze-500/60 bg-night-800 transition group-hover:border-bronze-400">
