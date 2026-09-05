@@ -65,6 +65,15 @@ const MEMBRI_INIZIALI: Membro[] = [
   { id: "n1", nome: "Lina Bonetti ved. Malagoli", relazione: "Genitore", comune: "Nonantola", contatto: "marco.malagoli@gmail.com" },
 ];
 
+/** Salvataggio locale sicuro: in anteprime sandbox localStorage può essere inaccessibile. */
+function saveLS(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* ignora: i dati restano comunque nello stato dell'app */
+  }
+}
+
 const ABBIGLIAMENTO = ["Abito preferito indicato dalla famiglia", "Abito formale scuro", "Abito religioso / confraternita"];
 const MUSICA = ["Nessuna musica", "Organista", "Coro parrocchiale", "Brano preferito (da concordare)"];
 const ALLESTIMENTI = ["Fiori bianchi", "Composizioni di stagione", "Nessun addobbo floreale"];
@@ -185,7 +194,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
       note: note.trim() || undefined,
       salvataIl: new Date().toLocaleDateString("it-IT"),
     };
-    localStorage.setItem("vicini_volonta_v2", JSON.stringify(v));
+    saveLS("vicini_volonta_v2", v);
     setSalvata(v);
     setRiepilogo(v);
     toast("Le tue volontà sono state registrate in forma riservata.");
@@ -575,7 +584,7 @@ function Nucleo() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    localStorage.setItem("vicini_nucleo_v2", JSON.stringify(membri));
+    saveLS("vicini_nucleo_v2", membri);
   }, [membri]);
 
   const aggiungi = (e: React.FormEvent) => {

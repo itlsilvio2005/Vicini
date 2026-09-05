@@ -358,6 +358,51 @@ export function Switch({
   );
 }
 
+/* ================= Error boundary (l'anteprima non resta mai bianca) ================= */
+
+export class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="grid min-h-screen place-items-center bg-night-950 p-6 text-paper">
+          <div className="w-full max-w-md rounded-xl border border-bronze-500/50 bg-night-900 p-8 text-center">
+            <p className="font-display text-3xl font-semibold">Vicini</p>
+            <p className="mt-3 text-sm leading-relaxed text-mist">
+              Si è verificato un errore imprevisto durante il caricamento della piattaforma.
+            </p>
+            <p className="mt-3 rounded-md border border-night-700 bg-night-800 px-3 py-2 font-mono text-[11px] text-bronze-300">
+              {String(this.state.error.message || this.state.error)}
+            </p>
+            <button
+              onClick={() => {
+                this.setState({ error: null });
+                try {
+                  window.location.reload();
+                } catch {
+                  this.forceUpdate();
+                }
+              }}
+              className="mt-5 rounded-md bg-bronze-500 px-5 py-2.5 text-sm font-bold text-night-950 transition hover:bg-bronze-400"
+            >
+              Ricarica la pagina
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "bronze" | "neutral" | "night" | "green" | "amber" }) {
   const tones: Record<string, string> = {
     bronze: "border-bronze-500/50 bg-bronze-300/20 text-bronze-700",

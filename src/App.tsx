@@ -17,7 +17,7 @@ import {
   type OrdineFiori,
   type Pensiero,
 } from "./data";
-import { ToastProvider } from "./lib";
+import { ErrorBoundary, ToastProvider } from "./lib";
 import { Bacheca } from "./Bacheca";
 import { Imprese } from "./Imprese";
 import { Luoghi } from "./Luoghi";
@@ -36,9 +36,45 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; short: string; ha
 
 /** Legge la scheda attiva dall'URL hash (#/bacheca, #/imprese, …) */
 function tabFromHash(): TabId {
-  const h = window.location.hash.replace(/^#\/?/, "").split("?")[0];
-  const found = TABS.find((t) => t.hash === h);
-  return found ? found.id : "bacheca";
+  try {
+    const h = window.location.hash.replace(/^#\/?/, "").split("?")[0];
+    const found = TABS.find((t) => t.hash === h);
+    return found ? found.id : "bacheca";
+  } catch {
+    return "bacheca"; // ambienti sandboxed senza accesso a location
+  }
+}
+
+/* API di navigazione "sicure": in anteprime sandbox (iframe ristretti)
+   history/location possono lanciare SecurityError → non devono mai crashare l'app. */
+function safeReplaceHash(hash: string) {
+  try {
+    window.history.replaceState(null, "", hash);
+  } catch {
+    /* ignora: il routing prosegue comunque in memoria */
+  }
+}
+function safeSetHash(hash: string): boolean {
+  try {
+    window.location.hash = hash;
+    return true;
+  } catch {
+    return false;
+  }
+}
+function safeScrollTop() {
+  try {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  } catch {
+    window.scrollTo(0, 0);
+  }
+}
+function safeReadHash(): string {
+  try {
+    return window.location.hash;
+  } catch {
+    return "";
+  }
 }
 
 function Shell() {
@@ -50,8 +86,8 @@ function Shell() {
   /* Navigazione hash: ogni scheda è una vista con il proprio URL (#/bacheca, …).
      Il pulsante Indietro/Avanti del browser cambia scheda come in una vera SPA. */
   useEffect(() => {
-    if (!window.location.hash) {
-      window.history.replaceState(null, "", "#/bacheca");
+    if (tabFromHash() === "bacheca" && !safeReadHash()) {
+      safeReplaceHash("#/bacheca");
     }
     const onHash = () => setTab(tabFromHash());
     window.addEventListener("hashchange", onHash);
@@ -60,13 +96,17 @@ function Shell() {
 
   /* Al cambio scheda: sempre in cima alla nuova vista (nessun scorrimento residuo) */
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    safeScrollTop();
   }, [tab]);
 
   /* Ogni scheda aggiorna il titolo della pagina, come una vista autonoma */
   useEffect(() => {
-    const t = TABS.find((x) => x.id === tab);
-    document.title = `Vicini — ${t?.label ?? "Bacheca Manifesti"} · Provincia di Modena`;
+    try {
+      const t = TABS.find((x) => x.id === tab);
+      document.title = `Vicini — ${t?.label ?? "Bacheca Manifesti"} · Provincia di Modena`;
+    } catch {
+      /* ignora */
+    }
   }, [tab]);
 
   const aggiungiOrdine = useCallback((o: OrdineFiori) => {
@@ -79,11 +119,15 @@ function Shell() {
 
   const vaiA = useCallback((t: TabId) => {
     const target = "#/" + (TABS.find((x) => x.id === t)?.hash ?? "bacheca");
-    if (window.location.hash === target) {
+    if (safeReadHash() === target) {
       setTab(t);
-      window.scrollTo({ top: 0 });
-    } else {
-      window.location.hash = target; // → hashchange → setTab
+      safeScrollTop();
+      return;
+    }
+    // aggiorna l'URL se possibile (→ hashchange → setTab), altrimenti cambia vista direttamente
+    if (!safeSetHash(target)) {
+      setTab(t);
+      safeScrollTop();
     }
   }, []);
 
@@ -259,8 +303,10 @@ function Shell() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <Shell />
-    </ToastProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <Shell />
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
