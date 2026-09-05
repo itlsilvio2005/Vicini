@@ -358,6 +358,98 @@ export function Switch({
   );
 }
 
+/* ================= PageMast — banda istituzionale di apertura sezione ================= */
+
+export function PageMast({
+  kicker,
+  title,
+  sub,
+  meta,
+}: {
+  kicker: string;
+  title: React.ReactNode;
+  sub?: React.ReactNode;
+  meta?: React.ReactNode;
+}) {
+  return (
+    <div className="relative overflow-hidden bg-night-900 text-paper">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(900px 420px at 85% -10%, rgba(176,138,69,0.15), transparent 60%), radial-gradient(700px 520px at -10% 40%, rgba(44,70,116,0.3), transparent 55%)",
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        style={{ backgroundImage: "repeating-linear-gradient(115deg, transparent 0 26px, #c7a262 26px 27px)" }}
+        aria-hidden="true"
+      />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-bronze-500/70 to-transparent" aria-hidden="true" />
+
+      <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14">
+        <Reveal>
+          <p className="flex items-center gap-3 text-[10.5px] font-semibold uppercase tracking-[0.26em] text-bronze-300">
+            {kicker}
+            <span className="h-px w-16 bg-bronze-500/60" />
+          </p>
+          <h1 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-[1.05] sm:text-5xl">{title}</h1>
+          {sub && <p className="mt-4 max-w-2xl text-[14.5px] leading-relaxed text-mist">{sub}</p>}
+          {meta && (
+            <p className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] capitalize text-mist/90">{meta}</p>
+          )}
+        </Reveal>
+      </div>
+    </div>
+  );
+}
+
+/* ================= Error boundary (l'anteprima non resta mai bianca) ================= */
+
+export class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="grid min-h-screen place-items-center bg-night-950 p-6 text-paper">
+          <div className="w-full max-w-md rounded-xl border border-bronze-500/50 bg-night-900 p-8 text-center">
+            <p className="font-display text-3xl font-semibold">Vicini</p>
+            <p className="mt-3 text-sm leading-relaxed text-mist">
+              Si è verificato un errore imprevisto durante il caricamento della piattaforma.
+            </p>
+            <p className="mt-3 rounded-md border border-night-700 bg-night-800 px-3 py-2 font-mono text-[11px] text-bronze-300">
+              {String(this.state.error.message || this.state.error)}
+            </p>
+            <button
+              onClick={() => {
+                this.setState({ error: null });
+                try {
+                  window.location.reload();
+                } catch {
+                  this.forceUpdate();
+                }
+              }}
+              className="mt-5 rounded-md bg-bronze-500 px-5 py-2.5 text-sm font-bold text-night-950 transition hover:bg-bronze-400"
+            >
+              Ricarica la pagina
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "bronze" | "neutral" | "night" | "green" | "amber" }) {
   const tones: Record<string, string> = {
     bronze: "border-bronze-500/50 bg-bronze-300/20 text-bronze-700",

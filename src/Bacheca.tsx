@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   Flower2,
   HeartHandshake,
@@ -16,6 +17,9 @@ import {
   Mail,
   BellRing,
   Flame,
+  ArrowLeft,
+  ArrowRight,
+  CalendarClock,
 } from "lucide-react";
 import {
   agenziaById,
@@ -27,17 +31,29 @@ import {
   type OrdineFiori,
   type Pensiero,
 } from "./data";
-import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, useToast } from "./lib";
+import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, SectionHeading, useToast } from "./lib";
 
-/* ---------------- WhatsApp share ---------------- */
+/* ---------------- helpers ---------------- */
 
 function waLink(m: Manifesto) {
   const text =
     `Manifesto funebre — ${m.nome} (${m.comune}).\n` +
     `Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora} — ${m.funerale.luogo}.\n` +
-    `Per inviare fiori o un pensiero: https://${URL_BASE}/m/${m.id}`;
+    `Per inviare fiori o un pensiero: https://${URL_BASE}/manifesto/${m.id}`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
+
+function initialsOf(nome: string) {
+  return nome
+    .replace(/ved\.|in |don |dott\.|sig\./gi, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 1 && /^[A-ZÀ-Ú]/i.test(w))
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+}
+
+const slug = (c: string) => c.toLowerCase();
 
 /* ---------------- Candela ---------------- */
 
@@ -82,7 +98,7 @@ function Candle({ className = "h-32 sm:h-40" }: { className?: string }) {
 const MASTHEAD_IMG =
   "https://image.qwenlm.ai/generated-images/ddb71b0c-1804-4b23-a5c3-fdf4dcef67eb/_result.png";
 
-/* ---------------- Band di apertura (bacheca come albo pubblico) ---------------- */
+/* ---------------- Band di apertura ---------------- */
 
 function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
   const oggi = new Date().toLocaleDateString("it-IT", {
@@ -131,7 +147,7 @@ function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
             <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
             <span>{manifesti.length} manifesti in pubblicazione</span>
             <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
-            <span>14 imprese accreditate</span>
+            <span>15 imprese accreditate</span>
           </p>
         </div>
         <div className="hidden items-end justify-end gap-6 lg:flex">
@@ -139,7 +155,7 @@ function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
           <div className="max-w-[230px] pb-2">
             <p className="font-display text-lg italic leading-snug text-bronze-300">«La luce resta accesa per chi resta.»</p>
             <p className="mt-2 text-[11.5px] leading-relaxed text-mist">
-              Ogni manifesto è raggiungibile anche da cellulare tramite il QR code affisso nei luoghi del commiato.
+              Ogni manifesto ha una pagina propria raggiungibile anche da cellulare tramite QR code.
             </p>
           </div>
         </div>
@@ -151,7 +167,7 @@ function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
           <p className="flex shrink-0 items-center gap-2 border-r border-night-700 py-2.5 pr-4 text-[10px] font-bold uppercase tracking-[0.2em] text-bronze-400">
             <BellRing size={13} /> Ultime pubblicazioni
           </p>
-          <div className="relative flex-1 overflow-hidden" aria-hidden="true">
+          <div className="ticker-mask relative flex-1 overflow-hidden" aria-hidden="true">
             <div className="ticker-track flex w-max items-center gap-10 whitespace-nowrap py-2.5 pl-10 pr-10">
               {[...manifesti, ...manifesti].map((m, i) => (
                 <span key={`${m.id}-${i}`} className="flex items-center gap-2 text-[12.5px] text-mist">
@@ -182,7 +198,12 @@ export function Bacheca({
   onNuovoOrdine: (o: OrdineFiori) => void;
   onNuovoPensiero: (manifestoId: string, p: Pensiero) => void;
 }) {
-  const [filtro, setFiltro] = useState<Comune | "Tutti">("Tutti");
+  const { comune } = useParams();
+
+  const comuneAttivo = useMemo(() => {
+    if (!comune) return null;
+    return COMUNI.find((c) => slug(c) === comune) ?? null;
+  }, [comune]);
 
   const counts = useMemo(() => {
     const map = new Map<string, number>();
@@ -190,37 +211,47 @@ export function Bacheca({
     return map;
   }, [manifesti]);
 
-  const visibili = filtro === "Tutti" ? manifesti : manifesti.filter((m) => m.comune === filtro);
+  /* rotta /bacheca/:comune non valida → torna alla bacheca completa */
+  if (comune && !comuneAttivo) return <Navigate to="/bacheca" replace />;
+
+  const visibili = comuneAttivo ? manifesti.filter((m) => m.comune === comuneAttivo) : manifesti;
 
   return (
     <div>
       <BachecaBand manifesti={manifesti} />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        {/* Filtri rapidi comuni */}
         <div className="mb-8 flex items-center gap-3">
-          <h2 className="font-display text-2xl font-semibold text-ink">Filtra per comune</h2>
+          <h2 className="font-display text-2xl font-semibold text-ink">
+            {comuneAttivo ? `Manifesti — Comune di ${comuneAttivo}` : "Filtra per comune"}
+          </h2>
           <span className="h-px flex-1 bg-line" />
+          {comuneAttivo && (
+            <Link to="/bacheca" className="link-rule text-[13px] font-semibold text-bronze-600">
+              Vedi tutti
+            </Link>
+          )}
         </div>
+
         <Reveal className="mb-9 flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setFiltro("Tutti")}
-            aria-pressed={filtro === "Tutti"}
+          <Link
+            to="/bacheca"
+            aria-pressed={!comuneAttivo}
             className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
-              filtro === "Tutti"
+              !comuneAttivo
                 ? "border-night-800 bg-night-800 text-paper shadow-md"
                 : "border-line bg-card text-ink-soft hover:border-bronze-500 hover:text-bronze-600"
             }`}
           >
             Tutti <span className="ml-1 opacity-70">{manifesti.length}</span>
-          </button>
+          </Link>
           {COMUNI.map((c) => {
             const n = counts.get(c) ?? 0;
-            const attivo = filtro === c;
+            const attivo = comuneAttivo === c;
             return (
-              <button
+              <Link
                 key={c}
-                onClick={() => setFiltro(attivo ? "Tutti" : c)}
+                to={`/bacheca/${slug(c)}`}
                 aria-pressed={attivo}
                 className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
                   attivo
@@ -229,7 +260,7 @@ export function Bacheca({
                 } ${n === 0 ? "opacity-50" : ""}`}
               >
                 {c} <span className="ml-1 opacity-70">{n}</span>
-              </button>
+              </Link>
             );
           })}
           <span className="ml-auto hidden text-[12px] italic text-ink-faint xl:block">
@@ -237,7 +268,6 @@ export function Bacheca({
           </span>
         </Reveal>
 
-        {/* Griglia manifesti */}
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {visibili.map((m, i) => (
             <ManifestoCard key={m.id} m={m} delay={(i % 3) * 90} onOrdine={onNuovoOrdine} onPensiero={onNuovoPensiero} />
@@ -254,17 +284,7 @@ export function Bacheca({
   );
 }
 
-/* ---------------- Card manifesto ---------------- */
-
-function initialsOf(nome: string) {
-  return nome
-    .replace(/ved\.|in |don |dott\.|sig\./gi, "")
-    .split(/\s+/)
-    .filter((w) => w.length > 1 && /^[A-ZÀ-Ú]/i.test(w))
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
-}
+/* ---------------- Card manifesto (compatta + accordion) ---------------- */
 
 function ManifestoCard({
   m,
@@ -277,6 +297,7 @@ function ManifestoCard({
   onPensiero: (id: string, p: Pensiero) => void;
   onOrdine: (o: OrdineFiori) => void;
 }) {
+  const [aperto, setAperto] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [fioriOpen, setFioriOpen] = useState(false);
   const [cordoglioOpen, setCordoglioOpen] = useState(false);
@@ -292,7 +313,9 @@ function ManifestoCard({
           <div className="flex items-start gap-4">
             <Monogram initials={initialsOf(m.nome)} />
             <div className="min-w-0">
-              <h3 className="font-display text-[24px] font-semibold leading-tight text-ink">{m.nome}</h3>
+              <Link to={`/manifesto/${m.id}`} className="link-rule font-display text-[24px] font-semibold leading-tight text-ink hover:text-bronze-700">
+                {m.nome}
+              </Link>
               <p className="mt-0.5 text-[13px] text-ink-soft">
                 di anni {m.anni} · {m.nascita} — {m.morte}
               </p>
@@ -308,31 +331,59 @@ function ManifestoCard({
             </div>
           </div>
 
-          <div className="my-4 flex items-center gap-3" aria-hidden="true">
-            <span className="h-px flex-1 bg-line" />
-            <span className="h-1.5 w-1.5 rotate-45 border border-bronze-500 bg-bronze-300/40" />
-            <span className="h-px flex-1 bg-line" />
+          {/* sintesi sempre visibile */}
+          <div className="mt-4 space-y-2 rounded-lg border border-line-soft bg-paper px-4 py-3">
+            <p className="flex items-start gap-2.5 text-[13px] leading-snug">
+              <CalendarClock size={14} className="mt-0.5 shrink-0 text-bronze-600" />
+              <span>
+                <span className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-bronze-700">Cerimonia</span>
+                <br />
+                <strong className="text-ink">{m.funerale.giorno} · ore {m.funerale.ora}</strong>{" "}
+                <span className="text-ink-soft">— {m.funerale.luogo}</span>
+              </span>
+            </p>
+            <p className="flex items-start gap-2.5 text-[12.5px] leading-snug text-ink-soft">
+              <Clock3 size={14} className="mt-0.5 shrink-0 text-bronze-600/80" />
+              <span>
+                <span className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-faint">Camera ardente</span>
+                <br />
+                {m.cameraArdente.luogo} · <strong className="font-semibold text-ink-soft">{m.cameraArdente.orari}</strong>
+              </span>
+            </p>
           </div>
 
-          <div className="space-y-3.5">
-            <InfoBlock
-              icon={<Clock3 size={14} />}
-              label="Camera Ardente"
-              rows={[m.cameraArdente.luogo, m.cameraArdente.indirizzo]}
-              orari={m.cameraArdente.orari}
-              nota={m.cameraArdente.indicazioni}
-            />
-            <InfoBlock
-              icon={<IconRito size={14} />}
-              label={m.rito === "Musulmano" ? "Preghiera / Cerimonia" : "Funerale / Cerimonia"}
-              rows={[`${m.funerale.giorno} — ore ${m.funerale.ora}`, m.funerale.luogo, m.funerale.indirizzo]}
-              nota={m.funerale.dettagli}
-            />
-            <InfoBlock
-              icon={<Landmark size={14} />}
-              label={m.commiato.tipo === "Cremazione" ? "Cinerario / Cremazione" : m.commiato.tipo}
-              rows={[m.commiato.luogo, m.commiato.cimitero]}
-            />
+          {/* accordion dettagli */}
+          <button
+            onClick={() => setAperto((v) => !v)}
+            aria-expanded={aperto}
+            className="mt-3 flex w-full items-center justify-between rounded-md border border-line bg-card px-3.5 py-2 text-[12px] font-bold uppercase tracking-[0.14em] text-ink-soft transition hover:border-bronze-500 hover:text-bronze-600"
+          >
+            Dettagli: camera ardente · cerimonia · {m.commiato.tipo.toLowerCase()}
+            <ChevronDown size={15} className={`transition-transform duration-300 ${aperto ? "rotate-180 text-bronze-600" : ""}`} />
+          </button>
+          <div className={`grid transition-all duration-500 ease-out ${aperto ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+            <div className="overflow-hidden">
+              <div className="space-y-3.5 border-t border-line-soft pt-3.5">
+                <InfoBlock
+                  icon={<Clock3 size={14} />}
+                  label="Camera Ardente"
+                  rows={[m.cameraArdente.luogo, m.cameraArdente.indirizzo]}
+                  orari={m.cameraArdente.orari}
+                  nota={m.cameraArdente.indicazioni}
+                />
+                <InfoBlock
+                  icon={<IconRito size={14} />}
+                  label={m.rito === "Musulmano" ? "Preghiera / Cerimonia" : "Funerale / Cerimonia"}
+                  rows={[`${m.funerale.giorno} — ore ${m.funerale.ora}`, m.funerale.luogo, m.funerale.indirizzo]}
+                  nota={m.funerale.dettagli}
+                />
+                <InfoBlock
+                  icon={<Landmark size={14} />}
+                  label={m.commiato.tipo === "Cremazione" ? "Cinerario / Cremazione" : m.commiato.tipo}
+                  rows={[m.commiato.luogo, m.commiato.cimitero]}
+                />
+              </div>
+            </div>
           </div>
 
           {m.pensieri.length > 0 && (
@@ -346,19 +397,20 @@ function ManifestoCard({
           )}
         </div>
 
+        {/* azioni — gerarchia: Invia Fiori primaria */}
         <div className="border-t border-line-soft bg-paper px-5 py-3.5 sm:px-6">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setFioriOpen(true)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-bronze-500 px-3 py-2 text-[12.5px] font-bold text-night-950 transition hover:bg-bronze-400 active:scale-[0.98]"
-            >
-              <Flower2 size={14} /> Invia Fiori
-            </button>
+          <button
+            onClick={() => setFioriOpen(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-3 py-2.5 text-sm font-bold text-night-950 shadow-sm transition hover:bg-bronze-400 active:scale-[0.98]"
+          >
+            <Flower2 size={16} /> Invia Fiori
+          </button>
+          <div className="mt-2 flex items-center gap-2">
             <button
               onClick={() => setCordoglioOpen(true)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-night-700 bg-night-800 px-3 py-2 text-[12.5px] font-semibold text-paper transition hover:border-bronze-500 hover:text-bronze-300 active:scale-[0.98]"
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border border-night-700 bg-night-800 px-3 text-[12px] font-semibold text-paper transition hover:border-bronze-500 hover:text-bronze-300 active:scale-[0.98]"
             >
-              <HeartHandshake size={14} /> Lascia un Pensiero
+              <HeartHandshake size={13} /> Lascia un Pensiero
             </button>
             <a
               href={waLink(m)}
@@ -366,7 +418,7 @@ function ManifestoCard({
               rel="noreferrer"
               aria-label="Condividi su WhatsApp"
               title="Condividi su WhatsApp"
-              className="rounded-md border border-line bg-card p-2 text-[#3d6b4f] transition hover:border-[#3d6b4f] hover:bg-[#3d6b4f]/10 active:scale-95"
+              className="grid h-9 w-9 place-items-center rounded-md border border-line bg-card text-[#3d6b4f] transition hover:border-[#3d6b4f] hover:bg-[#3d6b4f]/10 active:scale-95"
             >
               <WhatsAppIcon />
             </a>
@@ -375,7 +427,7 @@ function ManifestoCard({
               aria-expanded={qrOpen}
               aria-label="Mostra QR code del manifesto"
               title="QR Code Manifesto"
-              className={`rounded-md border p-2 transition active:scale-95 ${
+              className={`grid h-9 w-9 place-items-center rounded-md border transition active:scale-95 ${
                 qrOpen
                   ? "border-bronze-500 bg-bronze-300/25 text-bronze-700"
                   : "border-line bg-card text-ink-soft hover:border-bronze-500 hover:text-bronze-600"
@@ -398,9 +450,7 @@ function ManifestoCard({
                   <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">
                     Inquadra per inviare fiori o cordogli dal cellulare.
                   </p>
-                  <p className="mt-1.5 font-mono text-[10.5px] text-ink-faint">
-                    {URL_BASE}/m/{m.id}
-                  </p>
+                  <p className="mt-1.5 font-mono text-[10.5px] text-ink-faint">{URL_BASE}/manifesto/{m.id}</p>
                 </div>
                 <ChevronDown
                   size={16}
@@ -411,11 +461,16 @@ function ManifestoCard({
           </div>
         </div>
 
-        <p className="border-t border-line-soft bg-card px-5 py-2 text-[11px] text-ink-faint sm:px-6">
-          Pratica curata da <strong className="font-semibold text-ink-soft">{agenzia.nome}</strong> ·{" "}
-          <a href={`tel:${agenzia.telefono.replace(/\s/g, "")}`} className="text-bronze-600 hover:underline">
-            {agenzia.telefono}
-          </a>
+        <p className="flex items-center justify-between gap-3 border-t border-line-soft bg-card px-5 py-2 text-[11px] text-ink-faint sm:px-6">
+          <span>
+            Pratica curata da <strong className="font-semibold text-ink-soft">{agenzia.nome}</strong> ·{" "}
+            <a href={`tel:${agenzia.telefono.replace(/\s/g, "")}`} className="text-bronze-600 hover:underline">
+              {agenzia.telefono}
+            </a>
+          </span>
+          <Link to={`/manifesto/${m.id}`} className="flex shrink-0 items-center gap-1 font-bold text-bronze-600 hover:text-bronze-700">
+            Scheda <ArrowRight size={11} />
+          </Link>
         </p>
       </div>
 
@@ -424,6 +479,207 @@ function ManifestoCard({
     </Reveal>
   );
 }
+
+/* ---------------- Pagina completa manifesto (rotta SEO) ---------------- */
+
+export function ManifestoDettaglio({
+  manifesti,
+  onNuovoOrdine,
+  onNuovoPensiero,
+}: {
+  manifesti: Manifesto[];
+  onNuovoOrdine: (o: OrdineFiori) => void;
+  onNuovoPensiero: (manifestoId: string, p: Pensiero) => void;
+}) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [fioriOpen, setFioriOpen] = useState(false);
+  const [cordoglioOpen, setCordoglioOpen] = useState(false);
+
+  const m = manifesti.find((x) => x.id === id);
+  if (!m) return <Navigate to="/bacheca" replace />;
+
+  const agenzia = agenziaById(m.agenzia);
+  const IconRito = m.rito === "Musulmano" ? MoonStar : Church;
+
+  return (
+    <div>
+      {/* intestazione scura */}
+      <div className="relative overflow-hidden bg-night-900 text-paper">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(800px 400px at 85% -10%, rgba(176,138,69,0.16), transparent 60%), radial-gradient(700px 500px at -10% 30%, rgba(44,70,116,0.3), transparent 55%)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6">
+          <button
+            onClick={() => {
+              try {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                  return;
+                }
+              } catch {
+                /* anteprime sandbox: vai direttamente alla bacheca */
+              }
+              navigate("/bacheca");
+            }}
+            className="flex items-center gap-2 text-[12.5px] font-semibold text-mist transition hover:text-bronze-300"
+          >
+            <ArrowLeft size={14} /> Torna alla bacheca
+          </button>
+          <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center">
+            <Monogram initials={initialsOf(m.nome)} size={92} />
+            <div>
+              <h1 className="font-display text-4xl font-semibold leading-tight sm:text-5xl">{m.nome}</h1>
+              <p className="mt-1.5 text-[14px] text-mist">
+                di anni {m.anni} · nato/a {m.nascita} — {m.morte}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                <Badge tone="night">
+                  <MapPin size={11} /> Comune di {m.comune}
+                </Badge>
+                <Badge tone={m.rito === "Musulmano" ? "bronze" : "neutral"}>
+                  <IconRito size={11} /> Rito {m.rito.toLowerCase()}
+                </Badge>
+                <Badge tone="neutral">Pubblicato {m.pubblicato.toLowerCase()}</Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.15fr_0.85fr]">
+        {/* colonna informazioni */}
+        <div>
+          <SectionHeading
+            num="—"
+            kicker="Orari e luoghi"
+            title={<span className="text-3xl sm:text-4xl">Il percorso del commiato</span>}
+          />
+          <div className="space-y-5 rounded-xl border border-line bg-card p-6 sm:p-7">
+            <InfoBlock
+              icon={<Clock3 size={15} />}
+              label="Camera Ardente"
+              rows={[m.cameraArdente.luogo, m.cameraArdente.indirizzo]}
+              orari={m.cameraArdente.orari}
+              nota={m.cameraArdente.indicazioni}
+            />
+            <div className="border-t border-line-soft" />
+            <InfoBlock
+              icon={<IconRito size={15} />}
+              label={m.rito === "Musulmano" ? "Preghiera / Cerimonia" : "Funerale / Cerimonia"}
+              rows={[`${m.funerale.giorno} — ore ${m.funerale.ora}`, m.funerale.luogo, m.funerale.indirizzo]}
+              nota={m.funerale.dettagli}
+            />
+            <div className="border-t border-line-soft" />
+            <InfoBlock
+              icon={<Landmark size={15} />}
+              label={m.commiato.tipo === "Cremazione" ? "Cinerario / Cremazione" : m.commiato.tipo}
+              rows={[m.commiato.luogo, m.commiato.cimitero]}
+            />
+          </div>
+
+          {/* pensieri */}
+          <h3 className="mt-10 flex items-center gap-3 font-display text-2xl font-semibold text-ink">
+            <HeartHandshake size={19} className="text-bronze-600" /> Pensieri e cordogli ({m.pensieri.length})
+          </h3>
+          <ul className="mt-4 space-y-3">
+            {m.pensieri.length === 0 && (
+              <li className="rounded-lg border border-dashed border-line bg-card p-6 text-center text-[13px] italic text-ink-faint">
+                Nessun pensiero pubblicato: lascia tu il primo.
+              </li>
+            )}
+            {m.pensieri.map((p, i) => (
+              <li key={i} className="rounded-lg border border-line-soft bg-card px-5 py-4 text-[13.5px] italic leading-relaxed text-ink-soft">
+                «{p.testo}»
+                <span className="mt-1.5 block text-[11.5px] not-italic text-ink-faint">
+                  — {p.nome}
+                  {p.relazione ? `, ${p.relazione}` : ""} · {p.quando}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* colonna azioni */}
+        <div className="space-y-6 lg:sticky lg:top-32 lg:self-start">
+          <div className="rounded-xl border border-line bg-card p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-faint">Partecipa al cordoglio</p>
+            <button
+              onClick={() => setFioriOpen(true)}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 shadow-sm transition hover:bg-bronze-400 active:scale-[0.98]"
+            >
+              <Flower2 size={17} /> Invia Fiori
+            </button>
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={() => setCordoglioOpen(true)}
+                className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md border border-night-700 bg-night-800 px-3 text-[12.5px] font-semibold text-paper transition hover:border-bronze-500 hover:text-bronze-300"
+              >
+                <HeartHandshake size={14} /> Lascia un Pensiero
+              </button>
+              <a
+                href={waLink(m)}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Condividi su WhatsApp"
+                className="grid h-10 w-10 place-items-center rounded-md border border-line bg-paper text-[#3d6b4f] transition hover:border-[#3d6b4f] hover:bg-[#3d6b4f]/10"
+              >
+                <WhatsAppIcon />
+              </a>
+            </div>
+            <p className="mt-3 flex items-start gap-2 rounded-md border border-bronze-600/40 bg-bronze-300/15 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-bronze-700">
+              <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+              I fiori devono essere ordinati almeno <strong>24 ore prima del funerale</strong>.
+            </p>
+          </div>
+
+          {/* QR manifesto */}
+          <div className="rounded-xl border border-dashed border-bronze-500/60 bg-card p-6 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bronze-700">QR Code Manifesto</p>
+            <div className="mt-3 flex justify-center">
+              <QrVisual seed={m.id + m.nome} size={150} />
+            </div>
+            <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">
+              Inquadra per inviare fiori o cordogli dal cellulare.
+            </p>
+            <p className="mt-1.5 font-mono text-[11px] text-ink-faint">{URL_BASE}/manifesto/{m.id}</p>
+          </div>
+
+          {/* agenzia */}
+          <div className="rounded-xl border border-line bg-card p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-faint">Pratica curata da</p>
+            <p className="mt-2 font-display text-xl font-semibold text-ink">{agenzia.nome}</p>
+            <ul className="mt-3 space-y-1.5 text-[12.5px] text-ink-soft">
+              <li className="flex items-center gap-2">
+                <MapPin size={13} className="text-bronze-600" /> {agenzia.indirizzo}
+              </li>
+              <li>
+                <a href={`tel:${agenzia.telefono.replace(/\s/g, "")}`} className="flex items-center gap-2 font-semibold text-ink-soft hover:text-bronze-600">
+                  <Phone size={13} className="text-bronze-600" /> {agenzia.telefono} · h24
+                </a>
+              </li>
+              <li>
+                <a href={`mailto:${agenzia.email}`} className="link-rule flex items-center gap-2 hover:text-bronze-600">
+                  <Mail size={13} className="text-bronze-600" /> {agenzia.email}
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <FioriModal manifesto={m} open={fioriOpen} onClose={() => setFioriOpen(false)} onSubmitOrder={onNuovoOrdine} />
+      <CordoglioModal manifesto={m} open={cordoglioOpen} onClose={() => setCordoglioOpen(false)} onInvia={onNuovoPensiero} />
+    </div>
+  );
+}
+
+/* ---------------- InfoBlock ---------------- */
 
 function InfoBlock({
   icon,

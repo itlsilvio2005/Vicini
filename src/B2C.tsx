@@ -28,13 +28,14 @@ import {
   agenziaById,
   CHIESE_CERIMONIA,
   COMUNI,
+  GRUPPI_IMPRESE,
   MOSCHEE,
   PAESI_RIMPATRIO,
   RITI,
   type Comune,
   type Rito,
 } from "./data";
-import { Badge, Field, inputCls, Modal, ModalHeader, Reveal, SectionHeading, Switch, useToast } from "./lib";
+import { Badge, Field, inputCls, Modal, ModalHeader, PageMast, Reveal, Switch, useToast } from "./lib";
 
 /* ================= TIPI ================= */
 
@@ -64,6 +65,15 @@ const MEMBRI_INIZIALI: Membro[] = [
   { id: "n1", nome: "Lina Bonetti ved. Malagoli", relazione: "Genitore", comune: "Nonantola", contatto: "marco.malagoli@gmail.com" },
 ];
 
+/** Salvataggio locale sicuro: in anteprime sandbox localStorage può essere inaccessibile. */
+function saveLS(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* ignora: i dati restano comunque nello stato dell'app */
+  }
+}
+
 const ABBIGLIAMENTO = ["Abito preferito indicato dalla famiglia", "Abito formale scuro", "Abito religioso / confraternita"];
 const MUSICA = ["Nessuna musica", "Organista", "Coro parrocchiale", "Brano preferito (da concordare)"];
 const ALLESTIMENTI = ["Fiori bianchi", "Composizioni di stagione", "Nessun addobbo floreale"];
@@ -73,21 +83,29 @@ const DESTINAZIONI = ["Tumulazione", "Cremazione", "Inumazione"];
 
 export function B2C({ prefillAgenzia }: { prefillAgenzia: { id: string; ts: number } | null }) {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
-      <SectionHeading
-        num="04"
+    <div>
+      <PageMast
         kicker="Area riservata B2C"
         title={
           <>
-            Le Mie Volontà <em className="italic text-bronze-600">&amp; Il Nucleo</em>
+            Le Mie Volontà <em className="italic text-bronze-300">&amp; Il Nucleo</em>
           </>
         }
         sub="Due strumenti riservati: registra come desideri sia organizzato il tuo funerale e proteggi i tuoi cari con notifiche automatiche sui nuovi manifesti. Nessun dato è pubblico."
+        meta={
+          <>
+            <span>Registrazione riservata e revocabile</span>
+            <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
+            <span>Notifiche automatiche GDPR-compliant</span>
+          </>
+        }
       />
 
-      <div className="grid gap-10 xl:grid-cols-[1.15fr_0.85fr]">
-        <Volonta prefill={prefillAgenzia} />
-        <Nucleo />
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+        <div className="grid gap-10 xl:grid-cols-[1.15fr_0.85fr]">
+          <Volonta prefill={prefillAgenzia} />
+          <Nucleo />
+        </div>
       </div>
     </div>
   );
@@ -184,7 +202,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
       note: note.trim() || undefined,
       salvataIl: new Date().toLocaleDateString("it-IT"),
     };
-    localStorage.setItem("vicini_volonta_v2", JSON.stringify(v));
+    saveLS("vicini_volonta_v2", v);
     setSalvata(v);
     setRiepilogo(v);
     toast("Le tue volontà sono state registrate in forma riservata.");
@@ -219,7 +237,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
               <option value="">— Seleziona l'impresa a cui affidare la gestione —</option>
               {AGENZIE.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.nome} · {a.gruppi.length > 1 ? "Modena e Vignola–Nonantola" : a.gruppi[0] === "modena" ? "Modena" : a.gruppi[0] === "vignola-nonantola" ? "Vignola & Nonantola" : a.gruppi[0][0].toUpperCase() + a.gruppi[0].slice(1)}
+                  {a.nome} · {a.gruppi.map((g) => GRUPPI_IMPRESE.find((x) => x.id === g)?.nome ?? g).join(" · ")}
                 </option>
               ))}
             </select>
@@ -449,7 +467,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
                 <p className="flex items-center gap-2 text-[12px] font-bold text-ink">
                   <Shirt size={13} className="text-bronze-600" /> Abbigliamento
                 </p>
-                <select value={abbigliamento} onChange={(e) => setAbbigliamento(e.target.value)} className={`${inputCls()} mt-2.5 !py-2 text-[12.5px]`}>
+                <select value={abbigliamento} onChange={(e) => setAbbigliamento(e.target.value)} className={`${inputCls()} mt-2.5 py-2! text-[12.5px]`}>
                   <option value="">Nessuna preferenza</option>
                   {ABBIGLIAMENTO.map((a) => (
                     <option key={a} value={a}>{a}</option>
@@ -460,7 +478,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
                 <p className="flex items-center gap-2 text-[12px] font-bold text-ink">
                   <Music2 size={13} className="text-bronze-600" /> Musica
                 </p>
-                <select value={musica} onChange={(e) => setMusica(e.target.value)} className={`${inputCls()} mt-2.5 !py-2 text-[12.5px]`}>
+                <select value={musica} onChange={(e) => setMusica(e.target.value)} className={`${inputCls()} mt-2.5 py-2! text-[12.5px]`}>
                   <option value="">Nessuna preferenza</option>
                   {MUSICA.map((m) => (
                     <option key={m} value={m}>{m}</option>
@@ -471,7 +489,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
                 <p className="flex items-center gap-2 text-[12px] font-bold text-ink">
                   <Flower2 size={13} className="text-bronze-600" /> Allestimenti locali
                 </p>
-                <select value={allestimento} onChange={(e) => setAllestimento(e.target.value)} className={`${inputCls()} mt-2.5 !py-2 text-[12.5px]`}>
+                <select value={allestimento} onChange={(e) => setAllestimento(e.target.value)} className={`${inputCls()} mt-2.5 py-2! text-[12.5px]`}>
                   <option value="">Nessuna preferenza</option>
                   {ALLESTIMENTI.map((a) => (
                     <option key={a} value={a}>{a}</option>
@@ -574,7 +592,7 @@ function Nucleo() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    localStorage.setItem("vicini_nucleo_v2", JSON.stringify(membri));
+    saveLS("vicini_nucleo_v2", membri);
   }, [membri]);
 
   const aggiungi = (e: React.FormEvent) => {

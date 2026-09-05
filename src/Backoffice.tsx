@@ -15,6 +15,7 @@ import {
   Wallet,
   Eye,
   BadgeCheck,
+  LogOut,
 } from "lucide-react";
 import {
   AGENZIE,
@@ -26,6 +27,7 @@ import {
   type Pratica,
 } from "./data";
 import { Badge, Modal, ModalHeader, Reveal, useToast } from "./lib";
+import { type Sessione } from "./auth";
 
 const VOCI_FATTURA = [
   { voce: "Cofano funebre e accessori", importo: 1240 },
@@ -37,11 +39,15 @@ const VOCI_FATTURA = [
 ];
 
 export function Backoffice({
+  sessione,
   ordini,
   onFatturaInviata,
+  onLogout,
 }: {
+  sessione: Sessione;
   ordini: OrdineFiori[];
   onFatturaInviata: (id: string) => void;
+  onLogout: () => void;
 }) {
   const toast = useToast();
   const [agenziaId, setAgenziaId] = useState("pecorari");
@@ -107,8 +113,15 @@ export function Backoffice({
             </label>
             <p className="flex items-center gap-2 rounded-md border border-night-600 bg-night-800 px-3 py-2 text-[11.5px] text-mist">
               <ShieldCheck size={13} className="shrink-0 text-bronze-400" />
-              Accesso riservato · dati trattati ai sensi del Reg. UE 2016/679 (GDPR)
+              Operatore: <strong className="text-paper/90">{sessione.user}</strong> · sessione valida fino alle{" "}
+              {new Date(sessione.scadeIl).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
             </p>
+            <button
+              onClick={onLogout}
+              className="flex items-center justify-center gap-2 rounded-md border border-night-600 px-4 py-2 text-[12.5px] font-semibold text-mist transition hover:border-[#9a3b2e] hover:text-[#e6b7ae]"
+            >
+              <LogOut size={14} /> Esci
+            </button>
           </div>
         </div>
       </div>

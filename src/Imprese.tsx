@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MapPin, Phone, Mail, ArrowRight, Landmark, Store } from "lucide-react";
 import { AGENZIE, GRUPPI_IMPRESE } from "./data";
-import { Reveal, SectionHeading } from "./lib";
+import { PageMast, Reveal } from "./lib";
 
 export function Imprese({ onScegli }: { onScegli: (id: string) => void }) {
   const [gruppo, setGruppo] = useState<string>("tutti");
@@ -9,17 +9,27 @@ export function Imprese({ onScegli }: { onScegli: (id: string) => void }) {
   const gruppiVisibili = GRUPPI_IMPRESE.filter((g) => gruppo === "tutti" || g.id === gruppo);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
-      <SectionHeading
-        num="02"
+    <div>
+      <PageMast
         kicker="Vetrina ufficiale · Modena e provincia"
         title={
           <>
-            Le imprese <em className="italic text-bronze-600">del luogo</em>
+            Le imprese <em className="italic text-bronze-300">del luogo</em>
           </>
         }
         sub="Tutte le imprese funebri accreditate sulla piattaforma, organizzate per comune di riferimento. L'elenco non costituisce alcuna classifica o priorità: ogni famiglia sceglie liberamente l'impresa di fiducia."
+        meta={
+          <>
+            <span>{AGENZIE.length} imprese accreditate</span>
+            <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
+            <span>5 ambiti comunali</span>
+            <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
+            <span>Reperibilità h24 garantita</span>
+          </>
+        }
       />
+
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
 
       {/* filtro per comune */}
       <Reveal className="mb-10 flex flex-wrap gap-2">
@@ -137,6 +147,7 @@ export function Imprese({ onScegli }: { onScegli: (id: string) => void }) {
           sempre libera e senza vincoli per le famiglie.
         </p>
       </Reveal>
+      </div>
     </div>
   );
 }
