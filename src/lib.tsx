@@ -358,6 +358,53 @@ export function Switch({
   );
 }
 
+/* ================= PageMast — banda istituzionale di apertura sezione ================= */
+
+export function PageMast({
+  kicker,
+  title,
+  sub,
+  meta,
+}: {
+  kicker: string;
+  title: React.ReactNode;
+  sub?: React.ReactNode;
+  meta?: React.ReactNode;
+}) {
+  return (
+    <div className="relative overflow-hidden bg-night-900 text-paper">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(900px 420px at 85% -10%, rgba(176,138,69,0.15), transparent 60%), radial-gradient(700px 520px at -10% 40%, rgba(44,70,116,0.3), transparent 55%)",
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        style={{ backgroundImage: "repeating-linear-gradient(115deg, transparent 0 26px, #c7a262 26px 27px)" }}
+        aria-hidden="true"
+      />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-bronze-500/70 to-transparent" aria-hidden="true" />
+
+      <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14">
+        <Reveal>
+          <p className="flex items-center gap-3 text-[10.5px] font-semibold uppercase tracking-[0.26em] text-bronze-300">
+            {kicker}
+            <span className="h-px w-16 bg-bronze-500/60" />
+          </p>
+          <h1 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-[1.05] sm:text-5xl">{title}</h1>
+          {sub && <p className="mt-4 max-w-2xl text-[14.5px] leading-relaxed text-mist">{sub}</p>}
+          {meta && (
+            <p className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] capitalize text-mist/90">{meta}</p>
+          )}
+        </Reveal>
+      </div>
+    </div>
+  );
+}
+
 /* ================= Error boundary (l'anteprima non resta mai bianca) ================= */
 
 export class ErrorBoundary extends React.Component<
