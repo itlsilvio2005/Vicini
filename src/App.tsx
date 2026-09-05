@@ -73,10 +73,18 @@ function Shell() {
 
   /* Ogni rotta aggiorna titolo e posizione di scroll, come una pagina autonoma */
   useEffect(() => {
-    const base = "/" + (location.pathname.split("/")[1] ?? "bacheca");
-    const titolo = TITOLI[base === "/" ? "/bacheca" : base] ?? TITOLI["/bacheca"];
-    document.title = `Vicini — ${titolo} · Provincia di Modena`;
-    window.scrollTo({ top: 0 });
+    try {
+      const base = "/" + (location.pathname.split("/")[1] ?? "bacheca");
+      const titolo = TITOLI[base === "/" ? "/bacheca" : base] ?? TITOLI["/bacheca"];
+      document.title = `Vicini — ${titolo} · Provincia di Modena`;
+    } catch {
+      /* anteprime sandbox: ignora */
+    }
+    try {
+      window.scrollTo({ top: 0 });
+    } catch {
+      window.scrollTo(0, 0);
+    }
   }, [location.pathname]);
 
   const aggiungiOrdine = useCallback((o: OrdineFiori) => {

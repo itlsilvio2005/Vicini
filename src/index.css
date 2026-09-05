@@ -240,6 +240,18 @@ body {
   font-family: var(--font-body);
   background: #0b1424;
 }
+/* Tailwind preflight impone max-width:100% alle immagini: senza questa
+   regola le tile di OpenStreetMap risulterebbero deformate/spezzate. */
+.leaflet-container img {
+  max-width: none;
+}
+.leaflet-container img.leaflet-tile {
+  width: 256px;
+  height: 256px;
+}
+.leaflet-bar a {
+  color: #1c2b45;
+}
 .leaflet-tooltip {
   border-color: var(--color-night-600);
   box-shadow: 0 8px 24px rgba(7, 13, 24, 0.45);

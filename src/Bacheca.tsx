@@ -516,7 +516,17 @@ export function ManifestoDettaglio({
         />
         <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              try {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                  return;
+                }
+              } catch {
+                /* anteprime sandbox: vai direttamente alla bacheca */
+              }
+              navigate("/bacheca");
+            }}
             className="flex items-center gap-2 text-[12.5px] font-semibold text-mist transition hover:text-bronze-300"
           >
             <ArrowLeft size={14} /> Torna alla bacheca

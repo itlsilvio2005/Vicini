@@ -47,7 +47,7 @@ function MappaLeaflet({
   /* inizializzazione una sola volta */
   useEffect(() => {
     if (!boxRef.current || mapRef.current) return;
-    const map = L.map(boxRef.current, { center: CENTRO_MODENA, zoom: 12, scrollWheelZoom: true });
+    const map = L.map(boxRef.current, { center: CENTRO_MODENA, zoom: 12, scrollWheelZoom: false });
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
