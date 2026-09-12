@@ -28,13 +28,16 @@ import {
   type Pensiero,
 } from "./data";
 import { ErrorBoundary, ToastProvider, useToast } from "./lib";
-import { AuthProvider } from "./lib/auth";
+import { AuthProvider, useAuth } from "./lib/auth";
 import { getSessione, logout, LoginGate, type Sessione } from "./auth";
 import { Bacheca, ManifestoDettaglio } from "./Bacheca";
 import { Imprese } from "./Imprese";
 import { Luoghi } from "./Luoghi";
 import { B2C } from "./B2C";
 import { Backoffice } from "./Backoffice";
+import { LoginUnificato } from "./components/LoginUnificato";
+import { DashboardAgenzia } from "./components/DashboardAgenzia";
+import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
 
 const NAV = [
   { to: "/bacheca", label: "Bacheca Manifesti", short: "Bacheca", icon: <ScrollText size={16} /> },
@@ -223,6 +226,9 @@ function Shell() {
           <Route path="/imprese" element={<Imprese onScegli={scegliAgenzia} />} />
           <Route path="/mappa" element={<Luoghi />} />
           <Route path="/volonta-nucleo" element={<B2C prefillAgenzia={prefill} />} />
+          <Route path="/login" element={<LoginUnificato />} />
+          <Route path="/dashboard-agenzia" element={<DashboardAgenzia />} />
+          <Route path="/area-privata" element={<B2C prefillAgenzia={null} />} />
           <Route
             path="/area-riservata"
             element={
