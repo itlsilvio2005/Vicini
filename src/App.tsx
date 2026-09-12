@@ -28,6 +28,7 @@ import {
   type Pensiero,
 } from "./data";
 import { ErrorBoundary, ToastProvider, useToast } from "./lib";
+import { AuthProvider } from "./lib/auth";
 import { getSessione, logout, LoginGate, type Sessione } from "./auth";
 import { Bacheca, ManifestoDettaglio } from "./Bacheca";
 import { Imprese } from "./Imprese";
@@ -40,7 +41,7 @@ const NAV = [
   { to: "/imprese", label: "Le imprese del luogo", short: "Imprese", icon: <Landmark size={16} /> },
   { to: "/mappa", label: "Mappa & Luoghi del Territorio", short: "Mappa & Luoghi", icon: <MapIcon size={16} /> },
   { to: "/volonta-nucleo", label: "Le Mie Volontà & Il Nucleo", short: "Volontà & Nucleo", icon: <HeartHandshake size={16} /> },
-  { to: "/area-agenzia", label: "Area Riservata Agenzia", short: "Area Agenzia", icon: <Lock size={16} /> },
+  { to: "/area-riservata", label: "Area Riservata", short: "Area Riservata", icon: <Lock size={16} /> },
 ];
 
 const TITOLI: Record<string, string> = {
@@ -48,7 +49,7 @@ const TITOLI: Record<string, string> = {
   "/imprese": "Le imprese del luogo",
   "/mappa": "Mappa & Luoghi del Territorio",
   "/volonta-nucleo": "Le Mie Volontà & Il Nucleo",
-  "/area-agenzia": "Area Riservata Agenzia",
+  "/area-riservata": "Area Riservata",
 };
 
 /* In alcuni iframe sandbox la History API non è disponibile:
@@ -179,7 +180,7 @@ function Shell() {
                     <span className={active ? "text-bronze-400" : "text-mist-dark"}>{t.icon}</span>
                     <span className="hidden md:inline">{t.label}</span>
                     <span className="md:hidden">{t.short}</span>
-                    {t.to === "/area-agenzia" && sessione && (
+                    {t.to === "/area-riservata" && sessione && (
                       <span className="h-1.5 w-1.5 rounded-full bg-[#7fbf9a]" title="Accesso attivo" />
                     )}
                     <span
@@ -223,7 +224,7 @@ function Shell() {
           <Route path="/mappa" element={<Luoghi />} />
           <Route path="/volonta-nucleo" element={<B2C prefillAgenzia={prefill} />} />
           <Route
-            path="/area-agenzia"
+            path="/area-riservata"
             element={
               sessione ? (
                 <Backoffice
@@ -336,11 +337,13 @@ export default function App() {
   const Router = historyDisponibile ? BrowserRouter : MemoryRouter;
   return (
     <ErrorBoundary>
-      <ToastProvider>
-        <Router>
-          <Shell />
-        </Router>
-      </ToastProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <Router>
+            <Shell />
+          </Router>
+        </ToastProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
