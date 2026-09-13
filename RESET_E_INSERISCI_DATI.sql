@@ -6,16 +6,22 @@
 -- ============================================================================
 
 -- ============================================================================
--- FASE 1: RESET (cancella tutti i dati)
+-- FASE 1: RESET (cancella tutti i dati in ordine corretto)
 -- ============================================================================
+-- Ordine: prima le tabelle figlie (con foreign keys), poi le tabelle padri
 
-DELETE FROM public.nucleo;
-DELETE FROM public.volonta;
-DELETE FROM public.pensieri;
-DELETE FROM public.ordini_fiori;
-DELETE FROM public.pratiche;
-DELETE FROM public.manifesti;
-DELETE FROM public.agenzie;
+-- Tabelle figlie (dipendono da manifesti, agenzie, utenti)
+DELETE FROM public.nucleo;           -- dipende da profilo_utenti
+DELETE FROM public.volonta;          -- dipende da profilo_utenti, agenzie
+DELETE FROM public.ordini_fiori;     -- dipende da manifesti, profilo_utenti
+DELETE FROM public.pensieri;         -- dipende da manifesti, profilo_utenti
+DELETE FROM public.pratiche;         -- dipende da agenzie, manifesti
+
+-- Tabelle intermedie
+DELETE FROM public.manifesti;        -- dipende da agenzie
+
+-- Tabelle padri
+DELETE FROM public.agenzie;          -- dipende da profilo_utenti
 
 -- ============================================================================
 -- FASE 2: INSERIMENTO DATI
@@ -59,7 +65,8 @@ VALUES
   'Reperibilità 24h su 24',
   '["Trasporto salma", "Allestimento camera ardente", "Pratiche cimiteriali", "Tumulazione"]'::jsonb,
   '["Modena"]'::jsonb
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Manifesti
 INSERT INTO public.manifesti (
@@ -160,7 +167,8 @@ VALUES
   'Tempio Crematorio',
   'Cimitero di Formigine',
   true
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Pensieri
 INSERT INTO public.pensieri (manifesto_id, user_id, nome, relazione, testo, approvato)
@@ -188,7 +196,8 @@ VALUES
   'Concittadini',
   'Nonantola perde un uomo di grande valore.',
   true
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Ordini Fiori
 INSERT INTO public.ordini_fiori (
@@ -219,7 +228,8 @@ VALUES
   '3399876543',
   'Da evadere',
   false
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Pratiche
 INSERT INTO public.pratiche (
@@ -250,7 +260,8 @@ VALUES
   'In corso',
   2650.00,
   'Famiglia Verdi - Nonantola'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Volontà
 INSERT INTO public.volonta (
@@ -268,7 +279,8 @@ VALUES
   false,
   '{"chiesa": "Chiesa di Sant''Agostino", "musica": "Ave Maria"}'::jsonb,
   'Desidero che le offerte siano devolute in beneficenza'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Nucleo
 INSERT INTO public.nucleo (user_id, nome, relazione, comune, contatto)
@@ -293,7 +305,8 @@ VALUES
   'Figlia',
   'Bologna',
   'sara.neri@email.it'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- VERIFICA

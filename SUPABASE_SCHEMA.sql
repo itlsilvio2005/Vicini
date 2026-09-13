@@ -41,7 +41,7 @@ create policy "Utenti creano solo il proprio profilo"
 -- ============================================================================
 create table public.agenzie (
   id uuid default uuid_generate_v4() primary key,
-  user_id uuid references public.profilo_utenti(id) on delete cascade unique,
+  user_id uuid references public.profilo_utenti(id) on delete cascade,
   nome text not null,
   indirizzo text not null,
   descrizione text,
@@ -68,7 +68,7 @@ create policy "Solo il proprietario può aggiornare l'agenzia"
   on public.agenzie for update
   using (auth.uid() = user_id);
 
--- Policy: solo utenti con ruolo 'agenzia' possono creare la propria agenzia
+-- Policy: solo utenti con ruolo 'agenzia' possono creare agenzie
 create policy "Solo agenzie possono creare il profilo agenzia"
   on public.agenzie for insert
   with check (
