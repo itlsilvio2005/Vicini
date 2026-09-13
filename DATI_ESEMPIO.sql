@@ -1,36 +1,24 @@
 -- ============================================================================
 -- DATI DI ESEMPIO PER VICINI
 -- ============================================================================
--- Esegui questo script nel SQL Editor di Supabase dopo aver eseguito SUPABASE_SCHEMA.sql
--- Questo popola il database con dati di esempio per testare l'applicazione
-
--- ============================================================================
--- 1. CREA UTENTI DI ESEMPIO
--- ============================================================================
-
--- NOTA: Gli utenti devono essere creati tramite l'interfaccia di autenticazione di Supabase
--- oppure tramite il seguente script (sostituisci le email con quelle reali)
-
--- Per creare utenti, vai su Authentication → Users nel dashboard Supabase
--- e clicca "Add User" → "Create New User"
-
--- Esempio di utenti da creare:
--- Email: agenzia@vicini.mo | Password: test123456 | Metadata: {"ruolo": "agenzia"}
--- Email: utente@vicini.mo | Password: test123456 | Metadata: {"ruolo": "privato"}
-
--- Dopo aver creato gli utenti, copia i loro UUID e usali negli INSERT seguenti
-
--- ============================================================================
--- 2. INSERISCI AGENZIE DI ESEMPIO
+-- Script pronto all'uso: esegui direttamente nel SQL Editor di Supabase.
+-- Tutti gli UUID sono fissi, quindi puoi eseguire tutto in un colpo solo.
+--
+-- UID UTENTI (dal tuo progetto Supabase):
+--   Agenzia:      eba41f64-3173-4c6a-974c-18069d000dc2
+--   Utente Privato: 9f564219-7250-4077-a50a-ebb2f2353bad
 -- ============================================================================
 
--- IMPORTANTE: Sostituisci 'USER_ID_AGENZIA_QUI' con l'UUID reale dell'utente agenzia
--- che hai creato nel passo precedente
+-- ============================================================================
+-- 1. INSERISCI AGENZIE DI ESEMPIO
+-- ============================================================================
+-- UUID predefiniti per le 3 agenzie (così puoi referenziarli nei passi successivi)
 
-INSERT INTO public.agenzie (user_id, nome, indirizzo, descrizione, telefono, email, orari_apertura, servizi_offerti, aree_coperte)
+INSERT INTO public.agenzie (id, user_id, nome, indirizzo, descrizione, telefono, email, orari_apertura, servizi_offerti, aree_coperte)
 VALUES 
 (
-  'USER_ID_AGENZIA_QUI', -- SOSTITUISCI CON UUID REALE
+  'a1111111-1111-1111-1111-111111111111', -- UUID fisso agenzia Pecorari
+  'eba41f64-3173-4c6a-974c-18069d000dc2', -- UID utente agenzia
   'Onoranze Funebri Pecorari',
   'Via Nonantolana, 555 — 41122 Modena (MO)',
   'Opera nei comuni di Modena, Nonantola e Ravarino organizzando funerali completi con serietà e discrezione. Esperienza pluridecennale nel settore.',
@@ -41,7 +29,8 @@ VALUES
   '["Modena", "Nonantola", "Ravarino"]'::jsonb
 ),
 (
-  'USER_ID_AGENZIA_QUI', -- SOSTITUISCI CON UUID REALE
+  'a2222222-2222-2222-2222-222222222222', -- UUID fisso agenzia San Martino
+  'eba41f64-3173-4c6a-974c-18069d000dc2', -- stesso utente agenzia (demo)
   'Onoranze Funebri San Martino',
   'Via Don Adelmo Martinelli, 23 — 41043 Formigine (MO)',
   'Servizio 24h per cerimonie complete dalla preparazione e vestizione al trasporto. Professionalità e discrezione garantite.',
@@ -52,7 +41,8 @@ VALUES
   '["Formigine", "Modena", "Sassuolo"]'::jsonb
 ),
 (
-  'USER_ID_AGENZIA_QUI', -- SOSTITUISCI CON UUID REALE
+  'a3333333-3333-3333-3333-333333333333', -- UUID fisso agenzia Borsari
+  'eba41f64-3173-4c6a-974c-18069d000dc2', -- stesso utente agenzia (demo)
   'Onoranze Funebri Borsari',
   'Strada Cimitero San Cataldo, 131 — 41123 Modena (MO)',
   'Servizio discreto e professionale h24 con sede a San Cataldo. Vicinanza al cimitero per operazioni rapide.',
@@ -64,21 +54,20 @@ VALUES
 );
 
 -- ============================================================================
--- 3. INSERISCI MANIFESTI DI ESEMPIO
+-- 2. INSERISCI MANIFESTI DI ESEMPIO
 -- ============================================================================
-
--- IMPORTANTE: Sostituisci 'AGENZIA_ID_QUI' con l'UUID reale dell'agenzia
--- che hai inserito nel passo precedente
+-- UUID predefiniti per i 4 manifesti
 
 INSERT INTO public.manifesti (
-  agenzia_id, nome_defunto, anni, data_nascita, data_morte, comune, rito,
+  id, agenzia_id, nome_defunto, anni, data_nascita, data_morte, comune, rito,
   camera_ardente_luogo, camera_ardente_indirizzo, camera_ardente_orari, camera_ardente_indicazioni,
   funerale_giorno, funerale_ora, funerale_luogo, funerale_indirizzo, funerale_dettagli,
   commiato_tipo, commiato_luogo, commiato_cimitero, pubblicato
 )
 VALUES 
 (
-  'AGENZIA_ID_QUI', -- SOSTITUISCI CON UUID REALE AGENZIA
+  'm1111111-1111-1111-1111-111111111111', -- UUID fisso manifesto 1
+  'a1111111-1111-1111-1111-111111111111', -- agenzia Pecorari
   'Mario Rossi',
   78,
   '15 marzo 1946',
@@ -91,7 +80,7 @@ VALUES
   'Parcheggio disponibile, accesso disabili',
   'Giovedì 12 febbraio 2026',
   '10:30',
-  'Chiesa di San Agostino',
+  'Chiesa di Sant''Agostino',
   'Via Emilia Centro, 315 — Modena',
   'Santa Messa esequiale celebrata da Don Giovanni',
   'Cremazione',
@@ -100,7 +89,8 @@ VALUES
   true
 ),
 (
-  'AGENZIA_ID_QUI', -- SOSTITUISCI CON UUID REALE AGENZIA
+  'm2222222-2222-2222-2222-222222222222', -- UUID fisso manifesto 2
+  'a1111111-1111-1111-1111-111111111111', -- agenzia Pecorari
   'Giuseppe Verdi',
   85,
   '22 ottobre 1940',
@@ -113,7 +103,7 @@ VALUES
   'La famiglia riceve le condoglianze',
   'Mercoledì 11 febbraio 2026',
   '15:00',
-  'Chiesa di San Silvestro',
+  'Abbazia di San Silvestro',
   'Piazza Abbazia — Nonantola',
   'Funerale religioso con coro parrocchiale',
   'Tumulazione',
@@ -122,7 +112,8 @@ VALUES
   true
 ),
 (
-  'AGENZIA_ID_QUI', -- SOSTITUISCI CON UUID REALE AGENZIA
+  'm3333333-3333-3333-3333-333333333333', -- UUID fisso manifesto 3
+  'a2222222-2222-2222-2222-222222222222', -- agenzia San Martino
   'Ahmed Hassan',
   62,
   '8 giugno 1963',
@@ -135,8 +126,8 @@ VALUES
   'Lavaggio rituale disponibile',
   'Mercoledì 11 febbraio 2026',
   '14:00',
-  'Moschea di Modena',
-  'Via Canaletto Sud, 120 — Modena',
+  'Moschea La Misericordia',
+  'Via Sgarzeria / Via delle Suore — Modena',
   'Preghiera funebre islamica (Salat al-Janazah)',
   'Inumazione',
   'Reparto Islamico',
@@ -144,7 +135,8 @@ VALUES
   true
 ),
 (
-  'AGENZIA_ID_QUI', -- SOSTITUISCI CON UUID REALE AGENZIA
+  'm4444444-4444-4444-4444-444444444444', -- UUID fisso manifesto 4
+  'a2222222-2222-2222-2222-222222222222', -- agenzia San Martino
   'Maria Bianchi',
   91,
   '3 gennaio 1935',
@@ -167,41 +159,46 @@ VALUES
 );
 
 -- ============================================================================
--- 4. INSERISCI PENSIERI DI ESEMPIO
+-- 3. INSERISCI PENSIERI DI ESEMPIO
 -- ============================================================================
-
--- IMPORTANTE: Sostituisci 'MANIFESTO_ID_QUI' con gli UUID reali dei manifesti
--- e 'USER_ID_PRIVATO_QUI' con l'UUID dell'utente privato
 
 INSERT INTO public.pensieri (manifesto_id, user_id, nome, relazione, testo, approvato)
 VALUES 
 (
-  'MANIFESTO_ID_QUI', -- SOSTITUISCI CON UUID REALE MANIFESTO
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
+  'm1111111-1111-1111-1111-111111111111', -- manifesto Mario Rossi
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
   'Laura Neri',
   'Amica di famiglia',
   'Caro Mario, ci mancherai tanto. La tua gentilezza e il tuo sorriso illuminavano le nostre giornate. Riposa in pace.',
   true
 ),
 (
-  'MANIFESTO_ID_QUI', -- SOSTITUISCI CON UUID REALE MANIFESTO
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
+  'm1111111-1111-1111-1111-111111111111', -- manifesto Mario Rossi
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
   'Famiglia Colombo',
   'Vicini di casa',
   'Alla famiglia Rossi le nostre più sentite condoglianze. Mario era una persona speciale.',
   true
 ),
 (
-  'MANIFESTO_ID_QUI', -- SOSTITUISCI CON UUID REALE MANIFESTO
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
+  'm1111111-1111-1111-1111-111111111111', -- manifesto Mario Rossi
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
   'Giuseppe Ferrari',
   'Collega di lavoro',
   'Condoglianze alla famiglia. Mario è stato un collega stimato e un amico prezioso.',
   true
+),
+(
+  'm2222222-2222-2222-2222-222222222222', -- manifesto Giuseppe Verdi
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
+  'Comunità di Nonantola',
+  'Concittadini',
+  'Nonantola perde un uomo di grande valore. La sua memoria resterà viva tra noi.',
+  true
 );
 
 -- ============================================================================
--- 5. INSERISCI ORDINI FIORI DI ESEMPIO
+-- 4. INSERISCI ORDINI FIORI DI ESEMPIO
 -- ============================================================================
 
 INSERT INTO public.ordini_fiori (
@@ -210,8 +207,8 @@ INSERT INTO public.ordini_fiori (
 )
 VALUES 
 (
-  'MANIFESTO_ID_QUI', -- SOSTITUISCI CON UUID REALE MANIFESTO
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
+  'm1111111-1111-1111-1111-111111111111', -- manifesto Mario Rossi
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
   'Corona di fiori bianchi',
   120.00,
   'Con affetto - La famiglia Colombo',
@@ -222,8 +219,8 @@ VALUES
   true
 ),
 (
-  'MANIFESTO_ID_QUI', -- SOSTITUISCI CON UUID REALE MANIFESTO
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
+  'm1111111-1111-1111-1111-111111111111', -- manifesto Mario Rossi
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
   'Cuscino di rose rosse',
   95.00,
   'Per sempre nel nostro cuore - I colleghi',
@@ -232,10 +229,22 @@ VALUES
   '3399876543',
   'Da evadere',
   false
+),
+(
+  'm2222222-2222-2222-2222-222222222222', -- manifesto Giuseppe Verdi
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
+  'Composizione di gigli',
+  110.00,
+  'Addio Giuseppe - I vicini di casa',
+  'Paola Ricci',
+  'paola.ricci@email.it',
+  '3471122334',
+  'Confermato',
+  false
 );
 
 -- ============================================================================
--- 6. INSERISCI PRATICHE DI ESEMPIO
+-- 5. INSERISCI PRATICHE DI ESEMPIO
 -- ============================================================================
 
 INSERT INTO public.pratiche (
@@ -244,8 +253,8 @@ INSERT INTO public.pratiche (
 )
 VALUES 
 (
-  'AGENZIA_ID_QUI', -- SOSTITUISCI CON UUID REALE AGENZIA
-  'MANIFESTO_ID_QUI', -- SOSTITUISCI CON UUID REALE MANIFESTO
+  'a1111111-1111-1111-1111-111111111111', -- agenzia Pecorari
+  'm1111111-1111-1111-1111-111111111111', -- manifesto Mario Rossi
   'FT-2026-001',
   'Mario Rossi',
   'Modena',
@@ -256,8 +265,8 @@ VALUES
   'Famiglia Rossi - Via Emilia 45, Modena'
 ),
 (
-  'AGENZIA_ID_QUI', -- SOSTITUISCI CON UUID REALE AGENZIA
-  'MANIFESTO_ID_QUI', -- SOSTITUISCI CON UUID REALE MANIFESTO
+  'a1111111-1111-1111-1111-111111111111', -- agenzia Pecorari
+  'm2222222-2222-2222-2222-222222222222', -- manifesto Giuseppe Verdi
   'FT-2026-002',
   'Giuseppe Verdi',
   'Nonantola',
@@ -266,10 +275,34 @@ VALUES
   'In corso',
   2650.00,
   'Famiglia Verdi - Via Roma 45, Nonantola'
+),
+(
+  'a2222222-2222-2222-2222-222222222222', -- agenzia San Martino
+  'm3333333-3333-3333-3333-333333333333', -- manifesto Ahmed Hassan
+  'FT-2026-003',
+  'Ahmed Hassan',
+  'Modena',
+  '11/02/2026',
+  'Musulmano',
+  'In corso',
+  2400.00,
+  'Famiglia Hassan - Via Canaletto 50, Modena'
+),
+(
+  'a2222222-2222-2222-2222-222222222222', -- agenzia San Martino
+  'm4444444-4444-4444-4444-444444444444', -- manifesto Maria Bianchi
+  'FT-2026-004',
+  'Maria Bianchi',
+  'Formigine',
+  '12/02/2026',
+  'Cattolico',
+  'Completata',
+  2750.00,
+  'Famiglia Bianchi - Via Roma 12, Formigine'
 );
 
 -- ============================================================================
--- 7. INSERISCI VOLONTÀ DI ESEMPIO
+-- 6. INSERISCI VOLONTÀ DI ESEMPIO
 -- ============================================================================
 
 INSERT INTO public.volonta (
@@ -280,8 +313,8 @@ INSERT INTO public.volonta (
 )
 VALUES 
 (
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
-  'AGENZIA_ID_QUI', -- SOSTITUISCI CON UUID REALE AGENZIA
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
+  'a1111111-1111-1111-1111-111111111111', -- agenzia Pecorari
   'Cattolico',
   'Cremazione',
   false,
@@ -289,32 +322,32 @@ VALUES
   NULL,
   false,
   NULL,
-  '{"chiesa": "Chiesa di San Agostino", "musica": "Ave Maria di Schubert"}'::jsonb,
+  '{"chiesa": "Chiesa di Sant''Agostino", "musica": "Ave Maria di Schubert"}'::jsonb,
   'Desidero che le offerte siano devolute in beneficenza'
 );
 
 -- ============================================================================
--- 8. INSERISCI MEMBRI DEL NUCLEO DI ESEMPIO
+-- 7. INSERISCI MEMBRI DEL NUCLEO DI ESEMPIO
 -- ============================================================================
 
 INSERT INTO public.nucleo (user_id, nome, relazione, comune, contatto)
 VALUES 
 (
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
   'Anna Neri',
   'Coniuge',
   'Modena',
   'anna.neri@email.it'
 ),
 (
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
   'Luca Neri',
   'Figlio',
   'Modena',
   '3331112222'
 ),
 (
-  'USER_ID_PRIVATO_QUI', -- SOSTITUISCI CON UUID REALE UTENTE PRIVATO
+  '9f564219-7250-4077-a50a-ebb2f2353bad', -- utente privato
   'Sara Neri',
   'Figlia',
   'Bologna',
@@ -322,17 +355,23 @@ VALUES
 );
 
 -- ============================================================================
--- NOTE FINALI
+-- ✅ FINE SCRIPT
 -- ============================================================================
-
--- Dopo aver eseguito questo script:
--- 1. Sostituisci tutti i placeholder (USER_ID_AGENZIA_QUI, AGENZIA_ID_QUI, ecc.)
---    con gli UUID reali presi dal dashboard Supabase
--- 2. Verifica che i dati siano stati inseriti correttamente
--- 3. Avvia l'applicazione con npm run dev
--- 4. L'applicazione ora userà i dati reali dal database Supabase
-
--- Per trovare gli UUID:
--- - Utenti: Authentication → Users → copia l'UID
--- - Agenzie: Table Editor → agenzie → copia l'id
--- - Manifesti: Table Editor → manifesti → copia l'id
+-- Dopo aver eseguito questo script, verifica i dati nel Table Editor di Supabase:
+--   - agenzie: 3 righe
+--   - manifesti: 4 righe
+--   - pensieri: 4 righe
+--   - ordini_fiori: 3 righe
+--   - pratiche: 4 righe
+--   - volonta: 1 riga
+--   - nucleo: 3 righe
+--
+-- Riepilogo UUID utilizzati (per riferimento futuro):
+--   Agenzia Pecorari:      a1111111-1111-1111-1111-111111111111
+--   Agenzia San Martino:   a2222222-2222-2222-2222-222222222222
+--   Agenzia Borsari:       a3333333-3333-3333-3333-333333333333
+--   Manifesto Mario Rossi: m1111111-1111-1111-1111-111111111111
+--   Manifesto Giuseppe V.: m2222222-2222-2222-2222-222222222222
+--   Manifesto Ahmed H.:    m3333333-3333-3333-3333-333333333333
+--   Manifesto Maria B.:    m4444444-4444-4444-4444-444444444444
+-- ============================================================================
