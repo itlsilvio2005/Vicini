@@ -187,7 +187,7 @@ VALUES
 )
 ON CONFLICT (id) DO NOTHING;
 
--- Pensieri
+-- Pensieri (id generato automaticamente, nessun conflitto possibile dopo DELETE)
 INSERT INTO public.pensieri (manifesto_id, user_id, nome, relazione, testo, approvato)
 VALUES 
 (
@@ -213,8 +213,7 @@ VALUES
   'Concittadini',
   'Nonantola perde un uomo di grande valore.',
   true
-)
-ON CONFLICT (id) DO NOTHING;
+);
 
 -- Ordini Fiori
 INSERT INTO public.ordini_fiori (
@@ -245,8 +244,7 @@ VALUES
   '3399876543',
   'Da evadere',
   false
-)
-ON CONFLICT (id) DO NOTHING;
+);
 
 -- Pratiche
 INSERT INTO public.pratiche (
@@ -277,8 +275,7 @@ VALUES
   'In corso',
   2650.00,
   'Famiglia Verdi - Nonantola'
-)
-ON CONFLICT (id) DO NOTHING;
+);
 
 -- Volontà
 INSERT INTO public.volonta (
@@ -296,8 +293,7 @@ VALUES
   false,
   '{"chiesa": "Chiesa di Sant''Agostino", "musica": "Ave Maria"}'::jsonb,
   'Desidero che le offerte siano devolute in beneficenza'
-)
-ON CONFLICT (id) DO NOTHING;
+);
 
 -- Nucleo
 INSERT INTO public.nucleo (user_id, nome, relazione, comune, contatto)
@@ -322,8 +318,7 @@ VALUES
   'Figlia',
   'Bologna',
   'sara.neri@email.it'
-)
-ON CONFLICT (id) DO NOTHING;
+);
 
 -- ============================================================================
 -- VERIFICA
