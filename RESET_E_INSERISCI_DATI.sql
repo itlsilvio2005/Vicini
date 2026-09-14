@@ -46,12 +46,12 @@ UNION ALL SELECT 'agenzie', COUNT(*) FROM public.agenzie;
 -- FASE 2: INSERIMENTO DATI
 -- ============================================================================
 
--- Agenzie
+-- Agenzie (stesso utente gestisce più agenzie - modello flessibile)
 INSERT INTO public.agenzie (id, user_id, nome, indirizzo, descrizione, telefono, email, orari_apertura, servizi_offerti, aree_coperte)
 VALUES 
 (
   'a1111111-1111-1111-1111-111111111111',
-  'eba41f64-3173-4c6a-974c-18069d000dc2',
+  'eba41f64-3173-4c6a-974c-18069d000dc2', -- Utente agenzia
   'Onoranze Funebri Pecorari',
   'Via Nonantolana, 555 — 41122 Modena (MO)',
   'Opera nei comuni di Modena, Nonantola e Ravarino organizzando funerali completi con serietà e discrezione.',
@@ -63,7 +63,7 @@ VALUES
 ),
 (
   'a2222222-2222-2222-2222-222222222222',
-  'eba41f64-3173-4c6a-974c-18069d000dc2',
+  'eba41f64-3173-4c6a-974c-18069d000dc2', -- Stesso utente (gestisce più agenzie)
   'Onoranze Funebri San Martino',
   'Via Don Adelmo Martinelli, 23 — 41043 Formigine (MO)',
   'Servizio 24h per cerimonie complete dalla preparazione e vestizione al trasporto.',
@@ -75,7 +75,7 @@ VALUES
 ),
 (
   'a3333333-3333-3333-3333-333333333333',
-  'eba41f64-3173-4c6a-974c-18069d000dc2',
+  'eba41f64-3173-4c6a-974c-18069d000dc2', -- Stesso utente (gestisce più agenzie)
   'Onoranze Funebri Borsari',
   'Strada Cimitero San Cataldo, 131 — 41123 Modena (MO)',
   'Servizio discreto e professionale h24 con sede a San Cataldo.',
@@ -85,15 +85,7 @@ VALUES
   '["Trasporto salma", "Allestimento camera ardente", "Pratiche cimiteriali", "Tumulazione"]'::jsonb,
   '["Modena"]'::jsonb
 )
-ON CONFLICT (user_id) DO UPDATE SET
-  nome = EXCLUDED.nome,
-  indirizzo = EXCLUDED.indirizzo,
-  descrizione = EXCLUDED.descrizione,
-  telefono = EXCLUDED.telefono,
-  email = EXCLUDED.email,
-  orari_apertura = EXCLUDED.orari_apertura,
-  servizi_offerti = EXCLUDED.servizi_offerti,
-  aree_coperte = EXCLUDED.aree_coperte;
+ON CONFLICT (id) DO NOTHING;
 
 -- Manifesti
 INSERT INTO public.manifesti (
