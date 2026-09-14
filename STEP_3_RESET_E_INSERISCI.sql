@@ -85,6 +85,7 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Manifesti
+-- UUID validi (tutti caratteri esadecimali: 0-9, a-f)
 INSERT INTO public.manifesti (
   id, agenzia_id, nome_defunto, anni, data_nascita, data_morte, comune, rito,
   camera_ardente_luogo, camera_ardente_indirizzo, camera_ardente_orari, camera_ardente_indicazioni,
@@ -93,8 +94,8 @@ INSERT INTO public.manifesti (
 )
 VALUES 
 (
-  'm1111111-1111-1111-1111-111111111111',
-  'a1111111-1111-1111-1111-111111111111',
+  '11111111-1111-1111-1111-111111111111', -- Manifesto 1: Mario Rossi
+  'a1111111-1111-1111-1111-111111111111', -- Agenzia Pecorari
   'Mario Rossi',
   78,
   '15 marzo 1946',
@@ -116,8 +117,8 @@ VALUES
   true
 ),
 (
-  'm2222222-2222-2222-2222-222222222222',
-  'a1111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222', -- Manifesto 2: Giuseppe Verdi
+  'a1111111-1111-1111-1111-111111111111', -- Agenzia Pecorari
   'Giuseppe Verdi',
   85,
   '22 ottobre 1940',
@@ -139,8 +140,8 @@ VALUES
   true
 ),
 (
-  'm3333333-3333-3333-3333-333333333333',
-  'a2222222-2222-2222-2222-222222222222',
+  '33333333-3333-3333-3333-333333333333', -- Manifesto 3: Ahmed Hassan
+  'a2222222-2222-2222-2222-222222222222', -- Agenzia San Martino
   'Ahmed Hassan',
   62,
   '8 giugno 1963',
@@ -162,8 +163,8 @@ VALUES
   true
 ),
 (
-  'm4444444-4444-4444-4444-444444444444',
-  'a2222222-2222-2222-2222-222222222222',
+  '44444444-4444-4444-4444-444444444444', -- Manifesto 4: Maria Bianchi
+  'a2222222-2222-2222-2222-222222222222', -- Agenzia San Martino
   'Maria Bianchi',
   91,
   '3 gennaio 1935',
@@ -190,7 +191,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.pensieri (manifesto_id, user_id, nome, relazione, testo, approvato)
 VALUES 
 (
-  'm1111111-1111-1111-1111-111111111111',
+  '11111111-1111-1111-1111-111111111111', -- Manifesto Mario Rossi
   '9f564219-7250-4077-a50a-ebb2f2353bad',
   'Laura Neri',
   'Amica di famiglia',
@@ -198,7 +199,7 @@ VALUES
   true
 ),
 (
-  'm1111111-1111-1111-1111-111111111111',
+  '11111111-1111-1111-1111-111111111111', -- Manifesto Mario Rossi
   '9f564219-7250-4077-a50a-ebb2f2353bad',
   'Famiglia Colombo',
   'Vicini di casa',
@@ -206,7 +207,7 @@ VALUES
   true
 ),
 (
-  'm2222222-2222-2222-2222-222222222222',
+  '22222222-2222-2222-2222-222222222222', -- Manifesto Giuseppe Verdi
   '9f564219-7250-4077-a50a-ebb2f2353bad',
   'Comunità di Nonantola',
   'Concittadini',
@@ -222,7 +223,7 @@ INSERT INTO public.ordini_fiori (
 )
 VALUES 
 (
-  'm1111111-1111-1111-1111-111111111111',
+  '11111111-1111-1111-1111-111111111111', -- Manifesto Mario Rossi
   '9f564219-7250-4077-a50a-ebb2f2353bad',
   'Corona di fiori bianchi',
   120.00,
@@ -234,7 +235,7 @@ VALUES
   true
 ),
 (
-  'm1111111-1111-1111-1111-111111111111',
+  '11111111-1111-1111-1111-111111111111', -- Manifesto Mario Rossi
   '9f564219-7250-4077-a50a-ebb2f2353bad',
   'Cuscino di rose rosse',
   95.00,
@@ -254,8 +255,8 @@ INSERT INTO public.pratiche (
 )
 VALUES 
 (
-  'a1111111-1111-1111-1111-111111111111',
-  'm1111111-1111-1111-1111-111111111111',
+  'a1111111-1111-1111-1111-111111111111', -- Agenzia Pecorari
+  '11111111-1111-1111-1111-111111111111', -- Manifesto Mario Rossi
   'FT-2026-001',
   'Mario Rossi',
   'Modena',
@@ -266,8 +267,8 @@ VALUES
   'Famiglia Rossi - Modena'
 ),
 (
-  'a1111111-1111-1111-1111-111111111111',
-  'm2222222-2222-2222-2222-222222222222',
+  'a1111111-1111-1111-1111-111111111111', -- Agenzia Pecorari
+  '22222222-2222-2222-2222-222222222222', -- Manifesto Giuseppe Verdi
   'FT-2026-002',
   'Giuseppe Verdi',
   'Nonantola',
