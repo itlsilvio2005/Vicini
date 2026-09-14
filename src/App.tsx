@@ -29,12 +29,10 @@ import {
 } from "./data";
 import { ErrorBoundary, ToastProvider, useToast } from "./lib";
 import { AuthProvider, useAuth } from "./lib/auth";
-import { getSessione, logout, LoginGate, type Sessione } from "./auth";
 import { Bacheca, ManifestoDettaglio } from "./Bacheca";
 import { Imprese } from "./Imprese";
 import { Luoghi } from "./Luoghi";
 import { B2C } from "./B2C";
-import { Backoffice } from "./Backoffice";
 import { LoginUnificato } from "./components/LoginUnificato";
 import { DashboardAgenzia } from "./components/DashboardAgenzia";
 import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
@@ -67,7 +65,7 @@ const historyDisponibile = (() => {
 })();
 
 function Shell() {
-  const [sessione, setSessione] = useState<Sessione | null>(() => getSessione());
+  const { utente, logout } = useAuth();
   const [manifesti, setManifesti] = useState<Manifesto[]>(MANIFESTI);
   const [ordini, setOrdini] = useState<OrdineFiori[]>(ORDINI_INIZIALI);
   const [prefill, setPrefill] = useState<{ id: string; ts: number } | null>(null);
@@ -112,11 +110,11 @@ function Shell() {
     setOrdini((list) => list.map((o) => (o.id === id ? { ...o, fatturaInviata: true } : o)));
   }, []);
 
-  const esci = useCallback(() => {
-    logout();
-    setSessione(null);
+  const esci = useCallback(async () => {
+    await logout();
     toast("Sessione chiusa. L'area agenzia è di nuovo protetta.", "info");
-  }, [toast]);
+    navigate("/login");
+  }, [logout, toast, navigate]);
 
   const oggi = useMemo(
     () =>
@@ -183,7 +181,7 @@ function Shell() {
                     <span className={active ? "text-bronze-400" : "text-mist-dark"}>{t.icon}</span>
                     <span className="hidden md:inline">{t.label}</span>
                     <span className="md:hidden">{t.short}</span>
-                    {t.to === "/area-riservata" && sessione && (
+                    {t.to === "/area-riservata" && utente && (
                       <span className="h-1.5 w-1.5 rounded-full bg-[#7fbf9a]" title="Accesso attivo" />
                     )}
                     <span
@@ -232,20 +230,14 @@ function Shell() {
           <Route
             path="/area-riservata"
             element={
-              sessione ? (
-                <Backoffice
-                  sessione={sessione}
-                  ordini={ordini}
-                  onFatturaInviata={fatturaInviata}
-                  onLogout={esci}
-                />
+              utente ? (
+                utente.ruolo === "agenzia" ? (
+                  <DashboardAgenzia />
+                ) : (
+                  <Navigate to="/area-privata" replace />
+                )
               ) : (
-                <LoginGate
-                  onLogin={(s) => {
-                    setSessione(s);
-                    toast(`Accesso eseguito: ${s.user}. Benvenuti nel backoffice.`);
-                  }}
-                />
+                <Navigate to="/login" replace />
               )
             }
           />
@@ -310,13 +302,13 @@ function Shell() {
                     segreteria@vicini.mo
                   </a>
                 </li>
-                {sessione ? (
+                {utente ? (
                   <li>
                     <button
                       onClick={esci}
                       className="flex items-center gap-1.5 text-[12px] font-semibold text-bronze-300 hover:text-bronze-200"
                     >
-                      <LogOut size={12} /> Esci dal backoffice
+                      <LogOut size={12} /> Esci ({utente.email})
                     </button>
                   </li>
                 ) : (
