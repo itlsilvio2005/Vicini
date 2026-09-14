@@ -99,8 +99,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function login(email: string, password: string): Promise<{ error?: string }> {
+    // Sistema demo: funziona sempre con credenziali di test
+    const credenzialiDemo = {
+      'agenzia@vicini.mo': { password: 'test123456', ruolo: 'agenzia' as const, nome: 'Agenzia Demo' },
+      'utente@vicini.mo': { password: 'test123456', ruolo: 'privato' as const, nome: 'Utente Demo' },
+    };
+
+    // Se le credenziali sono quelle demo, usa il sistema demo
+    if (credenzialiDemo[email as keyof typeof credenzialiDemo]?.password === password) {
+      const mockUser: UtenteAutenticato = {
+        id: email === 'agenzia@vicini.mo' ? 'eba41f64-3173-4c6a-974c-18069d000dc2' : '9f564219-7250-4077-a50a-ebb2f2353bad',
+        email,
+        ruolo: credenzialiDemo[email as keyof typeof credenzialiDemo].ruolo,
+        nome_completo: credenzialiDemo[email as keyof typeof credenzialiDemo].nome,
+        telefono: null,
+      };
+      localStorage.setItem('vicini_mock_session', JSON.stringify(mockUser));
+      setUtente(mockUser);
+      return {};
+    }
+
     if (!supabaseAttivo) {
-      // Mock login per demo
+      // Fallback mock per altre credenziali
       const mockUser: UtenteAutenticato = {
         id: 'mock-user-id',
         email,

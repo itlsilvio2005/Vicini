@@ -56,20 +56,81 @@ export function DashboardAgenzia() {
   }
 
   if (!agenzia) {
+    // Agenzia non trovata nel database: mostra dashboard demo
+    const [sezioneDemo, setSezioneDemo] = useState<SezioneDashboard>('bacheca');
+    
+    const agenziaDemo: Agenzia = {
+      id: 'demo-agency-id',
+      user_id: utente?.id || '',
+      nome: 'Onoranze Funebri Demo',
+      indirizzo: 'Via Demo, 123 — Modena (MO)',
+      descrizione: 'Agenzia demo per visualizzare la dashboard',
+      telefono: '059 123 456',
+      email: utente?.email || 'demo@vicini.mo',
+      logo_url: null,
+      foto_sede_url: null,
+      orari_apertura: 'Lunedì-Venerdì 9:00-18:00',
+      servizi_offerti: ['Trasporto salma', 'Allestimento camera ardente', 'Organizzazione cerimonia'],
+      aree_coperte: ['Modena', 'Provincia'],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Profilo Agenzia Non Trovato</h2>
-          <p className="text-gray-600 mb-6">
-            Il tuo account è registrato come agenzia, ma non è stato ancora creato un profilo agenzia.
-            Contatta l'amministrazione per completare la configurazione.
-          </p>
-          <button
-            onClick={handleLogout}
-            className="px-6 py-3 bg-bronze-500 text-white rounded-lg font-medium hover:bg-bronze-600"
-          >
-            Torna alla Home
-          </button>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Dashboard */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center gap-4">
+                <h1 className="text-2xl font-bold text-gray-900">Dashboard Agenzia</h1>
+                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                  ⚠️ Modalità Demo - Profilo non configurato
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">{utente?.email}</span>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Esci
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Messaggio informativo */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-bold text-yellow-900 mb-2">⚠️ Profilo Agenzia Non Trovato</h2>
+            <p className="text-yellow-800 mb-3">
+              Il tuo account è registrato come agenzia, ma non è stato ancora creato un profilo agenzia nel database.
+            </p>
+            <p className="text-yellow-800 mb-3">
+              <strong>Per configurare il profilo:</strong>
+            </p>
+            <ol className="list-decimal list-inside text-yellow-800 space-y-1 mb-3">
+              <li>Vai su Supabase Dashboard → Table Editor</li>
+              <li>Clicca sulla tabella <code className="bg-yellow-100 px-2 py-0.5 rounded">agenzie</code></li>
+              <li>Clicca "+ New Row"</li>
+              <li>Compila i campi con i dati della tua agenzia</li>
+              <li>Assicurati che <code className="bg-yellow-100 px-2 py-0.5 rounded">user_id</code> sia: <code className="bg-yellow-100 px-2 py-0.5 rounded">{utente?.id}</code></li>
+            </ol>
+            <p className="text-yellow-800">
+              Nel frattempo, stai visualizzando una dashboard demo con dati di esempio.
+            </p>
+          </div>
+
+          {/* Dashboard demo */}
+          <DashboardContent 
+            agenzia={agenziaDemo} 
+            sezioneAttiva={sezioneDemo}
+            setSezioneAttiva={setSezioneDemo}
+            onAggiornato={() => {}}
+          />
         </div>
       </div>
     );
@@ -101,6 +162,26 @@ export function DashboardAgenzia() {
         </div>
       </header>
 
+      {/* Content */}
+      <DashboardContent agenzia={agenzia} sezioneAttiva={sezioneAttiva} setSezioneAttiva={setSezioneAttiva} onAggiornato={caricaAgenzia} />
+    </div>
+  );
+}
+
+// Componente per il contenuto della dashboard (riutilizzabile)
+function DashboardContent({ 
+  agenzia, 
+  sezioneAttiva, 
+  setSezioneAttiva,
+  onAggiornato 
+}: { 
+  agenzia: Agenzia; 
+  sezioneAttiva: SezioneDashboard;
+  setSezioneAttiva: (s: SezioneDashboard) => void;
+  onAggiornato: () => void;
+}) {
+  return (
+    <>
       {/* Navigation Tabs */}
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -159,7 +240,7 @@ export function DashboardAgenzia() {
           <BachecaManifestiAgenzia agenziaId={agenzia.id} />
         )}
         {sezioneAttiva === 'profilo' && (
-          <ProfiloAgenzia agenzia={agenzia} onAggiornato={caricaAgenzia} />
+          <ProfiloAgenzia agenzia={agenzia} onAggiornato={onAggiornato} />
         )}
         {sezioneAttiva === 'archivio' && (
           <ArchivioAgenzia agenziaId={agenzia.id} />
@@ -168,6 +249,6 @@ export function DashboardAgenzia() {
           <BackofficeAgenzia agenziaId={agenzia.id} />
         )}
       </main>
-    </div>
+    </>
   );
 }
