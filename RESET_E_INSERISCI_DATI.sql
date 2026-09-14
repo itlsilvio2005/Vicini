@@ -9,6 +9,16 @@
 -- FASE 1: RESET (cancella tutti i dati in ordine corretto)
 -- ============================================================================
 -- Ordine: prima le tabelle figlie (con foreign keys), poi le tabelle padri
+-- IMPORTANTE: Disabilita temporaneamente RLS per permettere la cancellazione
+
+-- Disabilita RLS per le operazioni di cancellazione
+ALTER TABLE public.nucleo DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.volonta DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ordini_fiori DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pensieri DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pratiche DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.manifesti DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agenzie DISABLE ROW LEVEL SECURITY;
 
 -- Tabelle figlie (dipendono da manifesti, agenzie, utenti)
 DELETE FROM public.nucleo;           -- dipende da profilo_utenti
@@ -22,6 +32,15 @@ DELETE FROM public.manifesti;        -- dipende da agenzie
 
 -- Tabelle padri
 DELETE FROM public.agenzie;          -- dipende da profilo_utenti
+
+-- Verifica che tutte le tabelle siano vuote
+SELECT 'nucleo' AS tabella, COUNT(*) AS righe FROM public.nucleo
+UNION ALL SELECT 'volonta', COUNT(*) FROM public.volonta
+UNION ALL SELECT 'ordini_fiori', COUNT(*) FROM public.ordini_fiori
+UNION ALL SELECT 'pensieri', COUNT(*) FROM public.pensieri
+UNION ALL SELECT 'pratiche', COUNT(*) FROM public.pratiche
+UNION ALL SELECT 'manifesti', COUNT(*) FROM public.manifesti
+UNION ALL SELECT 'agenzie', COUNT(*) FROM public.agenzie;
 
 -- ============================================================================
 -- FASE 2: INSERIMENTO DATI
@@ -66,7 +85,15 @@ VALUES
   '["Trasporto salma", "Allestimento camera ardente", "Pratiche cimiteriali", "Tumulazione"]'::jsonb,
   '["Modena"]'::jsonb
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (user_id) DO UPDATE SET
+  nome = EXCLUDED.nome,
+  indirizzo = EXCLUDED.indirizzo,
+  descrizione = EXCLUDED.descrizione,
+  telefono = EXCLUDED.telefono,
+  email = EXCLUDED.email,
+  orari_apertura = EXCLUDED.orari_apertura,
+  servizi_offerti = EXCLUDED.servizi_offerti,
+  aree_coperte = EXCLUDED.aree_coperte;
 
 -- Manifesti
 INSERT INTO public.manifesti (
@@ -325,6 +352,20 @@ UNION ALL
 SELECT '✅ volonta', count(*) FROM public.volonta
 UNION ALL
 SELECT '✅ nucleo', count(*) FROM public.nucleo;
+
+-- ============================================================================
+-- FASE 3: RIABILITA RLS
+-- ============================================================================
+
+ALTER TABLE public.nucleo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.volonta ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ordini_fiori ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pensieri ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pratiche ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.manifesti ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agenzie ENABLE ROW LEVEL SECURITY;
+
+SELECT '✅ RLS riabilitato su tutte le tabelle' AS status;
 
 -- ============================================================================
 -- FINE
