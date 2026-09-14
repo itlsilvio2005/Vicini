@@ -20,6 +20,12 @@ ALTER TABLE public.pratiche DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.manifesti DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.agenzie DISABLE ROW LEVEL SECURITY;
 
+-- RIMUOVI VINCOLI UNIQUE che impediscono l'inserimento di più righe con lo stesso valore
+ALTER TABLE public.agenzie DROP CONSTRAINT IF EXISTS agenzie_user_id_key;
+
+-- Verifica che non ci siano altri vincoli UNIQUE problematici
+-- (se necessario, rimuovili con: ALTER TABLE public.nome_tabella DROP CONSTRAINT IF EXISTS nome_vincolo;)
+
 -- Tabelle figlie (dipendono da manifesti, agenzie, utenti)
 DELETE FROM public.nucleo;           -- dipende da profilo_utenti
 DELETE FROM public.volonta;          -- dipende da profilo_utenti, agenzie
@@ -45,6 +51,15 @@ UNION ALL SELECT 'agenzie', COUNT(*) FROM public.agenzie;
 -- ============================================================================
 -- FASE 2: INSERIMENTO DATI
 -- ============================================================================
+
+-- Verifica che non ci siano altri vincoli UNIQUE nascosti che potrebbero causare problemi
+-- Se necessario, rimuovili prima di procedere con gli INSERT
+SELECT 
+    conname AS vincolo,
+    conrelid::regclass AS tabella,
+    pg_get_constraintdef(oid) AS definizione
+FROM pg_constraint
+WHERE contype = 'u' AND connamespace = 'public'::regnamespace;
 
 -- Agenzie (stesso utente gestisce più agenzie - modello flessibile)
 INSERT INTO public.agenzie (id, user_id, nome, indirizzo, descrizione, telefono, email, orari_apertura, servizi_offerti, aree_coperte)
