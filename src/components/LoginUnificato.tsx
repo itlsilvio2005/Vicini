@@ -28,14 +28,14 @@ export function LoginUnificato() {
         if (result.error) {
           setErrore(result.error);
         } else {
-          navigate(tipoUtente === 'agenzia' ? '/dashboard-agenzia' : '/area-privata');
+          navigate(tipoUtente === 'agenzia' ? '/area-riservata' : '/area-privata');
         }
       } else {
         const result = await login(email, password);
         if (result.error) {
           setErrore(result.error);
         } else {
-          navigate(tipoUtente === 'agenzia' ? '/dashboard-agenzia' : '/area-privata');
+          navigate(tipoUtente === 'agenzia' ? '/area-riservata' : '/area-privata');
         }
       }
     } catch (err) {
