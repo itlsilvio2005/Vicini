@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   Flower2,
@@ -32,6 +32,8 @@ import {
   type Pensiero,
 } from "./data";
 import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, SectionHeading, useToast } from "./lib";
+import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
+import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
 /* ---------------- helpers ---------------- */
 
@@ -190,7 +192,7 @@ function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
 /* ---------------- Bacheca (tab 1) ---------------- */
 
 export function Bacheca({
-  manifesti,
+  manifesti: manifestiProp,
   onNuovoOrdine,
   onNuovoPensiero,
 }: {
@@ -199,6 +201,68 @@ export function Bacheca({
   onNuovoPensiero: (manifestoId: string, p: Pensiero) => void;
 }) {
   const { comune } = useParams();
+  const [manifesti, setManifesti] = useState<Manifesto[]>(manifestiProp);
+  const [caricamento, setCaricamento] = useState(false);
+
+  // Carica manifesti da Supabase se configurato
+  useEffect(() => {
+    if (isSupabaseConfigured()) {
+      setCaricamento(true);
+      supabase
+        .from('manifesti')
+        .select(`
+          *,
+          agenzie!inner(
+            id,
+            nome,
+            indirizzo,
+            telefono,
+            email
+          )
+        `)
+        .eq('pubblicato', true)
+        .order('pubblicato_il', { ascending: false })
+        .then(({ data, error }: { data: any[] | null; error: any }) => {
+          if (error) {
+            console.error('Errore caricamento manifesti:', error);
+          } else if (data && data.length > 0) {
+            // Converti dati Supabase nel formato Manifesto
+            const manifestiConvertiti: Manifesto[] = data.map((m: any) => ({
+              id: m.id,
+              nome: m.nome_defunto,
+              anni: m.anni,
+              nascita: m.data_nascita || '',
+              morte: m.data_morte || '',
+              comune: m.comune as any,
+              rito: m.rito as any,
+              cameraArdente: {
+                luogo: m.camera_ardente_luogo || '',
+                indirizzo: m.camera_ardente_indirizzo || '',
+                orari: m.camera_ardente_orari || '',
+                indicazioni: m.camera_ardente_indicazioni || '',
+              },
+              funerale: {
+                giorno: m.funerale_giorno || '',
+                ora: m.funerale_ora || '',
+                luogo: m.funerale_luogo || '',
+                indirizzo: m.funerale_indirizzo || '',
+                dettagli: m.funerale_dettagli || '',
+              },
+              commiato: {
+                tipo: m.commiato_tipo as any || 'Cremazione',
+                luogo: m.commiato_luogo || '',
+                cimitero: m.commiato_cimitero || '',
+              },
+              agenzia: m.agenzie?.id || 'pecorari',
+              pubblicato: m.pubblicato_il ? new Date(m.pubblicato_il).toLocaleDateString('it-IT') : 'Oggi',
+              pensieri: [], // I pensieri vengono caricati separatamente
+            }));
+            setManifesti(manifestiConvertiti);
+          }
+          setCaricamento(false);
+        });
+    }
+  }, []);
 
   const comuneAttivo = useMemo(() => {
     if (!comune) return null;
@@ -232,6 +296,12 @@ export function Bacheca({
             </Link>
           )}
         </div>
+
+        {caricamento && (
+          <div className="mb-6 flex items-center justify-center rounded-lg border border-line bg-card p-6">
+            <p className="text-sm text-ink-soft">Caricamento manifesti dal database...</p>
+          </div>
+        )}
 
         <Reveal className="mb-9 flex flex-wrap items-center gap-2">
           <Link
@@ -583,26 +653,34 @@ export function ManifestoDettaglio({
             />
           </div>
 
-          {/* pensieri */}
-          <h3 className="mt-10 flex items-center gap-3 font-display text-2xl font-semibold text-ink">
-            <HeartHandshake size={19} className="text-bronze-600" /> Pensieri e cordogli ({m.pensieri.length})
-          </h3>
-          <ul className="mt-4 space-y-3">
-            {m.pensieri.length === 0 && (
-              <li className="rounded-lg border border-dashed border-line bg-card p-6 text-center text-[13px] italic text-ink-faint">
-                Nessun pensiero pubblicato: lascia tu il primo.
-              </li>
-            )}
-            {m.pensieri.map((p, i) => (
-              <li key={i} className="rounded-lg border border-line-soft bg-card px-5 py-4 text-[13.5px] italic leading-relaxed text-ink-soft">
-                «{p.testo}»
-                <span className="mt-1.5 block text-[11.5px] not-italic text-ink-faint">
-                  — {p.nome}
-                  {p.relazione ? `, ${p.relazione}` : ""} · {p.quando}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {/* Gruppo Chat Pensieri o lista statica */}
+          {isSupabaseConfigured() ? (
+            <div className="mt-10">
+              <GruppoChatPensieri manifestoId={m.id} manifestoNome={m.nome} />
+            </div>
+          ) : (
+            <>
+              <h3 className="mt-10 flex items-center gap-3 font-display text-2xl font-semibold text-ink">
+                <HeartHandshake size={19} className="text-bronze-600" /> Pensieri e cordogli ({m.pensieri.length})
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {m.pensieri.length === 0 && (
+                  <li className="rounded-lg border border-dashed border-line bg-card p-6 text-center text-[13px] italic text-ink-faint">
+                    Nessun pensiero pubblicato: lascia tu il primo.
+                  </li>
+                )}
+                {m.pensieri.map((p, i) => (
+                  <li key={i} className="rounded-lg border border-line-soft bg-card px-5 py-4 text-[13.5px] italic leading-relaxed text-ink-soft">
+                    «{p.testo}»
+                    <span className="mt-1.5 block text-[11.5px] not-italic text-ink-faint">
+                      — {p.nome}
+                      {p.relazione ? `, ${p.relazione}` : ""} · {p.quando}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
 
         {/* colonna azioni */}
