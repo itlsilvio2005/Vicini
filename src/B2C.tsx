@@ -36,6 +36,8 @@ import {
   type Rito,
 } from "./data";
 import { Badge, Field, inputCls, Modal, ModalHeader, PageMast, Reveal, Switch, useToast } from "./lib";
+import { supabase, isSupabaseConfigured } from "./lib/supabase";
+import { useAuth } from "./lib/auth";
 
 /* ================= TIPI ================= */
 
@@ -115,6 +117,7 @@ export function B2C({ prefillAgenzia }: { prefillAgenzia: { id: string; ts: numb
 
 function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
   const toast = useToast();
+  const { utente } = useAuth();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [agenzia, setAgenzia] = useState("");
@@ -136,14 +139,88 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [riepilogo, setRiepilogo] = useState<VolontaSalvata | null>(null);
-  const [salvata, setSalvata] = useState<VolontaSalvata | null>(() => {
-    try {
-      const raw = localStorage.getItem("vicini_volonta_v2");
-      return raw ? (JSON.parse(raw) as VolontaSalvata) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [salvata, setSalvata] = useState<VolontaSalvata | null>(null);
+  const [caricamento, setCaricamento] = useState(true);
+
+  // Carica volontà da Supabase o localStorage all'avvio
+  useEffect(() => {
+    const caricaVolonta = async () => {
+      if (isSupabaseConfigured() && utente) {
+        // Carica da Supabase
+        const { data, error } = await supabase
+          .from('volonta')
+          .select('*')
+          .eq('user_id', utente.id)
+          .single();
+
+        if (data && !error) {
+          const v: VolontaSalvata = {
+            nome: utente.nome_completo || utente.email,
+            email: utente.email,
+            agenzia: data.agenzia_id || '',
+            rito: data.rito as Rito,
+            destinazione: data.destinazione || '',
+            trasporto: data.trasporto_fuori_comune ? {
+              comune: data.trasporto_comune || '',
+              citta: data.trasporto_citta || ''
+            } : undefined,
+            rimpatrio: data.rimpatrio_estero ? {
+              paese: data.rimpatrio_paese || ''
+            } : undefined,
+            ritoDettagli: data.dettagli_rito ? Object.values(data.dettagli_rito) : undefined,
+            note: data.note || undefined,
+            salvataIl: new Date(data.updated_at).toLocaleDateString('it-IT'),
+          };
+          setSalvata(v);
+          // Popola i campi del form
+          setNome(v.nome);
+          setEmail(v.email);
+          setAgenzia(v.agenzia);
+          setRito(v.rito);
+          setDestinazione(v.destinazione);
+          if (v.trasporto) {
+            setTrasportoOn(true);
+            setTComune(v.trasporto.comune);
+            setTCitta(v.trasporto.citta);
+          }
+          if (v.rimpatrio) {
+            setRimpatrioOn(true);
+            setPaese(v.rimpatrio.paese);
+          }
+          if (v.note) setNote(v.note);
+        }
+      } else {
+        // Fallback: carica da localStorage
+        try {
+          const raw = localStorage.getItem("vicini_volonta_v2");
+          if (raw) {
+            const v = JSON.parse(raw) as VolontaSalvata;
+            setSalvata(v);
+            setNome(v.nome);
+            setEmail(v.email);
+            setAgenzia(v.agenzia);
+            setRito(v.rito);
+            setDestinazione(v.destinazione);
+            if (v.trasporto) {
+              setTrasportoOn(true);
+              setTComune(v.trasporto.comune);
+              setTCitta(v.trasporto.citta);
+            }
+            if (v.rimpatrio) {
+              setRimpatrioOn(true);
+              setPaese(v.rimpatrio.paese);
+            }
+            if (v.note) setNote(v.note);
+          }
+        } catch {
+          // ignora
+        }
+      }
+      setCaricamento(false);
+    };
+
+    caricaVolonta();
+  }, [utente]);
 
   useEffect(() => {
     if (prefill) {
@@ -156,7 +233,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
   const ortodosso = rito === "Ortodosso";
   const musulmano = rito === "Musulmano";
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (nome.trim().length < 2) errs.nome = "Inserisci nome e cognome.";
@@ -202,7 +279,33 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
       note: note.trim() || undefined,
       salvataIl: new Date().toLocaleDateString("it-IT"),
     };
-    saveLS("vicini_volonta_v2", v);
+
+    // Salva su Supabase se configurato e utente autenticato
+    if (isSupabaseConfigured() && utente) {
+      const { error } = await supabase.from('volonta').upsert([{
+        user_id: utente.id,
+        agenzia_id: agenzia,
+        rito: rito as string,
+        destinazione,
+        trasporto_fuori_comune: trasportoOn,
+        trasporto_comune: trasportoOn ? tComune.trim() : null,
+        trasporto_citta: trasportoOn ? tCitta.trim() : null,
+        rimpatrio_estero: rimpatrioOn,
+        rimpatrio_paese: rimpatrioOn ? paese : null,
+        dettagli_rito: dettagli.length ? dettagli : null,
+        note: note.trim() || null,
+      }]);
+
+      if (error) {
+        console.error('Errore salvataggio volontà:', error);
+        toast("Errore nel salvataggio. Riprova.", "info");
+        return;
+      }
+    } else {
+      // Fallback: salva su localStorage
+      saveLS("vicini_volonta_v2", v);
+    }
+
     setSalvata(v);
     setRiepilogo(v);
     toast("Le tue volontà sono state registrate in forma riservata.");
@@ -577,25 +680,62 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
 
 function Nucleo() {
   const toast = useToast();
-  const [membri, setMembri] = useState<Membro[]>(() => {
-    try {
-      const raw = localStorage.getItem("vicini_nucleo_v2");
-      return raw ? (JSON.parse(raw) as Membro[]) : MEMBRI_INIZIALI;
-    } catch {
-      return MEMBRI_INIZIALI;
-    }
-  });
+  const { utente } = useAuth();
+  const [membri, setMembri] = useState<Membro[]>([]);
   const [nome, setNome] = useState("");
   const [relazione, setRelazione] = useState("");
   const [comune, setComune] = useState<Comune | "">("");
   const [contatto, setContatto] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [caricamento, setCaricamento] = useState(true);
 
+  // Carica membri da Supabase o localStorage all'avvio
   useEffect(() => {
-    saveLS("vicini_nucleo_v2", membri);
-  }, [membri]);
+    const caricaMembri = async () => {
+      if (isSupabaseConfigured() && utente) {
+        // Carica da Supabase
+        const { data, error } = await supabase
+          .from('nucleo')
+          .select('*')
+          .eq('user_id', utente.id)
+          .order('created_at', { ascending: false });
 
-  const aggiungi = (e: React.FormEvent) => {
+        if (data && !error) {
+          setMembri(data.map(m => ({
+            id: m.id,
+            nome: m.nome,
+            relazione: m.relazione,
+            comune: m.comune as Comune,
+            contatto: m.contatto,
+          })));
+        }
+      } else {
+        // Fallback: carica da localStorage
+        try {
+          const raw = localStorage.getItem("vicini_nucleo_v2");
+          if (raw) {
+            setMembri(JSON.parse(raw) as Membro[]);
+          } else {
+            setMembri(MEMBRI_INIZIALI);
+          }
+        } catch {
+          setMembri(MEMBRI_INIZIALI);
+        }
+      }
+      setCaricamento(false);
+    };
+
+    caricaMembri();
+  }, [utente]);
+
+  // Salva su localStorage come fallback
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !utente) {
+      saveLS("vicini_nucleo_v2", membri);
+    }
+  }, [membri, utente]);
+
+  const aggiungi = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (nome.trim().length < 3) errs.nome = "Inserisci nome e cognome del tuo caro.";
@@ -605,13 +745,62 @@ function Nucleo() {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    setMembri((m) => [...m, { id: `n-${Date.now()}`, nome: nome.trim(), relazione, comune: comune as Comune, contatto: contatto.trim() }]);
+    const nuovoMembro = {
+      id: `n-${Date.now()}`,
+      nome: nome.trim(),
+      relazione,
+      comune: comune as Comune,
+      contatto: contatto.trim(),
+    };
+
+    // Salva su Supabase se configurato e utente autenticato
+    if (isSupabaseConfigured() && utente) {
+      const { data, error } = await supabase.from('nucleo').insert([{
+        user_id: utente.id,
+        nome: nuovoMembro.nome,
+        relazione: nuovoMembro.relazione,
+        comune: nuovoMembro.comune,
+        contatto: nuovoMembro.contatto,
+      }]).select().single();
+
+      if (error) {
+        console.error('Errore salvataggio membro:', error);
+        toast("Errore nel salvataggio. Riprova.", "info");
+        return;
+      }
+
+      if (data) {
+        setMembri((m) => [...m, {
+          id: data.id,
+          nome: data.nome,
+          relazione: data.relazione,
+          comune: data.comune as Comune,
+          contatto: data.contatto,
+        }]);
+      }
+    } else {
+      // Fallback: salva in memoria
+      setMembri((m) => [...m, nuovoMembro]);
+    }
+
     toast(`${nome.trim()} aggiunto al tuo Nucleo: le notifiche sono attive.`);
     setNome(""); setRelazione(""); setComune(""); setContatto("");
   };
 
-  const rimuovi = (id: string) => {
+  const rimuovi = async (id: string) => {
     const m = membri.find((x) => x.id === id);
+
+    // Elimina da Supabase se configurato e utente autenticato
+    if (isSupabaseConfigured() && utente) {
+      const { error } = await supabase.from('nucleo').delete().eq('id', id);
+
+      if (error) {
+        console.error('Errore eliminazione membro:', error);
+        toast("Errore nell'eliminazione. Riprova.", "info");
+        return;
+      }
+    }
+
     setMembri((list) => list.filter((x) => x.id !== id));
     if (m) toast(`${m.nome} rimosso dal Nucleo.`, "info");
   };
