@@ -14,6 +14,7 @@ export function DashboardAgenzia() {
   const { utente, logout } = useAuth();
   const navigate = useNavigate();
   const [sezioneAttiva, setSezioneAttiva] = useState<SezioneDashboard>('bacheca');
+  const [sezioneDemo, setSezioneDemo] = useState<SezioneDashboard>('bacheca');
   const [agenzia, setAgenzia] = useState<Agenzia | null>(null);
   const [caricamento, setCaricamento] = useState(true);
 
@@ -57,8 +58,6 @@ export function DashboardAgenzia() {
 
   if (!agenzia) {
     // Agenzia non trovata nel database: mostra dashboard demo
-    const [sezioneDemo, setSezioneDemo] = useState<SezioneDashboard>('bacheca');
-    
     const agenziaDemo: Agenzia = {
       id: 'demo-agency-id',
       user_id: utente?.id || '',
