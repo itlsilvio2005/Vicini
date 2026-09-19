@@ -29,6 +29,7 @@ import {
 } from "./data";
 import { ErrorBoundary, ToastProvider, useToast } from "./lib";
 import { AuthProvider, useAuth } from "./lib/auth";
+import { HelmetProvider } from "react-helmet-async";
 import { Bacheca, ManifestoDettaglio } from "./Bacheca";
 import { Imprese } from "./Imprese";
 import { Luoghi } from "./Luoghi";
@@ -338,14 +339,16 @@ function Shell() {
 export default function App() {
   const Router = historyDisponibile ? BrowserRouter : MemoryRouter;
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <ToastProvider>
-          <Router>
-            <Shell />
-          </Router>
-        </ToastProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <ToastProvider>
+            <Router>
+              <Shell />
+            </Router>
+          </ToastProvider>
+        </AuthProvider>
+      </ErrorBoundary>
+    </HelmetProvider>
   );
 }

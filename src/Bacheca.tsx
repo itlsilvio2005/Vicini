@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   Flower2,
   HeartHandshake,
@@ -575,6 +576,30 @@ export function ManifestoDettaglio({
 
   return (
     <div>
+      {/* Meta tag Open Graph per condivisione social (WhatsApp, Facebook, ecc.) */}
+      <Helmet>
+        <title>{`${m.nome} · Manifesto Funebre · Vicini`}</title>
+        <meta name="description" content={`Manifesto funebre di ${m.nome} (${m.comune}). Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora} - ${m.funerale.luogo}.`} />
+        
+        {/* Open Graph per Facebook, LinkedIn, WhatsApp */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={`Manifesto Funebre - ${m.nome}`} />
+        <meta property="og:description" content={`${m.nome}, ${m.anni} anni. Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora}.`} />
+        <meta property="og:url" content={`${window.location.origin}/manifesto/${m.id}`} />
+        <meta property="og:site_name" content="Vicini - Servizi Funebri Modena" />
+        <meta property="og:locale" content="it_IT" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`Manifesto Funebre - ${m.nome}`} />
+        <meta name="twitter:description" content={`${m.nome}, ${m.anni} anni. Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora}.`} />
+        
+        {/* WhatsApp specifica */}
+        <meta property="og:image" content={`${window.location.origin}/og-manifesto-default.jpg`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </Helmet>
+
       {/* intestazione scura */}
       <div className="relative overflow-hidden bg-night-900 text-paper">
         <div
