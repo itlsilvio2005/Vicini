@@ -36,6 +36,7 @@ import { B2C } from "./B2C";
 import { LoginUnificato } from "./components/LoginUnificato";
 import { DashboardAgenzia } from "./components/DashboardAgenzia";
 import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
+import { PannelloNotifiche } from "./components/NotificheNucleo";
 
 const NAV = [
   { to: "/bacheca", label: "Bacheca Manifesti", short: "Bacheca", icon: <ScrollText size={16} /> },
@@ -147,6 +148,9 @@ function Shell() {
           </button>
 
           <div className="flex items-center gap-3">
+            {/* Pannello Notifiche (solo per utenti loggati) */}
+            {utente && <PannelloNotifiche />}
+            
             <p className="hidden items-center gap-2 text-[11.5px] text-mist lg:flex">
               <span className="blink-dot inline-block h-1.5 w-1.5 rounded-full bg-bronze-400" />
               Reperibilità 24h · {oggi}
