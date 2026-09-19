@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   Flower2,
   HeartHandshake,
@@ -20,6 +21,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarClock,
+  Loader2,
 } from "lucide-react";
 import {
   agenziaById,
@@ -574,6 +576,30 @@ export function ManifestoDettaglio({
 
   return (
     <div>
+      {/* Meta tag Open Graph per condivisione social (WhatsApp, Facebook, ecc.) */}
+      <Helmet>
+        <title>{`${m.nome} · Manifesto Funebre · Vicini`}</title>
+        <meta name="description" content={`Manifesto funebre di ${m.nome} (${m.comune}). Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora} - ${m.funerale.luogo}.`} />
+        
+        {/* Open Graph per Facebook, LinkedIn, WhatsApp */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={`Manifesto Funebre - ${m.nome}`} />
+        <meta property="og:description" content={`${m.nome}, ${m.anni} anni. Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora}.`} />
+        <meta property="og:url" content={`${window.location.origin}/manifesto/${m.id}`} />
+        <meta property="og:site_name" content="Vicini - Servizi Funebri Modena" />
+        <meta property="og:locale" content="it_IT" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`Manifesto Funebre - ${m.nome}`} />
+        <meta name="twitter:description" content={`${m.nome}, ${m.anni} anni. Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora}.`} />
+        
+        {/* WhatsApp specifica */}
+        <meta property="og:image" content={`${window.location.origin}/og-manifesto-default.jpg`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </Helmet>
+
       {/* intestazione scura */}
       <div className="relative overflow-hidden bg-night-900 text-paper">
         <div
@@ -825,6 +851,7 @@ function FioriModal({
   const [nastro, setNastro] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [done, setDone] = useState(false);
+  const [caricamento, setCaricamento] = useState(false);
 
   const agenzia = agenziaById(manifesto.agenzia);
   const prezzo = FIORI.find((f) => f.nome === composizione)?.prezzo ?? 0;
@@ -837,7 +864,7 @@ function FioriModal({
     }, 300);
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (nome.trim().length < 2) errs.nome = "Inserisci il nome del mittente.";
@@ -846,7 +873,9 @@ function FioriModal({
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
-    onSubmitOrder({
+    setCaricamento(true);
+
+    const ordine: OrdineFiori = {
       id: `ord-${Date.now()}`,
       defunto: manifesto.nome,
       comune: manifesto.comune,
@@ -859,8 +888,34 @@ function FioriModal({
       fatturaInviata: false,
       agenzia: manifesto.agenzia,
       canale: "Sito Vicini",
-    });
+    };
+
+    // Se Supabase è configurato, salva nel database
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase.from('ordini_fiori').insert([{
+        manifesto_id: manifesto.id,
+        composizione: ordine.composizione,
+        importo: ordine.importo,
+        nastro: ordine.nastro || null,
+        cliente_nome: ordine.cliente.nome,
+        cliente_email: ordine.cliente.email,
+        cliente_telefono: ordine.cliente.telefono,
+        stato: 'Da evadere',
+        fattura_inviata: false,
+      }]);
+
+      if (error) {
+        console.error('Errore salvataggio ordine:', error);
+        toast("Errore nel salvataggio dell'ordine. Riprova.");
+        setCaricamento(false);
+        return;
+      }
+    }
+
+    // Salva anche in memoria (fallback o aggiornamento UI)
+    onSubmitOrder(ordine);
     setDone(true);
+    setCaricamento(false);
     toast(`Richiesta fiori inviata a ${agenzia.nome}. Riceverai la fattura via email.`);
   };
 
@@ -943,9 +998,18 @@ function FioriModal({
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 transition hover:bg-bronze-400 active:scale-[0.99]"
+            disabled={caricamento}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 transition hover:bg-bronze-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send size={15} /> Invia richiesta all'impresa
+            {caricamento ? (
+              <>
+                <Loader2 size={15} className="animate-spin" /> Invio...
+              </>
+            ) : (
+              <>
+                <Send size={15} /> Invia richiesta all'impresa
+              </>
+            )}
           </button>
         </form>
       )}
@@ -971,16 +1035,40 @@ function CordoglioModal({
   const [relazione, setRelazione] = useState("");
   const [testo, setTesto] = useState("");
   const [err, setErr] = useState<Record<string, string>>({});
+  const [caricamento, setCaricamento] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (nome.trim().length < 2) errs.nome = "Indica il tuo nome o quello della famiglia.";
     if (testo.trim().length < 5) errs.testo = "Scrivi qualche parola di cordoglio.";
     setErr(errs);
     if (Object.keys(errs).length > 0) return;
+
+    setCaricamento(true);
+
+    // Se Supabase è configurato, salva nel database
+    if (isSupabaseConfigured()) {
+      const { error } = await supabase.from('pensieri').insert([{
+        manifesto_id: manifesto.id,
+        nome: nome.trim(),
+        relazione: relazione.trim() || null,
+        testo: testo.trim(),
+        approvato: true,
+      }]);
+
+      if (error) {
+        console.error('Errore salvataggio pensiero:', error);
+        toast("Errore nel salvataggio del pensiero. Riprova.");
+        setCaricamento(false);
+        return;
+      }
+    }
+
+    // Salva anche in memoria (fallback o aggiornamento UI)
     onInvia(manifesto.id, { nome: nome.trim(), relazione: relazione.trim() || undefined, testo: testo.trim(), quando: "Adesso" });
     setNome(""); setRelazione(""); setTesto("");
+    setCaricamento(false);
     toast("Il tuo pensiero è stato pubblicato sul manifesto.");
   };
 
@@ -1033,9 +1121,18 @@ function CordoglioModal({
 
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-night-800 px-4 py-3 text-sm font-semibold text-paper transition hover:bg-night-700 active:scale-[0.99]"
+          disabled={caricamento}
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-night-800 px-4 py-3 text-sm font-semibold text-paper transition hover:bg-night-700 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Send size={15} /> Pubblica il pensiero
+          {caricamento ? (
+            <>
+              <Loader2 size={15} className="animate-spin" /> Pubblicazione...
+            </>
+          ) : (
+            <>
+              <Send size={15} /> Pubblica il pensiero
+            </>
+          )}
         </button>
       </form>
     </Modal>

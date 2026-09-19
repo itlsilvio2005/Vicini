@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, Manifesto } from '../lib/supabase';
+import { supabase, Manifesto, isSupabaseConfigured } from '../lib/supabase';
 import { Plus, Edit2, Trash2, Eye, Loader2, AlertCircle } from 'lucide-react';
 import { COMUNI, RITI } from '../data';
 
@@ -10,6 +10,7 @@ interface Props {
 export function BachecaManifestiAgenzia({ agenziaId }: Props) {
   const [manifesti, setManifesti] = useState<Manifesto[]>([]);
   const [caricamento, setCaricamento] = useState(true);
+  const [errore, setErrore] = useState<string | null>(null);
   const [mostraForm, setMostraForm] = useState(false);
   const [manifestoEdit, setManifestoEdit] = useState<Manifesto | null>(null);
 
@@ -18,18 +19,34 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
   }, [agenziaId]);
 
   const caricaManifesti = async () => {
-    const { data, error } = await supabase
-      .from('manifesti')
-      .select('*')
-      .eq('agenzia_id', agenziaId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Errore caricamento manifesti:', error);
-    } else {
-      setManifesti(data || []);
+    setErrore(null);
+    
+    // Se Supabase non è configurato, usa lista vuota
+    if (!isSupabaseConfigured()) {
+      console.log('Supabase non configurato, bacheca vuota');
+      setCaricamento(false);
+      return;
     }
-    setCaricamento(false);
+
+    try {
+      const { data, error } = await supabase
+        .from('manifesti')
+        .select('*')
+        .eq('agenzia_id', agenziaId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Errore caricamento manifesti:', error);
+        throw error;
+      }
+
+      setManifesti(data || []);
+    } catch (err) {
+      console.error('Errore caricamento bacheca:', err);
+      setErrore('Impossibile caricare i manifesti. Riprova più tardi.');
+    } finally {
+      setCaricamento(false);
+    }
   };
 
   const handleElimina = async (id: string) => {
@@ -63,6 +80,26 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="animate-spin w-8 h-8 text-bronze-500" />
+      </div>
+    );
+  }
+
+  if (errore) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="max-w-md w-full bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <h3 className="text-lg font-semibold text-red-900">Errore</h3>
+          </div>
+          <p className="text-red-700 mb-4">{errore}</p>
+          <button
+            onClick={caricaManifesti}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Riprova
+          </button>
+        </div>
       </div>
     );
   }
