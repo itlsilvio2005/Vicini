@@ -86,7 +86,7 @@ async function prerenderManifesti() {
   try {
     // Carica tutti i manifesti pubblicati da Supabase
     console.log('📋 Caricamento manifesti da Supabase...');
-    const {  manifesti, error } = await supabase
+    const { data: manifesti, error } = await supabase
       .from('manifesti')
       .select('*')
       .eq('pubblicato', true)
