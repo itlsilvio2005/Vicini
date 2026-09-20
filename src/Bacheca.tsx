@@ -568,7 +568,55 @@ export function ManifestoDettaglio({
   const [fioriOpen, setFioriOpen] = useState(false);
   const [cordoglioOpen, setCordoglioOpen] = useState(false);
 
-  const m = manifesti.find((x) => x.id === id);
+  // Prova a caricare i dati dal tag script JSON (per prerendering)
+  const [manifestoPreload, setManifestoPreload] = useState<Manifesto | null>(null);
+  
+  useEffect(() => {
+    // Cerca il tag script con i dati del manifesto
+    const scriptTag = document.getElementById('manifesto-data');
+    if (scriptTag && scriptTag.textContent) {
+      try {
+        const data = JSON.parse(scriptTag.textContent);
+        // Converti dal formato database al formato Manifesto
+        const manifesto: Manifesto = {
+          id: data.id,
+          nome: data.nome_defunto,
+          anni: data.anni,
+          nascita: data.data_nascita || '',
+          morte: data.data_morte || '',
+          comune: data.comune,
+          rito: data.rito,
+          cameraArdente: {
+            luogo: data.camera_ardente_luogo || '',
+            indirizzo: data.camera_ardente_indirizzo || '',
+            orari: data.camera_ardente_orari || '',
+            indicazioni: data.camera_ardente_indicazioni || '',
+          },
+          funerale: {
+            giorno: data.funerale_giorno || '',
+            ora: data.funerale_ora || '',
+            luogo: data.funerale_luogo || '',
+            indirizzo: data.funerale_indirizzo || '',
+            dettagli: data.funerale_dettagli || '',
+          },
+          commiato: {
+            tipo: data.commiato_tipo || 'Cremazione',
+            luogo: data.commiato_luogo || '',
+            cimitero: data.commiato_cimitero || '',
+          },
+          agenzia: data.agenzia_id || 'pecorari',
+          pubblicato: data.pubblicato_il ? new Date(data.pubblicato_il).toLocaleDateString('it-IT') : 'Oggi',
+          pensieri: [],
+        };
+        setManifestoPreload(manifesto);
+      } catch (e) {
+        console.error('Errore parsing manifesto-data:', e);
+      }
+    }
+  }, [id]);
+
+  // Usa i dati preload se disponibili, altrimenti cerca nei manifesti
+  const m = manifestoPreload || manifesti.find((x) => x.id === id);
   if (!m) return <Navigate to="/bacheca" replace />;
 
   const agenzia = agenziaById(m.agenzia);

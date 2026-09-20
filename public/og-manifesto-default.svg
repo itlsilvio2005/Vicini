@@ -1,0 +1,41 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0b1424;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a2332;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#c7a262;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b08a45;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Decorative line -->
+  <rect x="0" y="0" width="1200" height="4" fill="url(#accent)"/>
+  
+  <!-- Icon -->
+  <circle cx="600" cy="200" r="60" fill="none" stroke="#c7a262" stroke-width="3"/>
+  <path d="M 600 160 L 600 240 M 560 200 L 640 200" stroke="#c7a262" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Title -->
+  <text x="600" y="320" font-family="Georgia, serif" font-size="48" font-weight="bold" fill="#f5f1e7" text-anchor="middle">
+    Vicini
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="370" font-family="Arial, sans-serif" font-size="24" fill="#94a2b8" text-anchor="middle">
+    Servizi Funebri · Provincia di Modena
+  </text>
+  
+  <!-- Description -->
+  <text x="600" y="450" font-family="Arial, sans-serif" font-size="20" fill="#6d7890" text-anchor="middle">
+    Manifesto Funebre
+  </text>
+  
+  <!-- Bottom accent line -->
+  <rect x="0" y="626" width="1200" height="4" fill="url(#accent)"/>
+</svg>
