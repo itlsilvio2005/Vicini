@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Loader2, FileText, Flower, Users, TrendingUp } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { Loader2, FileText, Flower, Users, TrendingUp, AlertCircle } from 'lucide-react';
 
 interface Props {
   agenziaId: string;
@@ -8,6 +8,7 @@ interface Props {
 
 export function BackofficeAgenzia({ agenziaId }: Props) {
   const [caricamento, setCaricamento] = useState(true);
+  const [errore, setErrore] = useState<string | null>(null);
   const [stats, setStats] = useState({
     manifestiTotali: 0,
     manifestiPubblicati: 0,
@@ -23,33 +24,94 @@ export function BackofficeAgenzia({ agenziaId }: Props) {
   }, [agenziaId]);
 
   const caricaStatistiche = async () => {
-    const [manifestiResult, praticheResult, ordiniResult] = await Promise.all([
-      supabase.from('manifesti').select('id, pubblicato').eq('agenzia_id', agenziaId),
-      supabase.from('pratiche').select('id, stato, imponibile').eq('agenzia_id', agenziaId),
-      supabase.from('ordini_fiori').select('id, stato').eq('manifesti.agenzia_id', agenziaId),
-    ]);
+    setErrore(null);
+    
+    // Se Supabase non è configurato, usa dati di default
+    if (!isSupabaseConfigured()) {
+      console.log('Supabase non configurato, uso dati di default');
+      setCaricamento(false);
+      return;
+    }
 
-    const manifesti = manifestiResult.data || [];
-    const pratiche = praticheResult.data || [];
-    const ordini = ordiniResult.data || [];
+    try {
+      // Carica manifesti
+      const { data: manifesti, error: manifestiError } = await supabase
+        .from('manifesti')
+        .select('id, pubblicato')
+        .eq('agenzia_id', agenziaId);
 
-    setStats({
-      manifestiTotali: manifesti.length,
-      manifestiPubblicati: manifesti.filter(m => m.pubblicato).length,
-      praticheTotali: pratiche.length,
-      praticheInCorso: pratiche.filter(p => p.stato === 'In corso').length,
-      ordiniTotali: ordini.length,
-      ordiniDaEvadere: ordini.filter(o => o.stato === 'Da evadere').length,
-      fatturatoTotale: pratiche.reduce((sum, p) => sum + (p.imponibile || 0), 0),
-    });
+      if (manifestiError) {
+        console.error('Errore caricamento manifesti:', manifestiError);
+        throw manifestiError;
+      }
 
-    setCaricamento(false);
+      // Carica pratiche
+      const { data: pratiche, error: praticheError } = await supabase
+        .from('pratiche')
+        .select('id, stato, imponibile')
+        .eq('agenzia_id', agenziaId);
+
+      if (praticheError) {
+        console.error('Errore caricamento pratiche:', praticheError);
+        throw praticheError;
+      }
+
+      // Carica ordini fiori con join corretta
+      const { data: ordini, error: ordiniError } = await supabase
+        .from('ordini_fiori')
+        .select(`
+          id,
+          stato,
+          manifesti!inner(agenzia_id)
+        `)
+        .eq('manifesti.agenzia_id', agenziaId);
+
+      if (ordiniError) {
+        console.error('Errore caricamento ordini:', ordiniError);
+        throw ordiniError;
+      }
+
+      setStats({
+        manifestiTotali: manifesti?.length || 0,
+        manifestiPubblicati: manifesti?.filter(m => m.pubblicato).length || 0,
+        praticheTotali: pratiche?.length || 0,
+        praticheInCorso: pratiche?.filter(p => p.stato === 'In corso').length || 0,
+        ordiniTotali: ordini?.length || 0,
+        ordiniDaEvadere: ordini?.filter(o => o.stato === 'Da evadere').length || 0,
+        fatturatoTotale: pratiche?.reduce((sum, p) => sum + (p.imponibile || 0), 0) || 0,
+      });
+    } catch (err) {
+      console.error('Errore caricamento statistiche:', err);
+      setErrore('Impossibile caricare le statistiche. Riprova più tardi.');
+    } finally {
+      setCaricamento(false);
+    }
   };
 
   if (caricamento) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="animate-spin w-8 h-8 text-bronze-500" />
+      </div>
+    );
+  }
+
+  if (errore) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="max-w-md w-full bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <h3 className="text-lg font-semibold text-red-900">Errore</h3>
+          </div>
+          <p className="text-red-700 mb-4">{errore}</p>
+          <button
+            onClick={caricaStatistiche}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Riprova
+          </button>
+        </div>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { useNavigate } from 'react-router-dom';
 import { User, Building2, Mail, Lock, AlertCircle, Loader2, Flame } from 'lucide-react';
+import { validaEmail, validaFormRegistrazione, validaFormLogin } from '../lib/validazione';
 
 type TipoUtente = 'privato' | 'agenzia';
 
@@ -24,6 +25,20 @@ export function LoginUnificato() {
 
     try {
       if (isRegistrazione) {
+        // Validazione avanzata per registrazione
+        const validazione = validaFormRegistrazione({
+          nome,
+          email,
+          password,
+          confermaPassword: password, // Per ora non abbiamo campo conferma
+        });
+        
+        if (!validazione.valido) {
+          setErrore(Object.values(validazione.errori).join('. '));
+          setCaricamento(false);
+          return;
+        }
+        
         const result = await signup(email, password, tipoUtente, nome);
         if (result.error) {
           setErrore(result.error);
@@ -31,6 +46,15 @@ export function LoginUnificato() {
           navigate(tipoUtente === 'agenzia' ? '/area-riservata' : '/area-privata');
         }
       } else {
+        // Validazione avanzata per login
+        const validazione = validaFormLogin({ email, password });
+        
+        if (!validazione.valido) {
+          setErrore(Object.values(validazione.errori).join('. '));
+          setCaricamento(false);
+          return;
+        }
+        
         const result = await login(email, password);
         if (result.error) {
           setErrore(result.error);

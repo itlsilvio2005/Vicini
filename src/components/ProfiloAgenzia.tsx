@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase, Agenzia } from '../lib/supabase';
 import { Upload, Save, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { validaDatiAgenzia } from '../lib/validazione';
 
 interface Props {
   agenzia: Agenzia;
@@ -64,6 +65,23 @@ export function ProfiloAgenzia({ agenzia, onAggiornato }: Props) {
     e.preventDefault();
     setCaricamento(true);
     setMessaggio(null);
+
+    // Validazione avanzata dei dati agenzia
+    const validazione = validaDatiAgenzia({
+      nome: formData.nome,
+      indirizzo: formData.indirizzo,
+      telefono: formData.telefono,
+      email: formData.email,
+    });
+
+    if (!validazione.valido) {
+      setMessaggio({ 
+        tipo: 'error', 
+        testo: Object.values(validazione.errori).join('. ') 
+      });
+      setCaricamento(false);
+      return;
+    }
 
     const datiAggiornati = {
       ...formData,

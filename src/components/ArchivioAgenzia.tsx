@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase, Pratica, OrdineFiori } from '../lib/supabase';
-import { Loader2, FileText, Flower, Eye, Send } from 'lucide-react';
+import { supabase, Pratica, OrdineFiori, isSupabaseConfigured } from '../lib/supabase';
+import { Loader2, FileText, Flower, Eye, Send, AlertCircle } from 'lucide-react';
 
 interface Props {
   agenziaId: string;
@@ -11,31 +11,57 @@ export function ArchivioAgenzia({ agenziaId }: Props) {
   const [pratiche, setPratiche] = useState<Pratica[]>([]);
   const [ordini, setOrdini] = useState<OrdineFiori[]>([]);
   const [caricamento, setCaricamento] = useState(true);
+  const [errore, setErrore] = useState<string | null>(null);
 
   useEffect(() => {
     caricaDati();
   }, [agenziaId]);
 
   const caricaDati = async () => {
-    const [praticheResult, ordiniResult] = await Promise.all([
-      supabase
-        .from('pratiche')
-        .select('*')
-        .eq('agenzia_id', agenziaId)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('ordini_fiori')
-        .select(`
-          *,
-          manifesti!inner(agenzia_id)
-        `)
-        .eq('manifesti.agenzia_id', agenziaId)
-        .order('created_at', { ascending: false }),
-    ]);
+    setErrore(null);
+    
+    // Se Supabase non è configurato, usa dati vuoti
+    if (!isSupabaseConfigured()) {
+      console.log('Supabase non configurato, archivio vuoto');
+      setCaricamento(false);
+      return;
+    }
 
-    if (praticheResult.data) setPratiche(praticheResult.data);
-    if (ordiniResult.data) setOrdini(ordiniResult.data);
-    setCaricamento(false);
+    try {
+      const [praticheResult, ordiniResult] = await Promise.all([
+        supabase
+          .from('pratiche')
+          .select('*')
+          .eq('agenzia_id', agenziaId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('ordini_fiori')
+          .select(`
+            *,
+            manifesti!inner(agenzia_id)
+          `)
+          .eq('manifesti.agenzia_id', agenziaId)
+          .order('created_at', { ascending: false }),
+      ]);
+
+      if (praticheResult.error) {
+        console.error('Errore caricamento pratiche:', praticheResult.error);
+        throw praticheResult.error;
+      }
+
+      if (ordiniResult.error) {
+        console.error('Errore caricamento ordini:', ordiniResult.error);
+        throw ordiniResult.error;
+      }
+
+      if (praticheResult.data) setPratiche(praticheResult.data);
+      if (ordiniResult.data) setOrdini(ordiniResult.data);
+    } catch (err) {
+      console.error('Errore caricamento archivio:', err);
+      setErrore('Impossibile caricare i dati dell\'archivio. Riprova più tardi.');
+    } finally {
+      setCaricamento(false);
+    }
   };
 
   const handleInviaFattura = async (ordineId: string, email: string) => {
@@ -58,6 +84,26 @@ export function ArchivioAgenzia({ agenziaId }: Props) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="animate-spin w-8 h-8 text-bronze-500" />
+      </div>
+    );
+  }
+
+  if (errore) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="max-w-md w-full bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <h3 className="text-lg font-semibold text-red-900">Errore</h3>
+          </div>
+          <p className="text-red-700 mb-4">{errore}</p>
+          <button
+            onClick={caricaDati}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Riprova
+          </button>
+        </div>
       </div>
     );
   }
