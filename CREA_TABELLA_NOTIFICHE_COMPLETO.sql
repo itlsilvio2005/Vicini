@@ -6,30 +6,16 @@
 -- ============================================================================
 
 -- ============================================================================
--- PASSO 1: Verifica e crea la funzione handle_updated_at() se non esiste
+-- PASSO 1: Crea la funzione handle_updated_at() se non esiste
 -- ============================================================================
 
--- Controlla se la funzione esiste già
-DO $$
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_proc 
-    WHERE proname = 'handle_updated_at'
-  ) THEN
-    -- Crea la funzione
-    CREATE OR REPLACE FUNCTION public.handle_updated_at()
-    RETURNS TRIGGER AS $$
-    BEGIN
-      NEW.updated_at = now();
-      RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-    
-    RAISE NOTICE '✅ Funzione handle_updated_at() creata';
-  ELSE
-    RAISE NOTICE '✅ Funzione handle_updated_at() già esistente';
-  END IF;
-END $$;
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- PASSO 2: Crea la tabella notifiche_nucleo
@@ -52,15 +38,11 @@ CREATE TABLE public.notifiche_nucleo (
   data_creazione timestamp WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
-RAISE NOTICE '✅ Tabella notifiche_nucleo creata';
-
 -- ============================================================================
 -- PASSO 3: Abilita RLS
 -- ============================================================================
 
 ALTER TABLE public.notifiche_nucleo ENABLE ROW LEVEL SECURITY;
-
-RAISE NOTICE '✅ RLS abilitato su notifiche_nucleo';
 
 -- ============================================================================
 -- PASSO 4: Crea policy RLS
@@ -86,8 +68,6 @@ CREATE POLICY "Utente elimina solo le proprie notifiche"
   ON public.notifiche_nucleo FOR DELETE
   USING (auth.uid() = user_id);
 
-RAISE NOTICE '✅ Policy RLS create';
-
 -- ============================================================================
 -- PASSO 5: Crea indici per performance
 -- ============================================================================
@@ -101,8 +81,6 @@ CREATE INDEX IF NOT EXISTS idx_notifiche_nucleo_letta
 CREATE INDEX IF NOT EXISTS idx_notifiche_nucleo_data 
   ON public.notifiche_nucleo(data_creazione DESC);
 
-RAISE NOTICE '✅ Indici creati';
-
 -- ============================================================================
 -- PASSO 6: Crea trigger per data_creazione
 -- ============================================================================
@@ -115,8 +93,6 @@ CREATE TRIGGER set_data_creazione
   BEFORE INSERT ON public.notifiche_nucleo
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
-
-RAISE NOTICE '✅ Trigger creato';
 
 -- ============================================================================
 -- PASSO 7: Verifica che tutto sia stato creato correttamente
