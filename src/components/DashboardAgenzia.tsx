@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { useNavigate } from 'react-router-dom';
 import { supabase, Agenzia } from '../lib/supabase';
-import { LogOut, FileText, User, Archive, BarChart3, Loader2 } from 'lucide-react';
+import { LogOut, FileText, User, Archive, BarChart3, Loader2, Shield } from 'lucide-react';
 import { BachecaManifestiAgenzia } from './BachecaManifestiAgenzia';
 import { ProfiloAgenzia } from './ProfiloAgenzia';
 import { ArchivioAgenzia } from './ArchivioAgenzia';
 import { BackofficeAgenzia } from './BackofficeAgenzia';
+import { ModerazionePensieri } from './ModerazionePensieri';
 
-type SezioneDashboard = 'bacheca' | 'profilo' | 'archivio' | 'backoffice';
+type SezioneDashboard = 'bacheca' | 'profilo' | 'archivio' | 'backoffice' | 'moderazione';
 
 export function DashboardAgenzia() {
   const { utente, logout } = useAuth();
@@ -186,6 +187,17 @@ function DashboardContent({
             >
               <Archive className="w-5 h-5" />
               Archivio
+            </button>
+            <button
+              onClick={() => setSezioneAttiva('moderazione')}
+              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 ${
+                sezioneAttiva === 'moderazione'
+                  ? 'border-bronze-500 text-bronze-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              Moderazione
             </button>
             <button
               onClick={() => setSezioneAttiva('backoffice')}
