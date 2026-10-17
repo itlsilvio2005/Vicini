@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { User, Building2, Mail, Lock, AlertCircle, Loader2, Flame } from 'lucide-react';
 import { validaEmail, validaFormRegistrazione, validaFormLogin } from '../lib/validazione';
 
@@ -185,19 +185,14 @@ export function LoginUnificato() {
             </button>
           </form>
 
-          {/* Toggle Login/Registrazione */}
+          {/* Link alla pagina di registrazione */}
           <div className="mt-6 text-center">
-            <button
-              onClick={() => {
-                setIsRegistrazione(!isRegistrazione);
-                setErrore('');
-              }}
+            <Link
+              to="/registrazione"
               className="text-bronze-600 hover:text-bronze-700 font-semibold link-rule"
             >
-              {isRegistrazione
-                ? 'Hai già un account? Accedi'
-                : 'Non hai un account? Registrati'}
-            </button>
+              Non hai un account? Registrati
+            </Link>
           </div>
 
           {/* Info Tipo Utente */}

@@ -35,6 +35,7 @@ import { Imprese } from "./Imprese";
 import { Luoghi } from "./Luoghi";
 import { B2C } from "./B2C";
 import { LoginUnificato } from "./components/LoginUnificato";
+import { Registrazione } from "./components/Registrazione";
 import { DashboardAgenzia } from "./components/DashboardAgenzia";
 import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
 import { PannelloNotifiche } from "./components/NotificheNucleo";
@@ -230,6 +231,7 @@ function Shell() {
           <Route path="/mappa" element={<Luoghi />} />
           <Route path="/volonta-nucleo" element={<B2C prefillAgenzia={prefill} />} />
           <Route path="/login" element={<LoginUnificato />} />
+          <Route path="/registrazione" element={<Registrazione />} />
           <Route path="/dashboard-agenzia" element={<DashboardAgenzia />} />
           <Route path="/area-privata" element={<B2C prefillAgenzia={null} />} />
           <Route
