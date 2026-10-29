@@ -38,8 +38,6 @@ export function DashboardAgenzia() {
 
     if (error || !data) {
       // Agenzia non trovata: creala automaticamente con dati di default
-      console.log('Profilo agenzia non trovato, creazione automatica...');
-      
       const { data: nuovaAgenzia, error: insertError } = await supabase
         .from('agenzie')
         .insert([{
@@ -61,7 +59,6 @@ export function DashboardAgenzia() {
       if (insertError) {
         console.error('Errore creazione agenzia:', insertError);
       } else if (nuovaAgenzia) {
-        console.log('Agenzia creata con successo:', nuovaAgenzia.id);
         setAgenzia(nuovaAgenzia);
       }
     } else {
