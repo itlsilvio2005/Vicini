@@ -24,6 +24,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Le scorciatoie demo (credenziali di prova, sessione finta in localStorage)
+// esistono SOLO in sviluppo. Vite sostituisce import.meta.env.DEV con `false`
+// nella build di produzione, quindi questo codice non finisce nel bundle.
+const DEMO_ABILITATA = import.meta.env.DEV;
+const MSG_NON_CONFIGURATO = 'Servizio non disponibile al momento. Riprova più tardi.';
+
 // ============================================================================
 // PROVIDER
 // ============================================================================
@@ -35,14 +41,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabaseAttivo) {
-      // Fallback: controlla localStorage per sessione mock
-      const mockSession = localStorage.getItem('vicini_mock_session');
-      if (mockSession) {
-        try {
-          setUtente(JSON.parse(mockSession));
-        } catch {
-          localStorage.removeItem('vicini_mock_session');
+      if (DEMO_ABILITATA) {
+        // Solo sviluppo: ripristina la sessione mock da localStorage
+        const mockSession = localStorage.getItem('vicini_mock_session');
+        if (mockSession) {
+          try {
+            setUtente(JSON.parse(mockSession));
+          } catch {
+            localStorage.removeItem('vicini_mock_session');
+          }
         }
+      } else {
+        // Produzione: nessuna sessione finta è mai valida; elimina residui
+        try { localStorage.removeItem('vicini_mock_session'); } catch { /* ignora */ }
       }
       setCaricamento(false);
       return;
@@ -99,39 +110,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function login(email: string, password: string): Promise<{ error?: string }> {
-    // Sistema demo: funziona sempre con credenziali di test
-    const credenzialiDemo = {
-      'agenzia@vicini.mo': { password: 'test123456', ruolo: 'agenzia' as const, nome: 'Agenzia Demo' },
-      'utente@vicini.mo': { password: 'test123456', ruolo: 'privato' as const, nome: 'Utente Demo' },
-    };
-
-    // Se le credenziali sono quelle demo, usa il sistema demo
-    if (credenzialiDemo[email as keyof typeof credenzialiDemo]?.password === password) {
-      const mockUser: UtenteAutenticato = {
-        id: email === 'agenzia@vicini.mo' ? 'eba41f64-3173-4c6a-974c-18069d000dc2' : '9f564219-7250-4077-a50a-ebb2f2353bad',
-        email,
-        ruolo: credenzialiDemo[email as keyof typeof credenzialiDemo].ruolo,
-        nome_completo: credenzialiDemo[email as keyof typeof credenzialiDemo].nome,
-        telefono: null,
+    if (DEMO_ABILITATA) {
+      // Solo sviluppo: credenziali di prova
+      const credenzialiDemo = {
+        'agenzia@vicini.mo': { password: 'test123456', ruolo: 'agenzia' as const, nome: 'Agenzia Demo' },
+        'utente@vicini.mo': { password: 'test123456', ruolo: 'privato' as const, nome: 'Utente Demo' },
       };
-      localStorage.setItem('vicini_mock_session', JSON.stringify(mockUser));
-      setUtente(mockUser);
-      return {};
+
+      if (credenzialiDemo[email as keyof typeof credenzialiDemo]?.password === password) {
+        const mockUser: UtenteAutenticato = {
+          id: email === 'agenzia@vicini.mo' ? 'eba41f64-3173-4c6a-974c-18069d000dc2' : '9f564219-7250-4077-a50a-ebb2f2353bad',
+          email,
+          ruolo: credenzialiDemo[email as keyof typeof credenzialiDemo].ruolo,
+          nome_completo: credenzialiDemo[email as keyof typeof credenzialiDemo].nome,
+          telefono: null,
+        };
+        localStorage.setItem('vicini_mock_session', JSON.stringify(mockUser));
+        setUtente(mockUser);
+        return {};
+      }
+
+      if (!supabaseAttivo) {
+        // Solo sviluppo, senza Supabase: accesso finto per altre credenziali
+        const mockUser: UtenteAutenticato = {
+          id: 'mock-user-id',
+          email,
+          ruolo: email.includes('agenzia') ? 'agenzia' : 'privato',
+          nome_completo: 'Utente Demo',
+          telefono: null,
+        };
+        localStorage.setItem('vicini_mock_session', JSON.stringify(mockUser));
+        setUtente(mockUser);
+        return {};
+      }
     }
 
-    if (!supabaseAttivo) {
-      // Fallback mock per altre credenziali
-      const mockUser: UtenteAutenticato = {
-        id: 'mock-user-id',
-        email,
-        ruolo: email.includes('agenzia') ? 'agenzia' : 'privato',
-        nome_completo: 'Utente Demo',
-        telefono: null,
-      };
-      localStorage.setItem('vicini_mock_session', JSON.stringify(mockUser));
-      setUtente(mockUser);
-      return {};
-    }
+    // Produzione senza Supabase configurato: rifiuta, non concedere mai accesso
+    if (!supabaseAttivo) return { error: MSG_NON_CONFIGURATO };
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
@@ -144,8 +159,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ruolo: Ruolo,
     nome?: string
   ): Promise<{ error?: string }> {
+    if (!supabaseAttivo && !DEMO_ABILITATA) return { error: MSG_NON_CONFIGURATO };
+
     if (!supabaseAttivo) {
-      // Mock signup per demo
+      // Solo sviluppo: mock signup per demo
       const mockUser: UtenteAutenticato = {
         id: 'mock-user-id-' + Date.now(),
         email,

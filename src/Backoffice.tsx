@@ -27,7 +27,15 @@ import {
   type Pratica,
 } from "./data";
 import { Badge, Modal, ModalHeader, Reveal, useToast } from "./lib";
-import { type Sessione } from "./auth";
+
+/** Sessione operatore del Backoffice (l'autenticazione reale è in ./lib/auth). */
+export interface Sessione {
+  agenziaId: string;
+  user: string;
+  token: string;
+  emessoIl: number;
+  scadeIl: number;
+}
 
 const VOCI_FATTURA = [
   { voce: "Cofano funebre e accessori", importo: 1240 },
