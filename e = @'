@@ -1,0 +1,47 @@
+[1mdiff --git a/src/App.tsx b/src/App.tsx[m
+[1mindex 1b4668f..1afac9a 100644[m
+[1m--- a/src/App.tsx[m
+[1m+++ b/src/App.tsx[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-import { useCallback, useEffect, useMemo, useState } from "react";[m
+[32m+[m[32mimport { useCallback, useEffect, useMemo, useState , lazy, Suspense } from "react";[m
+ import {[m
+   BrowserRouter,[m
+   MemoryRouter,[m
+[36m@@ -31,13 +31,13 @@[m [mimport { ErrorBoundary, ToastProvider, useToast } from "./lib";[m
+ import { AuthProvider, useAuth } from "./lib/auth";[m
+ import { HelmetProvider } from "react-helmet-async";[m
+ import { Bacheca, ManifestoDettaglio } from "./Bacheca";[m
+[31m-import { Imprese } from "./Imprese";[m
+[31m-import { Luoghi } from "./Luoghi";[m
+[31m-import { B2C } from "./B2C";[m
+[31m-import { LoginUnificato } from "./components/LoginUnificato";[m
+[31m-import { DashboardAgenzia } from "./components/DashboardAgenzia";[m
+[31m-import { GruppoChatPensieri } from "./components/GruppoChatPensieri";[m
+[31m-import { PannelloNotifiche } from "./components/NotificheNucleo";[m
+[32m+[m[32mconst Imprese = lazy(() => import("./Imprese").then(m => ({ default: m.Imprese })));[m
+[32m+[m[32mconst Luoghi = lazy(() => import("./Luoghi").then(m => ({ default: m.Luoghi })));[m
+[32m+[m[32mconst B2C = lazy(() => import("./B2C").then(m => ({ default: m.B2C })));[m
+[32m+[m[32mconst LoginUnificato = lazy(() => import("./components/LoginUnificato").then(m => ({ default: m.LoginUnificato })));[m
+[32m+[m[32mconst DashboardAgenzia = lazy(() => import("./components/DashboardAgenzia").then(m => ({ default: m.DashboardAgenzia })));[m
+[32m+[m[32mconst GruppoChatPensieri = lazy(() => import("./components/GruppoChatPensieri").then(m => ({ default: m.GruppoChatPensieri })));[m
+[32m+[m[32mconst PannelloNotifiche = lazy(() => import("./components/NotificheNucleo").then(m => ({ default: m.PannelloNotifiche })));[m
+ [m
+ const NAV = [[m
+   { to: "/bacheca", label: "Bacheca Manifesti", short: "Bacheca", icon: <ScrollText size={16} /> },[m
+[36m@@ -341,6 +341,7 @@[m [mexport default function App() {[m
+   return ([m
+     <HelmetProvider>[m
+       <ErrorBoundary>[m
+[32m+[m[32m        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-stone-500 text-sm">Caricamento...</div>}>[m
+         <AuthProvider>[m
+           <ToastProvider>[m
+             <Router>[m
+[36m@@ -348,6 +349,7 @@[m [mexport default function App() {[m
+             </Router>[m
+           </ToastProvider>[m
+         </AuthProvider>[m
+[32m+[m[32m              </Suspense>[m
+       </ErrorBoundary>[m
+     </HelmetProvider>[m
+   );[m
