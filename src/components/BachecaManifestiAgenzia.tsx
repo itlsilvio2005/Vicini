@@ -23,7 +23,6 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
     
     // Se Supabase non è configurato, usa lista vuota
     if (!isSupabaseConfigured()) {
-      console.log('Supabase non configurato, bacheca vuota');
       setCaricamento(false);
       return;
     }

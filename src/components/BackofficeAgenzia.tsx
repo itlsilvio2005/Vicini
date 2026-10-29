@@ -28,7 +28,6 @@ export function BackofficeAgenzia({ agenziaId }: Props) {
     
     // Se Supabase non è configurato, usa dati di default
     if (!isSupabaseConfigured()) {
-      console.log('Supabase non configurato, uso dati di default');
       setCaricamento(false);
       return;
     }

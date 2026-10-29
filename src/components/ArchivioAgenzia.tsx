@@ -22,7 +22,6 @@ export function ArchivioAgenzia({ agenziaId }: Props) {
     
     // Se Supabase non è configurato, usa dati vuoti
     if (!isSupabaseConfigured()) {
-      console.log('Supabase non configurato, archivio vuoto');
       setCaricamento(false);
       return;
     }
