@@ -24,7 +24,7 @@ if (supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseAnonKey === 'YOUR_SUPABASE_AN
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl || "https://placeholder-project.supabase.co", supabaseAnonKey || "placeholder-anon-key");
 
 // ============================================================================
 // TIPI DATI
