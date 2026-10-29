@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState , lazy, Suspense } from "react";
 import {
   BrowserRouter,
   MemoryRouter,
@@ -31,13 +31,13 @@ import { ErrorBoundary, ToastProvider, useToast } from "./lib";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { HelmetProvider } from "react-helmet-async";
 import { Bacheca, ManifestoDettaglio } from "./Bacheca";
-import { Imprese } from "./Imprese";
-import { Luoghi } from "./Luoghi";
-import { B2C } from "./B2C";
-import { LoginUnificato } from "./components/LoginUnificato";
-import { DashboardAgenzia } from "./components/DashboardAgenzia";
-import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
-import { PannelloNotifiche } from "./components/NotificheNucleo";
+const Imprese = lazy(() => import("./Imprese").then(m => ({ default: m.Imprese })));
+const Luoghi = lazy(() => import("./Luoghi").then(m => ({ default: m.Luoghi })));
+const B2C = lazy(() => import("./B2C").then(m => ({ default: m.B2C })));
+const LoginUnificato = lazy(() => import("./components/LoginUnificato").then(m => ({ default: m.LoginUnificato })));
+const DashboardAgenzia = lazy(() => import("./components/DashboardAgenzia").then(m => ({ default: m.DashboardAgenzia })));
+const GruppoChatPensieri = lazy(() => import("./components/GruppoChatPensieri").then(m => ({ default: m.GruppoChatPensieri })));
+const PannelloNotifiche = lazy(() => import("./components/NotificheNucleo").then(m => ({ default: m.PannelloNotifiche })));
 
 const NAV = [
   { to: "/bacheca", label: "Bacheca Manifesti", short: "Bacheca", icon: <ScrollText size={16} /> },
@@ -341,6 +341,7 @@ export default function App() {
   return (
     <HelmetProvider>
       <ErrorBoundary>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-stone-500 text-sm">Caricamento...</div>}>
         <AuthProvider>
           <ToastProvider>
             <Router>
@@ -348,6 +349,7 @@ export default function App() {
             </Router>
           </ToastProvider>
         </AuthProvider>
+              </Suspense>
       </ErrorBoundary>
     </HelmetProvider>
   );
