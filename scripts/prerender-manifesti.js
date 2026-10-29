@@ -19,13 +19,50 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configurazione Supabase
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://fufqqwlmiqlvrxcnpekk.supabase.co';
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_CKMkgCtj_ML7eRMcbw2f7A_eA6JJGJd';
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Imposta VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY nell\'ambiente prima di eseguire il prerendering.');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// I dati dei manifesti arrivano da utenti (agenzie): vanno sempre escapati
+// prima di finire nell'HTML, altrimenti un nome come  "><script>...  genera XSS.
+function esc(valore) {
+  return String(valore ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// JSON sicuro dentro <script>: impedisce di chiudere il tag con </script>
+function jsonSicuro(oggetto) {
+  return JSON.stringify(oggetto)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Template HTML per ogni manifesto
-function generaHTMLManifesto(manifesto) {
+function generaHTMLManifesto(m) {
+  const manifesto = {
+    ...m,
+    nome_defunto: esc(m.nome_defunto),
+    comune: esc(m.comune),
+    anni: esc(m.anni),
+    funerale_giorno: esc(m.funerale_giorno),
+    funerale_ora: esc(m.funerale_ora),
+    funerale_luogo: esc(m.funerale_luogo),
+  };
   const titolo = `${manifesto.nome_defunto} · Manifesto Funebre · Vicini`;
   const descrizione = `Manifesto funebre di ${manifesto.nome_defunto} (${manifesto.comune}). Funerale: ${manifesto.funerale_giorno || 'da definire'}, ore ${manifesto.funerale_ora || 'da definire'} - ${manifesto.funerale_luogo || 'luogo da definire'}.`;
   const url = `https://vicini.mo/manifesto/${manifesto.id}`;
@@ -74,7 +111,7 @@ function generaHTMLManifesto(manifesto) {
   
   <!-- Dati del manifesto per React (opzionale, per idratazione) -->
   <script id="manifesto-data" type="application/json">
-    ${JSON.stringify(manifesto)}
+    ${jsonSicuro(m)}
   </script>
 </body>
 </html>`;
@@ -109,6 +146,10 @@ async function prerenderManifesti() {
     // Genera HTML statico per ogni manifesto
     let count = 0;
     for (const manifesto of manifesti) {
+      if (!UUID_RE.test(String(manifesto.id))) {
+        console.warn(`⚠️ Manifesto saltato: id non valido (${esc(manifesto.id)})`);
+        continue;
+      }
       const html = generaHTMLManifesto(manifesto);
       const filePath = path.join(manifestiDir, `${manifesto.id}.html`);
       
