@@ -13,6 +13,7 @@ export function LoginUnificato() {
   const [nome, setNome] = useState('');
   const [isRegistrazione, setIsRegistrazione] = useState(false);
   const [errore, setErrore] = useState('');
+  const [infoRichiestaAgenzia, setInfoRichiestaAgenzia] = useState(false);
   const [caricamento, setCaricamento] = useState(false);
   
   const { login, signup } = useAuth();
@@ -21,6 +22,7 @@ export function LoginUnificato() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrore('');
+    setInfoRichiestaAgenzia(false);
     setCaricamento(true);
 
     try {
@@ -42,8 +44,14 @@ export function LoginUnificato() {
         const result = await signup(email, password, tipoUtente, nome);
         if (result.error) {
           setErrore(result.error);
+        } else if (tipoUtente === 'agenzia') {
+          // Le agenzie del territorio vengono abilitate solo dopo verifica manuale:
+          // l'account nasce come "privato" e non si entra nell'area agenzia da soli.
+          setInfoRichiestaAgenzia(true);
+          setIsRegistrazione(false);
+          setPassword('');
         } else {
-          navigate(tipoUtente === 'agenzia' ? '/area-riservata' : '/area-privata');
+          navigate('/area-privata');
         }
       } else {
         // Validazione avanzata per login
@@ -159,6 +167,17 @@ export function LoginUnificato() {
                 minLength={6}
               />
             </div>
+
+            {infoRichiestaAgenzia && (
+              <div
+                role="status"
+                className="p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-sm"
+              >
+                <strong>Richiesta ricevuta.</strong> Il tuo account agenzia sarà attivato dopo la
+                verifica da parte di Vicini. Finché non ti avvisiamo puoi accedere come utente
+                privato.
+              </div>
+            )}
 
             {errore && (
               <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">

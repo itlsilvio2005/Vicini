@@ -24,7 +24,14 @@ if (supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseAnonKey === 'YOUR_SUPABASE_AN
   );
 }
 
-export const supabase = createClient(supabaseUrl || "https://placeholder-project.supabase.co", supabaseAnonKey || "placeholder-anon-key");
+// Se le variabili d'ambiente mancano, supabaseUrl vale la stringa 'YOUR_SUPABASE_URL'
+// (truthy): un semplice `|| placeholder` non scatta mai e createClient lancia
+// "Invalid supabaseUrl" lasciando la pagina bianca. Usiamo quindi isSupabaseConfigured().
+const configurato = isSupabaseConfigured();
+export const supabase = createClient(
+  configurato ? supabaseUrl : "https://placeholder-project.supabase.co",
+  configurato ? supabaseAnonKey : "placeholder-anon-key"
+);
 
 // ============================================================================
 // TIPI DATI
