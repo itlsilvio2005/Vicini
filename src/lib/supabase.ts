@@ -37,7 +37,7 @@ export const supabase = createClient(
 // TIPI DATI
 // ============================================================================
 
-export type Ruolo = 'privato' | 'agenzia';
+export type Ruolo = 'privato' | 'agenzia' | 'admin';
 
 export interface ProfiloUtente {
   id: string;

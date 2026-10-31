@@ -37,6 +37,7 @@ const B2C = lazy(() => import("./B2C").then(m => ({ default: m.B2C })));
 const LoginUnificato = lazy(() => import("./components/LoginUnificato").then(m => ({ default: m.LoginUnificato })));
 const DashboardAgenzia = lazy(() => import("./components/DashboardAgenzia").then(m => ({ default: m.DashboardAgenzia })));
 const GruppoChatPensieri = lazy(() => import("./components/GruppoChatPensieri").then(m => ({ default: m.GruppoChatPensieri })));
+const AdminDashboard = lazy(() => import("./components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
 const PannelloNotifiche = lazy(() => import("./components/NotificheNucleo").then(m => ({ default: m.PannelloNotifiche })));
 
 const NAV = [
@@ -53,6 +54,7 @@ const TITOLI: Record<string, string> = {
   "/mappa": "Mappa & Luoghi del Territorio",
   "/volonta-nucleo": "Le Mie Volontà & Il Nucleo",
   "/area-riservata": "Area Riservata",
+  "/admin": "Amministrazione",
 };
 
 /* In alcuni iframe sandbox la History API non è disponibile:
@@ -231,13 +233,18 @@ function Shell() {
           <Route path="/volonta-nucleo" element={<B2C prefillAgenzia={prefill} />} />
           <Route path="/login" element={<LoginUnificato />} />
           <Route path="/dashboard-agenzia" element={<DashboardAgenzia />} />
-          <Route path="/area-privata" element={<B2C prefillAgenzia={null} />} />
+          <Route
+            path="/area-privata"
+            element={utente?.ruolo === "admin" ? <Navigate to="/admin" replace /> : <B2C prefillAgenzia={null} />}
+          />
           <Route
             path="/area-riservata"
             element={
               utente ? (
                 utente.ruolo === "agenzia" ? (
                   <DashboardAgenzia />
+                ) : utente.ruolo === "admin" ? (
+                  <Navigate to="/admin" replace />
                 ) : (
                   <Navigate to="/area-privata" replace />
                 )
@@ -246,6 +253,7 @@ function Shell() {
               )
             }
           />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/bacheca" replace />} />
         </Routes>
       </main>
