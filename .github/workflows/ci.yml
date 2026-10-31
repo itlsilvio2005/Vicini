@@ -1,0 +1,50 @@
+name: CI
+
+# Si avvia su ogni pull request e su ogni push a main.
+# Serve a non ripetere errori già successi: il typecheck rimasto rotto su main
+# senza che nessuno se ne accorgesse, e le credenziali demo finite nel bundle
+# di produzione.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installa le dipendenze
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build di produzione
+        run: npm run build
+
+      - name: Nessuna credenziale demo nel bundle di produzione
+        run: |
+          if grep -rlE "test123456|eba41f64-3173|9f564219-7250|agenzia@vicini\.mo" dist/assets; then
+            echo "::error::Credenziali o dati demo trovati nel bundle di produzione (vedi file sopra)."
+            exit 1
+          fi
+
+      - name: Audit dipendenze (solo high e critical)
+        run: npm audit --audit-level=high
