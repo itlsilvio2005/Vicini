@@ -299,3 +299,14 @@ export function rispondi(testoUtente: string): Risposta {
     seguiti: DOMANDE_RAPIDE.slice(0, 4),
   };
 }
+
+/* Quando chiamare l'IA: solo per domande libere. Le risposte esatte (listino,
+   agenzie per comune, saluti, crisi personale, privacy) restano locali: sono
+   gratis, immediate e senza rischio di errori. */
+const SEMPRE_LOCALI = new Set(['emergenza-persona', 'fiori', 'agenzie', 'saluto', 'grazie', 'privacy', 'sono-agenzia']);
+export function usaIntelligenzaArtificiale(testo: string, locale: Risposta): boolean {
+  if (SEMPRE_LOCALI.has(locale.id)) return false;
+  const parole = normalizza(testo).split(' ').filter(Boolean).length;
+  // Domanda breve e riconosciuta -> risposta rapida; frase lunga o non capita -> IA.
+  return locale.id === 'non-capito' || parole > 12;
+}

@@ -21,7 +21,8 @@ const CAMERE_ARDENTI_RAPIDE = [
   { etichetta: 'Abitazione', luogo: 'Abitazione privata', indirizzo: '', orari: '9:00 - 19:00' },
 ];
 
-const CIMITERI_RAPIDI = [
+type TipoCommiato = 'Tumulazione' | 'Cremazione' | 'Inumazione';
+const CIMITERI_RAPIDI: { etichetta: string; tipo: TipoCommiato; luogo: string; cimitero: string }[] = [
   { etichetta: 'Crematorio Modena', tipo: 'Cremazione', luogo: 'Tempio Crematorio di Modena', cimitero: 'Cimitero di San Cataldo (Modena)' },
   { etichetta: 'San Cataldo (Tumulazione)', tipo: 'Tumulazione', luogo: 'Cimitero Monumentale di San Cataldo', cimitero: 'San Cataldo, Modena' },
   { etichetta: 'Cimitero locale', tipo: 'Tumulazione', luogo: 'Cimitero cittadino', cimitero: 'Cimitero comunale' },
@@ -1074,7 +1075,7 @@ export function FormManifesto({
                 <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
                 <select
                   value={formData.commiato_tipo}
-                  onChange={(e) => setFormData({ ...formData, commiato_tipo: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, commiato_tipo: e.target.value as TipoCommiato })}
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm"
                 >
                   <option value="">Seleziona...</option>
