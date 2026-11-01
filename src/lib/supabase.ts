@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 
 // ============================================================================
 // CONFIGURAZIONE SUPABASE
@@ -88,6 +88,8 @@ export interface Manifesto {
   commiato_luogo: string | null;
   commiato_cimitero: string | null;
   pubblicato: boolean;
+  foto_url?: string | null;
+  immagine_manifesto_url?: string | null;
   pubblicato_il: string | null;
   created_at: string;
   updated_at: string;
@@ -170,3 +172,4 @@ export interface MembroNucleo {
 export function isSupabaseConfigured(): boolean {
   return supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY';
 }
+
