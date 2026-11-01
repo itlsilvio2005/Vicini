@@ -1,10 +1,15 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { supabase, Manifesto, isSupabaseConfigured } from '../lib/supabase';
-import { Plus, Edit2, Trash2, Eye, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import { COMUNI, RITI } from '../data';
 
 interface Props {
   agenziaId: string;
+}
+
+export interface OpzioneAgenzia {
+  id: string;
+  nome: string;
 }
 
 export function BachecaManifestiAgenzia({ agenziaId }: Props) {
@@ -20,8 +25,6 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
 
   const caricaManifesti = async () => {
     setErrore(null);
-    
-    // Se Supabase non è configurato, usa lista vuota
     if (!isSupabaseConfigured()) {
       setCaricamento(false);
       return;
@@ -34,11 +37,7 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
         .eq('agenzia_id', agenziaId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Errore caricamento manifesti:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       setManifesti(data || []);
     } catch (err) {
       console.error('Errore caricamento bacheca:', err);
@@ -50,9 +49,7 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
 
   const handleElimina = async (id: string) => {
     if (!confirm('Sei sicuro di voler eliminare questo manifesto?')) return;
-
     const { error } = await supabase.from('manifesti').delete().eq('id', id);
-
     if (error) {
       alert('Errore durante l\'eliminazione');
     } else {
@@ -69,7 +66,7 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
     if (error) {
       alert('Errore durante l\'aggiornamento');
     } else {
-      setManifesti(manifesti.map(m => 
+      setManifesti(manifesti.map(m =>
         m.id === id ? { ...m, pubblicato: !pubblicato } : m
       ));
     }
@@ -105,7 +102,6 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Bacheca Manifesti</h2>
         <button
@@ -120,7 +116,6 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
         </button>
       </div>
 
-      {/* Lista Manifesti */}
       {manifesti.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm p-12 text-center">
           <p className="text-gray-500 mb-4">Nessun manifesto creato</p>
@@ -170,7 +165,7 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
                   </button>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500">Data Morte</p>
@@ -197,7 +192,6 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
         </div>
       )}
 
-      {/* Form Creazione/Modifica */}
       {mostraForm && (
         <FormManifesto
           agenziaId={agenziaId}
@@ -217,21 +211,25 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
   );
 }
 
-// Form per creazione/modifica manifesto
-function FormManifesto({
+export function FormManifesto({
   agenziaId,
+  agenzieDisponibili,
   manifesto,
   onSalvato,
   onAnnullato,
 }: {
   agenziaId: string;
+  agenzieDisponibili?: OpzioneAgenzia[];
   manifesto: Manifesto | null;
   onSalvato: () => void;
   onAnnullato: () => void;
 }) {
   const [caricamento, setCaricamento] = useState(false);
   const [errore, setErrore] = useState('');
-  
+  const [agenziaSelezionata, setAgenziaSelezionata] = useState(
+    manifesto?.agenzia_id || agenziaId || (agenzieDisponibili?.[0]?.id ?? '')
+  );
+
   const [formData, setFormData] = useState({
     nome_defunto: manifesto?.nome_defunto || '',
     anni: manifesto?.anni || '',
@@ -256,25 +254,27 @@ function FormManifesto({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agenziaSelezionata) {
+      setErrore('Seleziona un\'agenzia a cui associare il manifesto.');
+      return;
+    }
     setCaricamento(true);
     setErrore('');
 
     const datiManifesto = {
       ...formData,
-      agenzia_id: agenziaId,
+      agenzia_id: agenziaSelezionata,
       anni: formData.anni ? parseInt(formData.anni as string) : null,
     };
 
     let error;
     if (manifesto) {
-      // Aggiorna
       const result = await supabase
         .from('manifesti')
         .update(datiManifesto)
         .eq('id', manifesto.id);
       error = result.error;
     } else {
-      // Crea
       const result = await supabase
         .from('manifesti')
         .insert([datiManifesto]);
@@ -309,6 +309,26 @@ function FormManifesto({
             <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
               <AlertCircle className="w-5 h-5" />
               <span>{errore}</span>
+            </div>
+          )}
+
+          {agenzieDisponibili && agenzieDisponibili.length > 0 && (
+            <div className="rounded-xl border border-bronze-300 bg-amber-50/50 p-4">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Agenzia di riferimento *
+              </label>
+              <select
+                value={agenziaSelezionata}
+                onChange={(e) => setAgenziaSelezionata(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-bronze-500"
+                required
+              >
+                {agenzieDisponibili.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nome}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -600,3 +620,4 @@ function FormManifesto({
     </div>
   );
 }
+

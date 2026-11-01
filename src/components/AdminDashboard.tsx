@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { Navigate } from 'react-router-dom';
-import { Loader2, AlertCircle, ScrollText, MessageCircle, Flower2, Building2, Check, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle, ScrollText, MessageCircle, Flower2, Building2, Check, RefreshCw, Plus } from 'lucide-react';
+import { FormManifesto, BachecaManifestiAgenzia } from './BachecaManifestiAgenzia';
 
 type Periodo = 1 | 7 | 30;
 const PERIODI: { giorni: Periodo; etichetta: string; testo: string }[] = [
@@ -56,6 +57,9 @@ export function AdminDashboard() {
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState('');
   const [inApprovazione, setInApprovazione] = useState<string | null>(null);
+  const [mostraFormManifesto, setMostraFormManifesto] = useState(false);
+  const [agenziaPerManifesto, setAgenziaPerManifesto] = useState<string>('');
+  const [agenziaGestioneManifesti, setAgenziaGestioneManifesti] = useState<string | null>(null);
 
   const carica = useCallback(async () => {
     setCaricamento(true);
@@ -67,11 +71,15 @@ export function AdminDashboard() {
     if (a.error || r.error) {
       setErrore('Non riesco a caricare i dati. Controlla di aver applicato lo script SQL admin su Supabase.');
     } else {
-      setRighe((a.data ?? []) as RigaAgenzia[]);
+      const lista = (a.data ?? []) as RigaAgenzia[];
+      setRighe(lista);
       setRichieste((r.data ?? []) as Richiesta[]);
+      if (lista.length > 0 && !agenziaPerManifesto) {
+        setAgenziaPerManifesto(lista[0].agenzia_id);
+      }
     }
     setCaricamento(false);
-  }, [periodo]);
+  }, [periodo, agenziaPerManifesto]);
 
   useEffect(() => {
     if (utente?.ruolo === 'admin') carica();
@@ -98,12 +106,25 @@ export function AdminDashboard() {
         <h1 className="font-display text-3xl font-semibold text-ink">
           Andamento <span className="text-bronze-600">agenzie</span>
         </h1>
-        <button
-          onClick={carica}
-          className="flex items-center gap-2 rounded-md border border-line bg-card px-3 py-2 text-sm font-semibold text-ink-soft hover:border-bronze-500"
-        >
-          <RefreshCw className={`h-4 w-4 ${caricamento ? 'animate-spin' : ''}`} /> Aggiorna
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {righe.length > 0 && (
+            <button
+              onClick={() => {
+                setAgenziaPerManifesto(righe[0].agenzia_id);
+                setMostraFormManifesto(true);
+              }}
+              className="flex items-center gap-2 rounded-md bg-bronze-500 px-3.5 py-2 text-sm font-bold text-night-950 shadow-sm hover:bg-bronze-400"
+            >
+              <Plus className="h-4 w-4" /> Nuovo Manifesto
+            </button>
+          )}
+          <button
+            onClick={carica}
+            className="flex items-center gap-2 rounded-md border border-line bg-card px-3 py-2 text-sm font-semibold text-ink-soft hover:border-bronze-500"
+          >
+            <RefreshCw className={`h-4 w-4 ${caricamento ? 'animate-spin' : ''}`} /> Aggiorna
+          </button>
+        </div>
       </div>
 
       <div role="tablist" className="mb-5 inline-flex rounded-xl border border-line bg-card p-1 shadow-sm">
@@ -189,11 +210,55 @@ export function AdminDashboard() {
                 <div><dt className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">Importo</dt><dd className="text-lg font-semibold text-ink">{euro(r.importo_ordini_periodo)}</dd></div>
                 <div><dt className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">Ultimo manifesto</dt><dd className="text-lg font-semibold text-ink">{data(r.ultimo_manifesto)}</dd></div>
               </dl>
-              <p className="mt-2 text-xs text-ink-faint">Manifesti totali: {r.manifesti_totali}</p>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
+                <p className="text-xs text-ink-faint">Manifesti totali: {r.manifesti_totali}</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => {
+                      setAgenziaPerManifesto(r.agenzia_id);
+                      setMostraFormManifesto(true);
+                    }}
+                    className="flex items-center gap-1.5 rounded-md bg-bronze-500 px-3 py-1.5 text-xs font-bold text-night-950 hover:bg-bronze-400"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Aggiungi manifesto
+                  </button>
+                  <button
+                    onClick={() =>
+                      setAgenziaGestioneManifesti(
+                        agenziaGestioneManifesti === r.agenzia_id ? null : r.agenzia_id
+                      )
+                    }
+                    className="flex items-center gap-1.5 rounded-md border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink-soft hover:border-bronze-500"
+                  >
+                    <ScrollText className="h-3.5 w-3.5" />
+                    {agenziaGestioneManifesti === r.agenzia_id ? 'Chiudi elenco' : 'Gestisci manifesti'}
+                  </button>
+                </div>
+              </div>
+
+              {agenziaGestioneManifesti === r.agenzia_id && (
+                <div className="mt-4 border-t border-line pt-4">
+                  <BachecaManifestiAgenzia agenziaId={r.agenzia_id} />
+                </div>
+              )}
             </li>
           ))}
         </ul>
       )}
+
+      {mostraFormManifesto && (
+        <FormManifesto
+          agenziaId={agenziaPerManifesto}
+          agenzieDisponibili={righe.map((r) => ({ id: r.agenzia_id, nome: r.nome }))}
+          manifesto={null}
+          onSalvato={() => {
+            setMostraFormManifesto(false);
+            carica();
+          }}
+          onAnnullato={() => setMostraFormManifesto(false)}
+        />
+      )}
     </div>
   );
 }
+
