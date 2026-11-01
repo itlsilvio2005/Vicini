@@ -38,6 +38,7 @@ const LoginUnificato = lazy(() => import("./components/LoginUnificato").then(m =
 const DashboardAgenzia = lazy(() => import("./components/DashboardAgenzia").then(m => ({ default: m.DashboardAgenzia })));
 const GruppoChatPensieri = lazy(() => import("./components/GruppoChatPensieri").then(m => ({ default: m.GruppoChatPensieri })));
 const AdminDashboard = lazy(() => import("./components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
+const AssistenteVicini = lazy(() => import("./components/AssistenteVicini").then(m => ({ default: m.AssistenteVicini })));
 const PannelloNotifiche = lazy(() => import("./components/NotificheNucleo").then(m => ({ default: m.PannelloNotifiche })));
 
 const NAV = [
@@ -257,6 +258,10 @@ function Shell() {
           <Route path="*" element={<Navigate to="/bacheca" replace />} />
         </Routes>
       </main>
+
+      <Suspense fallback={null}>
+        <AssistenteVicini />
+      </Suspense>
 
       {/* ---------- Footer persistente ---------- */}
       <footer className="border-t-2 border-bronze-600 bg-night-950 text-mist">
