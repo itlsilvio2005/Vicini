@@ -149,8 +149,7 @@ export function AssistenteVicini() {
           {!consensoIA && isSupabaseConfigured() && (
             <div className="border-t border-line-soft bg-paper px-3 py-2 text-xs text-ink-soft">
               <p>
-                Per rispondere a domande libere posso usare un assistente con intelligenza artificiale (servizio
-                esterno: Anthropic). In quel caso le tue domande vengono inviate a quel servizio. Non scrivere
+                Per rispondere a domande libere posso usare un assistente con intelligenza artificiale (servizio di intelligenza artificiale esterno). In quel caso le tue domande vengono inviate a quel servizio. Non scrivere
                 nomi, indirizzi o altri dati personali.
               </p>
               <button
