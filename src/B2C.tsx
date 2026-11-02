@@ -22,6 +22,11 @@ import {
   Send,
   HeartHandshake,
   Ban,
+  KeyRound,
+  Copy,
+  Check,
+  Share2,
+  UserCheck,
 } from "lucide-react";
 import {
   AGENZIE,
@@ -47,6 +52,8 @@ interface Membro {
   relazione: string;
   comune: Comune;
   contatto: string;
+  annoNascita?: number | null;
+  codiceCollegato?: string | null;
 }
 
 interface VolontaSalvata {
@@ -64,15 +71,28 @@ interface VolontaSalvata {
 
 const RELAZIONI = ["Coniuge", "Figlio/a", "Genitore", "Fratello/Sorella", "Nipote", "Compagno/a", "Amico/a stretto", "Altro"];
 const MEMBRI_INIZIALI: Membro[] = [
-  { id: "n1", nome: "Lina Bonetti ved. Malagoli", relazione: "Genitore", comune: "Nonantola", contatto: "marco.malagoli@gmail.com" },
+  { id: "n1", nome: "Lina Bonetti ved. Malagoli", relazione: "Genitore", comune: "Nonantola", contatto: "marco.malagoli@gmail.com", annoNascita: 1942 },
 ];
 
-/** Salvataggio locale sicuro: in anteprime sandbox localStorage può essere inaccessibile. */
 function saveLS(key: string, value: unknown) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    /* ignora: i dati restano comunque nello stato dell'app */
+    /* ignora */
+  }
+}
+
+function generaCodiceLocale(): string {
+  try {
+    const esistente = localStorage.getItem("vicini_mio_codice_nucleo");
+    if (esistente) return esistente;
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const pick = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    const nuovo = `VCN-${pick(4)}-${pick(2)}`;
+    localStorage.setItem("vicini_mio_codice_nucleo", nuovo);
+    return nuovo;
+  } catch {
+    return "VCN-8492-MO";
   }
 }
 
@@ -93,12 +113,12 @@ export function B2C({ prefillAgenzia }: { prefillAgenzia: { id: string; ts: numb
             Le Mie Volontà <em className="italic text-bronze-300">&amp; Il Nucleo</em>
           </>
         }
-        sub="Due strumenti riservati: registra come desideri sia organizzato il tuo funerale e proteggi i tuoi cari con notifiche automatiche sui nuovi manifesti. Nessun dato è pubblico."
+        sub="Due strumenti riservati: registra come desideri sia organizzato il tuo funerale e gestisci il tuo Elenco Nucleo tramite Codice Personale o inserimento diretto per ricevere avvisi tempestivi sui nuovi manifesti."
         meta={
           <>
-            <span>Registrazione riservata e revocabile</span>
+            <span>Codice ID personale univoco</span>
             <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
-            <span>Notifiche automatiche GDPR-compliant</span>
+            <span>Notifiche automatiche H24 GDPR-compliant</span>
           </>
         }
       />
@@ -140,39 +160,32 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [riepilogo, setRiepilogo] = useState<VolontaSalvata | null>(null);
   const [salvata, setSalvata] = useState<VolontaSalvata | null>(null);
-  const [caricamento, setCaricamento] = useState(true);
 
-  // Carica volontà da Supabase o localStorage all'avvio
   useEffect(() => {
     const caricaVolonta = async () => {
       if (isSupabaseConfigured() && utente) {
-        // Carica da Supabase
         const { data, error } = await supabase
-          .from('volonta')
-          .select('*')
-          .eq('user_id', utente.id)
+          .from("volonta")
+          .select("*")
+          .eq("user_id", utente.id)
           .single();
 
         if (data && !error) {
           const v: VolontaSalvata = {
             nome: utente.nome_completo || utente.email,
             email: utente.email,
-            agenzia: data.agenzia_id || '',
+            agenzia: data.agenzia_id || "",
             rito: data.rito as Rito,
-            destinazione: data.destinazione || '',
-            trasporto: data.trasporto_fuori_comune ? {
-              comune: data.trasporto_comune || '',
-              citta: data.trasporto_citta || ''
-            } : undefined,
-            rimpatrio: data.rimpatrio_estero ? {
-              paese: data.rimpatrio_paese || ''
-            } : undefined,
+            destinazione: data.destinazione || "",
+            trasporto: data.trasporto_fuori_comune
+              ? { comune: data.trasporto_comune || "", citta: data.trasporto_citta || "" }
+              : undefined,
+            rimpatrio: data.rimpatrio_estero ? { paese: data.rimpatrio_paese || "" } : undefined,
             ritoDettagli: data.dettagli_rito ? Object.values(data.dettagli_rito) : undefined,
             note: data.note || undefined,
-            salvataIl: new Date(data.updated_at).toLocaleDateString('it-IT'),
+            salvataIl: new Date(data.updated_at).toLocaleDateString("it-IT"),
           };
           setSalvata(v);
-          // Popola i campi del form
           setNome(v.nome);
           setEmail(v.email);
           setAgenzia(v.agenzia);
@@ -190,7 +203,6 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           if (v.note) setNote(v.note);
         }
       } else {
-        // Fallback: carica da localStorage
         try {
           const raw = localStorage.getItem("vicini_volonta_v2");
           if (raw) {
@@ -216,7 +228,6 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           // ignora
         }
       }
-      setCaricamento(false);
     };
 
     caricaVolonta();
@@ -280,29 +291,29 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
       salvataIl: new Date().toLocaleDateString("it-IT"),
     };
 
-    // Salva su Supabase se configurato e utente autenticato
     if (isSupabaseConfigured() && utente) {
-      const { error } = await supabase.from('volonta').upsert([{
-        user_id: utente.id,
-        agenzia_id: agenzia,
-        rito: rito as string,
-        destinazione,
-        trasporto_fuori_comune: trasportoOn,
-        trasporto_comune: trasportoOn ? tComune.trim() : null,
-        trasporto_citta: trasportoOn ? tCitta.trim() : null,
-        rimpatrio_estero: rimpatrioOn,
-        rimpatrio_paese: rimpatrioOn ? paese : null,
-        dettagli_rito: dettagli.length ? dettagli : null,
-        note: note.trim() || null,
-      }]);
+      const { error } = await supabase.from("volonta").upsert([
+        {
+          user_id: utente.id,
+          agenzia_id: agenzia,
+          rito: rito as string,
+          destinazione,
+          trasporto_fuori_comune: trasportoOn,
+          trasporto_comune: trasportoOn ? tComune.trim() : null,
+          trasporto_citta: trasportoOn ? tCitta.trim() : null,
+          rimpatrio_estero: rimpatrioOn,
+          rimpatrio_paese: rimpatrioOn ? paese : null,
+          dettagli_rito: dettagli.length ? dettagli : null,
+          note: note.trim() || null,
+        },
+      ]);
 
       if (error) {
-        console.error('Errore salvataggio volontà:', error);
+        console.error("Errore salvataggio volontà:", error);
         toast("Errore nel salvataggio. Riprova.", "info");
         return;
       }
     } else {
-      // Fallback: salva su localStorage
       saveLS("vicini_volonta_v2", v);
     }
 
@@ -333,7 +344,6 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           </Field>
         </div>
 
-        {/* Agenzia di fiducia */}
         <div className="mt-6">
           <Field label="Agenzia di fiducia" required error={errors.agenzia} hint="dall'elenco «Le imprese del luogo»">
             <select value={agenzia} onChange={(e) => setAgenzia(e.target.value)} className={inputCls(!!errors.agenzia)}>
@@ -355,7 +365,6 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           )}
         </div>
 
-        {/* Trasporto fuori comune */}
         <div className="mt-6 rounded-lg border border-line bg-paper p-4 sm:p-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -381,7 +390,6 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           )}
         </div>
 
-        {/* Rimpatrio salma all'estero — universale */}
         <div className={`mt-4 rounded-lg border p-4 sm:p-5 transition-colors ${rimpatrioOn ? "border-bronze-500 bg-bronze-300/10" : "border-line bg-paper"}`}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -416,7 +424,6 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           )}
         </div>
 
-        {/* Rito */}
         <div className="mt-6">
           <Field label="Selezione del rito" required error={errors.rito}>
             <select value={rito} onChange={(e) => setRito(e.target.value as Rito)} className={inputCls(!!errors.rito)}>
@@ -428,7 +435,6 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           </Field>
         </div>
 
-        {/* campi condizionali per rito */}
         {rito === "Cattolico" && (
           <div className="anim-fade mt-5 rounded-lg border border-line bg-paper p-5">
             <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-bronze-700">
@@ -545,21 +551,19 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           </fieldset>
         )}
 
-        {/* Destinazione finale */}
         {rito && (
           <div className="anim-fade mt-5">
             <Field label="Destinazione finale" required error={errors.destinazione}>
               <select value={destinazione} onChange={(e) => setDestinazione(e.target.value)} className={inputCls(!!errors.destinazione)}>
                 <option value="">— Seleziona —</option>
                 {DESTINAZIONI.filter((d) => !(ortodosso && d === "Cremazione")).map((d) => (
-                  <option key={d} value={d}>{d}{ortodosso && d === "Cremazione" ? " (non consentita)" : ""}</option>
+                  <option key={d} value={d}>{d}</option>
                 ))}
               </select>
             </Field>
           </div>
         )}
 
-        {/* Abbigliamento / Musica / Allestimenti — nascosti se rimpatrio attivo */}
         {!rimpatrioOn && (
           <div className="anim-fade mt-6">
             <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-faint">
@@ -625,7 +629,6 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
         )}
       </form>
 
-      {/* modale riepilogo */}
       <Modal open={!!riepilogo} onClose={() => setRiepilogo(null)} labelledBy="volonta-title">
         {riepilogo && (
           <>
@@ -676,169 +679,336 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
   );
 }
 
-/* ================= IL NUCLEO ================= */
+/* ================= IL NUCLEO (CON CODICE PERSONALE + ELENCO IBRIDO) ================= */
 
 function Nucleo() {
   const toast = useToast();
   const { utente } = useAuth();
+  const [mioCodice, setMioCodice] = useState<string>("");
+  const [copiato, setCopiato] = useState(false);
+
   const [membri, setMembri] = useState<Membro[]>([]);
+  const [modalita, setModalita] = useState<"codice" | "manuale">("codice");
+
+  // Campi form
+  const [codiceInput, setCodiceInput] = useState("");
   const [nome, setNome] = useState("");
+  const [annoNascita, setAnnoNascita] = useState("");
   const [relazione, setRelazione] = useState("");
   const [comune, setComune] = useState<Comune | "">("");
   const [contatto, setContatto] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [caricamento, setCaricamento] = useState(true);
 
-  // Carica membri da Supabase o localStorage all'avvio
+  // Carica il Codice ID personale e l'Elenco Nucleo
   useEffect(() => {
-    const caricaMembri = async () => {
+    const inizializzaNucleo = async () => {
       if (isSupabaseConfigured() && utente) {
-        // Carica da Supabase
+        // 1. Ottiene o genera il Codice ID univoco su Supabase
+        const { data: cod } = await supabase.rpc("ottieni_mio_codice_nucleo", {
+          p_nome: utente.nome_completo || utente.email,
+        });
+        setMioCodice(cod || generaCodiceLocale());
+
+        // 2. Carica l'Elenco Nucleo dell'utente
         const { data, error } = await supabase
-          .from('nucleo')
-          .select('*')
-          .eq('user_id', utente.id)
-          .order('created_at', { ascending: false });
+          .from("nucleo")
+          .select("*")
+          .eq("user_id", utente.id)
+          .order("created_at", { ascending: false });
 
         if (data && !error) {
-          setMembri(data.map(m => ({
-            id: m.id,
-            nome: m.nome,
-            relazione: m.relazione,
-            comune: m.comune as Comune,
-            contatto: m.contatto,
-          })));
+          setMembri(
+            data.map((m) => ({
+              id: m.id,
+              nome: m.nome,
+              relazione: m.relazione,
+              comune: m.comune as Comune,
+              contatto: m.contatto,
+              annoNascita: m.anno_nascita ?? null,
+              codiceCollegato: m.codice_collegato ?? null,
+            }))
+          );
         }
       } else {
-        // Fallback: carica da localStorage
+        setMioCodice(generaCodiceLocale());
         try {
           const raw = localStorage.getItem("vicini_nucleo_v2");
-          if (raw) {
-            setMembri(JSON.parse(raw) as Membro[]);
-          } else {
-            setMembri(MEMBRI_INIZIALI);
-          }
+          setMembri(raw ? (JSON.parse(raw) as Membro[]) : MEMBRI_INIZIALI);
         } catch {
           setMembri(MEMBRI_INIZIALI);
         }
       }
-      setCaricamento(false);
     };
 
-    caricaMembri();
+    inizializzaNucleo();
   }, [utente]);
 
-  // Salva su localStorage come fallback
   useEffect(() => {
     if (!isSupabaseConfigured() || !utente) {
       saveLS("vicini_nucleo_v2", membri);
     }
   }, [membri, utente]);
 
+  const copiaCodice = async () => {
+    if (!mioCodice) return;
+    try {
+      await navigator.clipboard.writeText(mioCodice);
+      setCopiato(true);
+      toast("Codice Personale copiato negli appunti.");
+      setTimeout(() => setCopiato(false), 2500);
+    } catch {
+      toast(`Il tuo codice è ${mioCodice}`, "info");
+    }
+  };
+
+  const condividiWhatsApp = () => {
+    const testo = `Ciao, questo è il mio Codice Personale su Vicini: *${mioCodice}*. Puoi inserirlo nella tua sezione "Il Nucleo" per collegarci.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank", "noopener,noreferrer");
+  };
+
   const aggiungi = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
-    if (nome.trim().length < 3) errs.nome = "Inserisci nome e cognome del tuo caro.";
-    if (!relazione) errs.relazione = "Seleziona il grado di parentela.";
-    if (!comune) errs.comune = "Seleziona il comune di residenza.";
-    if (contatto.trim().length < 5) errs.contatto = "Indica un'email o un numero di telefono.";
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
 
-    const nuovoMembro = {
+    let nomeFinale = nome.trim();
+    let comuneFinale = comune as Comune;
+    let annoFinale = annoNascita ? Number(annoNascita) : null;
+    let codiceFinale: string | null = null;
+    let collegatoUserId: string | null = null;
+
+    if (modalita === "codice") {
+      const cPulito = codiceInput.trim().toUpperCase();
+      if (!/^VCN-[A-Z0-9]{4}-[A-Z0-9]{2}$/.test(cPulito)) {
+        errs.codiceInput = "Inserisci un codice valido nel formato VCN-XXXX-XX.";
+      } else if (cPulito === mioCodice) {
+        errs.codiceInput = "Non puoi inserire il tuo stesso codice personale.";
+      } else if (membri.some((m) => m.codiceCollegato === cPulito)) {
+        errs.codiceInput = "Questa persona è già presente nel tuo Elenco Nucleo.";
+      }
+
+      if (!relazione) errs.relazione = "Seleziona il grado di parentela o legame.";
+      if (contatto.trim().length < 5) errs.contatto = "Indica la tua email o telefono per ricevere gli avvisi.";
+
+      if (Object.keys(errs).length > 0) {
+        setErrors(errs);
+        return;
+      }
+
+      codiceFinale = cPulito;
+
+      // Cerca il codice su Supabase se attivo
+      if (isSupabaseConfigured() && utente) {
+        const { data: trovato } = await supabase.rpc("cerca_codice_nucleo", { p_codice: cPulito });
+        const profilo = Array.isArray(trovato) ? trovato[0] : null;
+        if (!profilo && !nomeFinale) {
+          setErrors({
+            codiceInput: "Codice non trovato o non ancora attivato. Verifica il codice o inserisci anche il nome qui sotto.",
+          });
+          return;
+        }
+        if (profilo) {
+          nomeFinale = profilo.nome_completo || nomeFinale || `Utente ${cPulito}`;
+          comuneFinale = (profilo.comune as Comune) || (comune as Comune) || "Modena";
+          annoFinale = profilo.anno_nascita || annoFinale;
+          collegatoUserId = profilo.user_id;
+        }
+      } else if (!nomeFinale) {
+        setErrors({ nome: "In modalità demo indica anche il nome e cognome del caro." });
+        return;
+      }
+    } else {
+      if (nomeFinale.length < 3) errs.nome = "Inserisci nome e cognome del tuo caro.";
+      if (!relazione) errs.relazione = "Seleziona il grado di parentela.";
+      if (!comune) errs.comune = "Seleziona il comune di residenza.";
+      if (annoFinale && (annoFinale < 1900 || annoFinale > new Date().getFullYear())) {
+        errs.annoNascita = "Inserisci un anno di nascita valido (es. 1945).";
+      }
+      if (contatto.trim().length < 5) errs.contatto = "Indica un'email o un numero di telefono.";
+      setErrors(errs);
+      if (Object.keys(errs).length > 0) return;
+    }
+
+    setErrors({});
+
+    const nuovoMembro: Membro = {
       id: `n-${Date.now()}`,
-      nome: nome.trim(),
+      nome: nomeFinale,
       relazione,
-      comune: comune as Comune,
+      comune: (comuneFinale || "Modena") as Comune,
       contatto: contatto.trim(),
+      annoNascita: annoFinale,
+      codiceCollegato: codiceFinale,
     };
 
-    // Salva su Supabase se configurato e utente autenticato
     if (isSupabaseConfigured() && utente) {
-      const { data, error } = await supabase.from('nucleo').insert([{
-        user_id: utente.id,
-        nome: nuovoMembro.nome,
-        relazione: nuovoMembro.relazione,
-        comune: nuovoMembro.comune,
-        contatto: nuovoMembro.contatto,
-      }]).select().single();
+      const { data, error } = await supabase
+        .from("nucleo")
+        .insert([
+          {
+            user_id: utente.id,
+            nome: nuovoMembro.nome,
+            relazione: nuovoMembro.relazione,
+            comune: nuovoMembro.comune,
+            contatto: nuovoMembro.contatto,
+            anno_nascita: nuovoMembro.annoNascita,
+            codice_collegato: nuovoMembro.codiceCollegato,
+            collegato_user_id: collegatoUserId,
+          },
+        ])
+        .select()
+        .single();
 
       if (error) {
-        console.error('Errore salvataggio membro:', error);
+        console.error("Errore salvataggio membro:", error);
         toast("Errore nel salvataggio. Riprova.", "info");
         return;
       }
 
       if (data) {
-        setMembri((m) => [...m, {
-          id: data.id,
-          nome: data.nome,
-          relazione: data.relazione,
-          comune: data.comune as Comune,
-          contatto: data.contatto,
-        }]);
+        setMembri((m) => [
+          {
+            id: data.id,
+            nome: data.nome,
+            relazione: data.relazione,
+            comune: data.comune as Comune,
+            contatto: data.contatto,
+            annoNascita: data.anno_nascita,
+            codiceCollegato: data.codice_collegato,
+          },
+          ...m,
+        ]);
       }
     } else {
-      // Fallback: salva in memoria
-      setMembri((m) => [...m, nuovoMembro]);
+      setMembri((m) => [nuovoMembro, ...m]);
     }
 
-    toast(`${nome.trim()} aggiunto al tuo Nucleo: le notifiche sono attive.`);
-    setNome(""); setRelazione(""); setComune(""); setContatto("");
+    toast(`${nuovoMembro.nome} aggiunto al tuo Elenco Nucleo.`);
+    setCodiceInput("");
+    setNome("");
+    setAnnoNascita("");
+    setRelazione("");
+    setComune("");
   };
 
   const rimuovi = async (id: string) => {
     const m = membri.find((x) => x.id === id);
 
-    // Elimina da Supabase se configurato e utente autenticato
     if (isSupabaseConfigured() && utente) {
-      const { error } = await supabase.from('nucleo').delete().eq('id', id);
-
+      const { error } = await supabase.from("nucleo").delete().eq("id", id);
       if (error) {
-        console.error('Errore eliminazione membro:', error);
         toast("Errore nell'eliminazione. Riprova.", "info");
         return;
       }
     }
 
     setMembri((list) => list.filter((x) => x.id !== id));
-    if (m) toast(`${m.nome} rimosso dal Nucleo.`, "info");
+    if (m) toast(`${m.nome} rimosso dall'Elenco Nucleo.`, "info");
   };
 
   return (
     <div className="space-y-6">
-      <Reveal delay={100}>
-        <div className="rounded-xl border border-line bg-card p-6 sm:p-7">
-          <div className="flex items-center gap-3 border-b border-line-soft pb-5">
-            <span className="grid h-11 w-11 place-items-center rounded-lg border border-bronze-500/50 bg-night-900 text-bronze-400">
-              <Users size={19} />
-            </span>
-            <div>
-              <h3 className="font-display text-2xl font-semibold text-ink sm:text-3xl">Il Nucleo</h3>
-              <p className="text-[12.5px] text-ink-faint">Notifiche automatiche sui nuovi manifesti dei tuoi cari</p>
+      {/* CARD 1: CODICE ID PERSONALE DA CONDIVIDERE */}
+      <Reveal delay={60}>
+        <div className="rounded-xl border border-bronze-500/50 bg-night-900 p-6 text-paper shadow-md sm:p-7">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-bronze-500/60 bg-night-800 text-bronze-300">
+                <KeyRound size={18} />
+              </span>
+              <div>
+                <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-bronze-300">
+                  Il tuo Codice ID Personale
+                </p>
+                <h4 className="font-display text-xl font-semibold text-paper">Fatti aggiungere al Nucleo</h4>
+              </div>
             </div>
           </div>
 
-          {/* membri */}
+          <p className="mt-3 text-[12.5px] leading-relaxed text-mist">
+            Invia questo codice alle persone a te più care: inserendolo nel loro Nucleo, sarete collegati in modo
+            diretto e sicuro senza errori di omonimia.
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-night-600 bg-night-800 px-4 py-3">
+            <span className="font-mono text-lg font-bold tracking-widest text-bronze-300">
+              {mioCodice || "VCN-••••-••"}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={copiaCodice}
+                className="flex items-center gap-1.5 rounded-md border border-night-600 bg-night-900 px-3 py-1.5 text-xs font-semibold text-paper transition hover:border-bronze-400"
+              >
+                {copiato ? <Check size={13} className="text-green-400" /> : <Copy size={13} className="text-bronze-300" />}
+                {copiato ? "Copiato" : "Copia"}
+              </button>
+              <button
+                type="button"
+                onClick={condividiWhatsApp}
+                className="flex items-center gap-1.5 rounded-md bg-bronze-500 px-3 py-1.5 text-xs font-bold text-night-950 transition hover:bg-bronze-400"
+              >
+                <Share2 size={13} /> Invia ai tuoi cari
+              </button>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+
+      {/* CARD 2: ELENCO NUCLEO + AGGIUNTA IBRIDA */}
+      <Reveal delay={120}>
+        <div className="rounded-xl border border-line bg-card p-6 sm:p-7">
+          <div className="flex items-center justify-between gap-3 border-b border-line-soft pb-5">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 place-items-center rounded-lg border border-bronze-500/50 bg-night-900 text-bronze-400">
+                <Users size={19} />
+              </span>
+              <div>
+                <h3 className="font-display text-2xl font-semibold text-ink sm:text-3xl">Elenco Nucleo</h3>
+                <p className="text-[12.5px] text-ink-faint">
+                  Persone care collegate e avvisi automatici sui manifesti
+                </p>
+              </div>
+            </div>
+            <Badge tone="bronze">{membri.length} {membri.length === 1 ? "caro" : "cari"}</Badge>
+          </div>
+
+          {/* Lista persone care */}
           <ul className="mt-5 space-y-3">
             {membri.length === 0 && (
               <li className="rounded-md border border-dashed border-line bg-paper p-4 text-[13px] italic text-ink-faint">
-                Nessun caro registrato: aggiungi il primo dal modulo qui sotto.
+                Il tuo Elenco Nucleo è vuoto: aggiungi un familiare tramite il suo Codice ID o inseriscilo manualmente.
               </li>
             )}
             {membri.map((m) => (
-              <li key={m.id} className="group flex items-center gap-3.5 rounded-lg border border-line-soft bg-paper px-4 py-3 transition hover:border-bronze-500/70">
+              <li
+                key={m.id}
+                className="group flex items-center gap-3.5 rounded-lg border border-line-soft bg-paper px-4 py-3 transition hover:border-bronze-500/70"
+              >
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-bronze-500/60 bg-night-900 font-display text-sm font-semibold text-bronze-300">
-                  {m.nome.split(/\s+/).filter((w) => w.length > 1).slice(0, 2).map((w) => w[0]).join("").toUpperCase()}
+                  {m.nome
+                    .split(/\s+/)
+                    .filter((w) => w.length > 1)
+                    .slice(0, 2)
+                    .map((w) => w[0])
+                    .join("")
+                    .toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-bold text-ink">{m.nome}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-[14px] font-bold text-ink">{m.nome}</p>
+                    {m.codiceCollegato && (
+                      <span className="inline-flex items-center gap-1 rounded bg-night-900 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-bronze-300">
+                        <UserCheck size={10} /> {m.codiceCollegato}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[12px] text-ink-faint">
-                    {m.relazione} · Comune di {m.comune} · notifiche a {m.contatto}
+                    {m.relazione}
+                    {m.annoNascita ? ` · classe ${m.annoNascita}` : ""} · {m.comune} · avvisi a {m.contatto}
                   </p>
                 </div>
                 <span className="hidden items-center gap-1 rounded-full border border-[#4c7a5a]/40 bg-[#4c7a5a]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#3c6349] sm:flex">
-                  <BellRing size={10} /> Attive
+                  <BellRing size={10} /> Attivo
                 </span>
                 <button
                   onClick={() => rimuovi(m.id)}
@@ -851,85 +1021,185 @@ function Nucleo() {
             ))}
           </ul>
 
-          {/* form aggiunta */}
-          <form onSubmit={aggiungi} noValidate className="mt-6 border-t border-line-soft pt-5">
-            <p className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-ink-faint">
-              <Plus size={13} /> Registra un caro
+          {/* Selettore modalità aggiunta */}
+          <div className="mt-6 border-t border-line-soft pt-5">
+            <p className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-ink-faint">
+              <Plus size={13} /> Aggiungi una persona cara all'Elenco Nucleo
             </p>
-            <div className="space-y-4">
-              <Field label="Nome e cognome" required error={errors.nome}>
-                <input value={nome} onChange={(e) => setNome(e.target.value)} className={inputCls(!!errors.nome)} placeholder="Es. Lina Bonetti" />
-              </Field>
+
+            <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg border border-line bg-paper p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setModalita("codice");
+                  setErrors({});
+                }}
+                className={`rounded-md py-2 text-xs font-bold transition ${
+                  modalita === "codice"
+                    ? "bg-night-900 text-bronze-300 shadow-sm"
+                    : "text-ink-soft hover:text-ink"
+                }`}
+              >
+                Con Codice ID (Consigliato)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalita("manuale");
+                  setErrors({});
+                }}
+                className={`rounded-md py-2 text-xs font-bold transition ${
+                  modalita === "manuale"
+                    ? "bg-night-900 text-bronze-300 shadow-sm"
+                    : "text-ink-soft hover:text-ink"
+                }`}
+              >
+                Senza codice (Anziani / Manuale)
+              </button>
+            </div>
+
+            <form onSubmit={aggiungi} noValidate className="space-y-4">
+              {modalita === "codice" ? (
+                <>
+                  <Field
+                    label="Codice ID della persona cara"
+                    required
+                    error={errors.codiceInput}
+                    hint="formato VCN-XXXX-XX"
+                  >
+                    <input
+                      value={codiceInput}
+                      onChange={(e) => setCodiceInput(e.target.value.toUpperCase())}
+                      className={`${inputCls(!!errors.codiceInput)} font-mono uppercase`}
+                      placeholder="Es. VCN-4829-MX"
+                    />
+                  </Field>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Nome e cognome (opzionale se già nel codice)" error={errors.nome}>
+                      <input
+                        value={nome}
+                        onChange={(e) => setNome(e.target.value)}
+                        className={inputCls(!!errors.nome)}
+                        placeholder="Es. Mario Rossi"
+                      />
+                    </Field>
+                    <Field label="Comune di riferimento" error={errors.comune}>
+                      <select
+                        value={comune}
+                        onChange={(e) => setComune(e.target.value as Comune)}
+                        className={inputCls(!!errors.comune)}
+                      >
+                        <option value="">— Automatico o scegli —</option>
+                        {COMUNI.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-[1.4fr_0.6fr]">
+                    <Field label="Nome e cognome del caro" required error={errors.nome}>
+                      <input
+                        value={nome}
+                        onChange={(e) => setNome(e.target.value)}
+                        className={inputCls(!!errors.nome)}
+                        placeholder="Es. Lina Bonetti"
+                      />
+                    </Field>
+                    <Field label="Anno nascita" error={errors.annoNascita} hint="evita omonimie">
+                      <input
+                        type="number"
+                        min={1900}
+                        max={new Date().getFullYear()}
+                        value={annoNascita}
+                        onChange={(e) => setAnnoNascita(e.target.value)}
+                        className={inputCls(!!errors.annoNascita)}
+                        placeholder="Es. 1942"
+                      />
+                    </Field>
+                  </div>
+                </>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Parentela" required error={errors.relazione}>
-                  <select value={relazione} onChange={(e) => setRelazione(e.target.value)} className={inputCls(!!errors.relazione)}>
+                <Field label="Parentela / Legame" required error={errors.relazione}>
+                  <select
+                    value={relazione}
+                    onChange={(e) => setRelazione(e.target.value)}
+                    className={inputCls(!!errors.relazione)}
+                  >
                     <option value="">— Seleziona —</option>
                     {RELAZIONI.map((r) => (
                       <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
                 </Field>
-                <Field label="Comune" required error={errors.comune}>
-                  <select value={comune} onChange={(e) => setComune(e.target.value as Comune)} className={inputCls(!!errors.comune)}>
-                    <option value="">— Seleziona —</option>
-                    {COMUNI.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+
+                {modalita === "manuale" ? (
+                  <Field label="Comune" required error={errors.comune}>
+                    <select
+                      value={comune}
+                      onChange={(e) => setComune(e.target.value as Comune)}
+                      className={inputCls(!!errors.comune)}
+                    >
+                      <option value="">— Seleziona —</option>
+                      {COMUNI.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </Field>
+                ) : (
+                  <Field label="Il tuo recapito per gli avvisi" required error={errors.contatto}>
+                    <input
+                      value={contatto}
+                      onChange={(e) => setContatto(e.target.value)}
+                      className={inputCls(!!errors.contatto)}
+                      placeholder="tua-email@esempio.it"
+                    />
+                  </Field>
+                )}
+              </div>
+
+              {modalita === "manuale" && (
+                <Field label="Recapito notifiche" required error={errors.contatto} hint="la tua email o telefono">
+                  <input
+                    value={contatto}
+                    onChange={(e) => setContatto(e.target.value)}
+                    className={inputCls(!!errors.contatto)}
+                    placeholder="nome@esempio.it · 3xx xxx xxxx"
+                  />
                 </Field>
-              </div>
-              <Field label="Recapito notifiche" required error={errors.contatto} hint="email o telefono">
-                <input value={contatto} onChange={(e) => setContatto(e.target.value)} className={inputCls(!!errors.contatto)} placeholder="nome@esempio.it · 3xx xxx xxxx" />
-              </Field>
+              )}
+
               <div className="flex flex-wrap gap-x-6 gap-y-2 rounded-md border border-line-soft bg-paper px-4 py-3 text-[12.5px] text-ink-soft">
-                <span className="flex items-center gap-2"><MailCheck size={14} className="text-bronze-600" /> Notifica email immediata</span>
-                <span className="flex items-center gap-2"><Smartphone size={14} className="text-bronze-600" /> SMS di backup</span>
+                <span className="flex items-center gap-2">
+                  <MailCheck size={14} className="text-bronze-600" /> Avviso automatico H24 su sito ed email
+                </span>
+                <span className="flex items-center gap-2">
+                  <Smartphone size={14} className="text-bronze-600" /> Controllo anti-omonimia attivo
+                </span>
               </div>
+
               <button
                 type="submit"
                 className="flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-5 py-3 text-sm font-bold text-night-950 transition hover:bg-bronze-400 active:scale-[0.99]"
               >
-                <Plus size={16} /> Aggiungi al Nucleo
+                <Plus size={16} /> Aggiungi all'Elenco Nucleo
               </button>
-            </div>
-          </form>
-        </div>
-      </Reveal>
-
-      {/* anteprima notifica + gdpr */}
-      <Reveal delay={180}>
-        <div className="rounded-xl border border-night-700 bg-night-900 p-6 text-paper sm:p-7">
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-mist">Anteprima — notifica automatica</p>
-          <div className="mt-4 rounded-lg border border-night-600 bg-night-800 p-4 shadow-inner">
-            <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-bronze-500 text-night-950">
-                <BellRing size={17} />
-              </span>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-mist">Vicini · adesso</p>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-paper/90">
-                  È stato pubblicato un manifesto per{" "}
-                  <strong className="text-bronze-300">{membri[0]?.nome ?? "un tuo caro"}</strong>{" "}
-                  {membri[0] ? `(Comune di ${membri[0].comune})` : ""}. Camera ardente, orario della cerimonia e QR del
-                  manifesto sono già disponibili.
-                </p>
-              </div>
-            </div>
+            </form>
           </div>
-          <p className="mt-4 flex items-start gap-2 text-[12px] leading-relaxed text-mist">
-            <ShieldCheck size={14} className="mt-0.5 shrink-0 text-bronze-400" />
-            L'elenco del Nucleo è visibile solo a te: nessuna agenzia può consultarlo. In conformità al GDPR, i dati
-            servono esclusivamente al sistema di notifica automatica della piattaforma.
-          </p>
         </div>
       </Reveal>
 
-      <Reveal delay={240}>
+      <Reveal delay={180}>
         <p className="flex items-center gap-2.5 rounded-lg border border-line bg-card px-5 py-4 text-[12.5px] leading-relaxed text-ink-soft">
           <HeartHandshake size={16} className="shrink-0 text-bronze-600" />
           <span>
-            <strong className="text-ink">Come funziona:</strong> alla pubblicazione di un manifesto che riguarda una persona
-            del Nucleo, ricevi subito una notifica con luoghi, orari e contatti — prima ancora che la notizia circoli.
+            <strong className="text-ink">Privacy totale:</strong> il tuo Elenco Nucleo è visibile esclusivamente a te.
+            Quando un'agenzia pubblica un manifesto compatibile per nome, comune ed età, il sistema genera subito un
+            avviso riservato con luoghi e orari della cerimonia.
           </span>
         </p>
       </Reveal>

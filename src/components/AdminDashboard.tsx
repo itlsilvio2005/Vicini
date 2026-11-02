@@ -2,7 +2,21 @@
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { Navigate } from 'react-router-dom';
-import { Loader2, AlertCircle, ScrollText, MessageCircle, Flower2, Building2, Check, RefreshCw, Plus } from 'lucide-react';
+import {
+  Loader2,
+  AlertCircle,
+  ScrollText,
+  MessageCircle,
+  Flower2,
+  Building2,
+  Check,
+  RefreshCw,
+  Plus,
+  Eye,
+  Users,
+  FileCheck2,
+  Activity,
+} from 'lucide-react';
 import { FormManifesto, BachecaManifestiAgenzia } from './BachecaManifestiAgenzia';
 
 type Periodo = 1 | 7 | 30;
@@ -32,12 +46,32 @@ interface Richiesta {
   richiesta_il: string;
 }
 
+interface StatisticheSito {
+  visite_sito: number;
+  aperture_manifesti: number;
+  ricerche_mappa: number;
+  click_fiori: number;
+  domande_bot: number;
+  membri_nucleo_totali: number;
+  volonta_registrate: number;
+}
+
+const STAT_VUOTE: StatisticheSito = {
+  visite_sito: 0,
+  aperture_manifesti: 0,
+  ricerche_mappa: 0,
+  click_fiori: 0,
+  domande_bot: 0,
+  membri_nucleo_totali: 0,
+  volonta_registrate: 0,
+};
+
 const euro = (n: number) =>
   Number(n).toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const data = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
-function Kpi({ icona, titolo, valore }: { icona: React.ReactNode; titolo: string; valore: string }) {
+function Kpi({ icona, titolo, valore, sub }: { icona: React.ReactNode; titolo: string; valore: string; sub?: string }) {
   return (
     <div className="rounded-xl border border-line bg-card p-4 shadow-sm">
       <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-ink-faint">
@@ -45,6 +79,7 @@ function Kpi({ icona, titolo, valore }: { icona: React.ReactNode; titolo: string
         {titolo}
       </div>
       <p className="mt-2 font-display text-3xl font-semibold text-ink">{valore}</p>
+      {sub && <p className="mt-1 text-xs text-ink-faint">{sub}</p>}
     </div>
   );
 }
@@ -54,6 +89,7 @@ export function AdminDashboard() {
   const [periodo, setPeriodo] = useState<Periodo>(30);
   const [righe, setRighe] = useState<RigaAgenzia[]>([]);
   const [richieste, setRichieste] = useState<Richiesta[]>([]);
+  const [statSito, setStatSito] = useState<StatisticheSito>(STAT_VUOTE);
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState('');
   const [inApprovazione, setInApprovazione] = useState<string | null>(null);
@@ -64,12 +100,14 @@ export function AdminDashboard() {
   const carica = useCallback(async () => {
     setCaricamento(true);
     setErrore('');
-    const [a, r] = await Promise.all([
+    const [a, r, s] = await Promise.all([
       supabase.rpc('admin_andamento_agenzie', { p_giorni: periodo }),
       supabase.rpc('admin_richieste_agenzia'),
+      supabase.rpc('admin_statistiche_sito', { p_giorni: periodo }),
     ]);
+
     if (a.error || r.error) {
-      setErrore('Non riesco a caricare i dati. Controlla di aver applicato lo script SQL admin su Supabase.');
+      setErrore('Non riesco a caricare i dati agenzie. Controlla di aver eseguito lo script SQL su Supabase.');
     } else {
       const lista = (a.data ?? []) as RigaAgenzia[];
       setRighe(lista);
@@ -78,6 +116,11 @@ export function AdminDashboard() {
         setAgenziaPerManifesto(lista[0].agenzia_id);
       }
     }
+
+    if (!s.error && s.data) {
+      setStatSito(s.data as StatisticheSito);
+    }
+
     setCaricamento(false);
   }, [periodo, agenziaPerManifesto]);
 
@@ -99,12 +142,20 @@ export function AdminDashboard() {
 
   const somma = (k: keyof RigaAgenzia) => righe.reduce((t, r) => t + Number(r[k] ?? 0), 0);
   const testoPeriodo = PERIODI.find((p) => p.giorni === periodo)!.testo;
+  const etichettaPeriodo = PERIODI.find((p) => p.giorni === periodo)!.etichetta;
+
+  const interazioniTotali =
+    statSito.aperture_manifesti +
+    somma('pensieri_periodo') +
+    somma('ordini_periodo') +
+    statSito.ricerche_mappa +
+    statSito.domande_bot;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-semibold text-ink">
-          Andamento <span className="text-bronze-600">agenzie</span>
+          Pannello <span className="text-bronze-600">Amministratore</span>
         </h1>
         <div className="flex flex-wrap items-center gap-2">
           {righe.length > 0 && (
@@ -127,7 +178,7 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      <div role="tablist" className="mb-5 inline-flex rounded-xl border border-line bg-card p-1 shadow-sm">
+      <div role="tablist" className="mb-6 inline-flex rounded-xl border border-line bg-card p-1 shadow-sm">
         {PERIODI.map((p) => (
           <button
             key={p.giorni}
@@ -149,6 +200,60 @@ export function AdminDashboard() {
         </div>
       )}
 
+      {/* SEZIONE 1: VISUALIZZAZIONI E INTERAZIONI DEL SITO */}
+      <section className="mb-8 rounded-xl border border-night-700 bg-night-900 p-5 text-paper shadow-md">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-bronze-300">
+              Statistiche portale GDPR-safe
+            </p>
+            <h2 className="font-display text-2xl font-semibold text-paper">
+              Visualizzazioni e Interazioni — {testoPeriodo}
+            </h2>
+          </div>
+          <span className="rounded-full border border-bronze-500/40 bg-night-800 px-3 py-1 text-xs font-semibold text-bronze-300">
+             Conteggio anonimo senza cookie
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="rounded-lg border border-night-700 bg-night-800 p-4">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-mist">
+              <Eye className="h-4 w-4 text-bronze-400" /> Visite al sito ({etichettaPeriodo})
+            </p>
+            <p className="mt-2 font-display text-3xl font-semibold text-paper">{statSito.visite_sito}</p>
+            <p className="mt-1 text-xs text-mist">Aperture pagine del portale</p>
+          </div>
+
+          <div className="rounded-lg border border-night-700 bg-night-800 p-4">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-mist">
+              <Activity className="h-4 w-4 text-bronze-400" /> Interazioni ({etichettaPeriodo})
+            </p>
+            <p className="mt-2 font-display text-3xl font-semibold text-paper">{interazioniTotali}</p>
+            <p className="mt-1 text-xs text-mist">
+              {statSito.aperture_manifesti} letture manifesti · {somma('pensieri_periodo')} pensieri
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-night-700 bg-night-800 p-4">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-mist">
+              <Users className="h-4 w-4 text-bronze-400" /> Persone nel Nucleo
+            </p>
+            <p className="mt-2 font-display text-3xl font-semibold text-paper">{statSito.membri_nucleo_totali}</p>
+            <p className="mt-1 text-xs text-mist">Cari monitorati dagli utenti</p>
+          </div>
+
+          <div className="rounded-lg border border-night-700 bg-night-800 p-4">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-mist">
+              <FileCheck2 className="h-4 w-4 text-bronze-400" /> Volontà depositate
+            </p>
+            <p className="mt-2 font-display text-3xl font-semibold text-paper">{statSito.volonta_registrate}</p>
+            <p className="mt-1 text-xs text-mist">Moduli B2C attivi</p>
+          </div>
+        </div>
+      </section>
+
+      {/* SEZIONE 2: RICHIESTE AGENZIA IN ATTESA */}
       {richieste.length > 0 && (
         <section className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4" aria-label="Richieste in attesa">
           <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-amber-900">
@@ -179,15 +284,20 @@ export function AdminDashboard() {
         </section>
       )}
 
+      {/* SEZIONE 3: RIEPILOGO AGENZIE E MANIFESTI */}
+      <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-ink-faint">
+        Riepilogo attività agenzie — {testoPeriodo}
+      </h2>
+
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi icona={<Building2 className="h-4 w-4" />} titolo="Agenzie" valore={String(righe.length)} />
-        <Kpi icona={<ScrollText className="h-4 w-4" />} titolo={`Manifesti (${PERIODI.find((p) => p.giorni === periodo)!.etichetta})`} valore={String(somma('manifesti_periodo'))} />
-        <Kpi icona={<MessageCircle className="h-4 w-4" />} titolo="Pensieri" valore={String(somma('pensieri_periodo'))} />
+        <Kpi icona={<Building2 className="h-4 w-4" />} titolo="Agenzie attive" valore={String(righe.length)} />
+        <Kpi icona={<ScrollText className="h-4 w-4" />} titolo={`Manifesti (${etichettaPeriodo})`} valore={String(somma('manifesti_periodo'))} />
+        <Kpi icona={<MessageCircle className="h-4 w-4" />} titolo="Pensieri lasciati" valore={String(somma('pensieri_periodo'))} />
         <Kpi icona={<Flower2 className="h-4 w-4" />} titolo="Ordini fiori" valore={`${somma('ordini_periodo')} · ${euro(somma('importo_ordini_periodo'))}`} />
       </div>
 
       <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-ink-faint">
-        Per agenzia — {testoPeriodo}
+        Dettaglio per agenzia — {testoPeriodo}
       </h2>
 
       {caricamento && righe.length === 0 ? (
@@ -261,4 +371,3 @@ export function AdminDashboard() {
     </div>
   );
 }
-

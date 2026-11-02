@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, isSupabaseConfigured, Manifesto } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { Bell, X, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,18 +17,12 @@ interface Notifica {
   data_creazione: string;
 }
 
-/**
- * Hook per gestire le notifiche real-time del Nucleo
- * Monitora la pubblicazione di nuovi manifesti e notifica l'utente
- * se il defunto corrisponde a un familiare registrato nel Nucleo
- */
 export function useNotificheNucleo() {
   const { utente } = useAuth();
   const navigate = useNavigate();
   const [notifiche, setNotifiche] = useState<Notifica[]>([]);
   const [nonLette, setNonLette] = useState(0);
 
-  // Carica notifiche esistenti da Supabase
   useEffect(() => {
     if (!isSupabaseConfigured() || !utente) return;
 
@@ -47,54 +41,27 @@ export function useNotificheNucleo() {
 
       if (data) {
         setNotifiche(data);
-        setNonLette(data.filter(n => !n.letta).length);
+        setNonLette(data.filter((n) => !n.letta).length);
       }
     };
 
     caricaNotifiche();
-  }, [utente]);
 
-  // Iscriviti ai cambiamenti real-time nella tabella manifesti
-  useEffect(() => {
-    if (!isSupabaseConfigured() || !utente) return;
-
+    // Ascolta in tempo reale le notifiche generate dal Trigger SQL di Supabase per questo utente
     const subscription = supabase
-      .channel('manifesti-changes')
+      .channel(`notifiche-user-${utente.id}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'manifesti',
-          filter: 'pubblicato=eq.true',
+          table: 'notifiche_nucleo',
+          filter: `user_id=eq.${utente.id}`,
         },
-        async (payload) => {
-          const nuovoManifesto = payload.new as Manifesto;
-          
-          // Controlla se il defunto corrisponde a un familiare del Nucleo
-          const corrisponde = await controllaCorrispondenzaNucleo(
-            utente.id,
-            nuovoManifesto.nome_defunto,
-            nuovoManifesto.comune
-          );
-
-          if (corrisponde) {
-            // Crea notifica
-            await creaNotifica(utente.id, nuovoManifesto);
-            
-            // Ricarica notifiche
-            const { data } = await supabase
-              .from('notifiche_nucleo')
-              .select('*')
-              .eq('user_id', utente.id)
-              .order('data_creazione', { ascending: false })
-              .limit(50);
-
-            if (data) {
-              setNotifiche(data);
-              setNonLette(data.filter(n => !n.letta).length);
-            }
-          }
+        (payload) => {
+          const nuova = payload.new as Notifica;
+          setNotifiche((prev) => [nuova, ...prev.filter((n) => n.id !== nuova.id)]);
+          setNonLette((prev) => prev + 1);
         }
       )
       .subscribe();
@@ -104,65 +71,6 @@ export function useNotificheNucleo() {
     };
   }, [utente]);
 
-  /**
-   * Controlla se il defunto corrisponde a un familiare del Nucleo
-   */
-  const controllaCorrispondenzaNucleo = async (
-    userId: string,
-    nomeDefunto: string,
-    comune: string
-  ): Promise<boolean> => {
-    const { data, error } = await supabase
-      .from('nucleo')
-      .select('nome, comune')
-      .eq('user_id', userId);
-
-    if (error || !data) return false;
-
-    // Controlla se c'è una corrispondenza per nome e comune
-    return data.some(familiare => {
-      const nomeNorm = familiare.nome.toLowerCase().trim();
-      const defuntoNorm = nomeDefunto.toLowerCase().trim();
-      const comuneFam = familiare.comune.toLowerCase().trim();
-      const comuneDef = comune.toLowerCase().trim();
-
-      // Corrispondenza esatta o parziale del nome + stesso comune
-      return (
-        (nomeNorm === defuntoNorm || 
-         nomeNorm.includes(defuntoNorm) || 
-         defuntoNorm.includes(nomeNorm)) &&
-        comuneFam === comuneDef
-      );
-    });
-  };
-
-  /**
-   * Crea una nuova notifica nel database
-   */
-  const creaNotifica = async (userId: string, manifesto: Manifesto) => {
-    const notifica = {
-      user_id: userId,
-      titolo: `Nuovo manifesto per ${manifesto.nome_defunto}`,
-      messaggio: `È stato pubblicato un manifesto funebre per ${manifesto.nome_defunto} a ${manifesto.comune}.`,
-      manifesto_id: manifesto.id,
-      defunto_nome: manifesto.nome_defunto,
-      comune: manifesto.comune,
-      data_pubblicazione: manifesto.pubblicato_il || new Date().toISOString(),
-      letta: false,
-    };
-
-    const { error } = await supabase
-      .from('notifiche_nucleo')
-      .insert([notifica]);
-
-    if (error) {
-      console.error('Errore creazione notifica:', error);
-    }
-  };
-
-  /**
-   * Marca una notifica come letta
-   */
   const marcaComeLetta = async (notificaId: string) => {
     const { error } = await supabase
       .from('notifiche_nucleo')
@@ -170,16 +78,13 @@ export function useNotificheNucleo() {
       .eq('id', notificaId);
 
     if (!error) {
-      setNotifiche(prev =>
-        prev.map(n => n.id === notificaId ? { ...n, letta: true } : n)
+      setNotifiche((prev) =>
+        prev.map((n) => (n.id === notificaId ? { ...n, letta: true } : n))
       );
-      setNonLette(prev => Math.max(0, prev - 1));
+      setNonLette((prev) => Math.max(0, prev - 1));
     }
   };
 
-  /**
-   * Marca tutte le notifiche come lette
-   */
   const marcaTutteComeLette = async () => {
     if (!utente) return;
 
@@ -190,14 +95,11 @@ export function useNotificheNucleo() {
       .eq('letta', false);
 
     if (!error) {
-      setNotifiche(prev => prev.map(n => ({ ...n, letta: true })));
+      setNotifiche((prev) => prev.map((n) => ({ ...n, letta: true })));
       setNonLette(0);
     }
   };
 
-  /**
-   * Elimina una notifica
-   */
   const eliminaNotifica = async (notificaId: string) => {
     const { error } = await supabase
       .from('notifiche_nucleo')
@@ -205,17 +107,14 @@ export function useNotificheNucleo() {
       .eq('id', notificaId);
 
     if (!error) {
-      const notifica = notifiche.find(n => n.id === notificaId);
-      setNotifiche(prev => prev.filter(n => n.id !== notificaId));
+      const notifica = notifiche.find((n) => n.id === notificaId);
+      setNotifiche((prev) => prev.filter((n) => n.id !== notificaId));
       if (notifica && !notifica.letta) {
-        setNonLette(prev => Math.max(0, prev - 1));
+        setNonLette((prev) => Math.max(0, prev - 1));
       }
     }
   };
 
-  /**
-   * Naviga al manifesto della notifica
-   */
   const vaiAlManifesto = (manifestoId: string) => {
     navigate(`/manifesto/${manifestoId}`);
   };
@@ -230,9 +129,6 @@ export function useNotificheNucleo() {
   };
 }
 
-/**
- * Componente UI per il pannello notifiche
- */
 export function PannelloNotifiche() {
   const {
     notifiche,
@@ -249,11 +145,10 @@ export function PannelloNotifiche() {
 
   return (
     <div className="relative">
-      {/* Bottone campanella */}
       <button
         onClick={() => setAperto(!aperto)}
         className="relative p-2 text-gray-600 hover:text-bronze-600 transition-colors"
-        aria-label="Notifiche"
+        aria-label="Notifiche del Nucleo"
       >
         <Bell className="w-6 h-6" />
         {nonLette > 0 && (
@@ -263,12 +158,10 @@ export function PannelloNotifiche() {
         )}
       </button>
 
-      {/* Pannello notifiche */}
       {aperto && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-          {/* Header */}
+        <div className="absolute right-0 mt-2 w-96 max-w-[92vw] bg-white rounded-lg shadow-xl border border-gray-200 z-50">
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Notifiche</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Avvisi del Nucleo</h3>
             <div className="flex items-center gap-2">
               {nonLette > 0 && (
                 <button
@@ -288,16 +181,15 @@ export function PannelloNotifiche() {
             </div>
           </div>
 
-          {/* Lista notifiche */}
           <div className="max-h-96 overflow-y-auto">
             {notifiche.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <Bell className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                <p>Nessuna notifica</p>
+                <p>Nessun avviso dal tuo Elenco Nucleo</p>
               </div>
             ) : (
               <ul className="divide-y divide-gray-200">
-                {notifiche.map(notifica => (
+                {notifiche.map((notifica) => (
                   <li
                     key={notifica.id}
                     className={`p-4 hover:bg-gray-50 transition-colors ${
@@ -306,14 +198,14 @@ export function PannelloNotifiche() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-1">
-                        <p className={`text-sm font-medium ${
-                          !notifica.letta ? 'text-gray-900' : 'text-gray-600'
-                        }`}>
+                        <p
+                          className={`text-sm font-medium ${
+                            !notifica.letta ? 'text-gray-900' : 'text-gray-600'
+                          }`}
+                        >
                           {notifica.titolo}
                         </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {notifica.messaggio}
-                        </p>
+                        <p className="text-sm text-gray-500 mt-1">{notifica.messaggio}</p>
                         <p className="text-xs text-gray-400 mt-2">
                           {new Date(notifica.data_creazione).toLocaleDateString('it-IT', {
                             day: 'numeric',
@@ -326,21 +218,16 @@ export function PannelloNotifiche() {
                       </div>
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => vaiAlManifesto(notifica.manifesto_id)}
+                          onClick={() => {
+                            marcaComeLetta(notifica.id);
+                            setAperto(false);
+                            vaiAlManifesto(notifica.manifesto_id);
+                          }}
                           className="p-1 text-bronze-600 hover:text-bronze-700"
                           aria-label="Vai al manifesto"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </button>
-                        {!notifica.letta && (
-                          <button
-                            onClick={() => marcaComeLetta(notifica.id)}
-                            className="p-1 text-gray-400 hover:text-gray-600"
-                            aria-label="Segna come letta"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
                         <button
                           onClick={() => eliminaNotifica(notifica.id)}
                           className="p-1 text-red-400 hover:text-red-600"
