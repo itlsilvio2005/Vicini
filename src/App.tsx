@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState , lazy, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from "react";
 import {
   BrowserRouter,
   MemoryRouter,
@@ -29,17 +29,18 @@ import {
 } from "./data";
 import { ErrorBoundary, ToastProvider, useToast } from "./lib";
 import { AuthProvider, useAuth } from "./lib/auth";
+import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { HelmetProvider } from "react-helmet-async";
 import { Bacheca, ManifestoDettaglio } from "./Bacheca";
-const Imprese = lazy(() => import("./Imprese").then(m => ({ default: m.Imprese })));
-const Luoghi = lazy(() => import("./Luoghi").then(m => ({ default: m.Luoghi })));
-const B2C = lazy(() => import("./B2C").then(m => ({ default: m.B2C })));
-const LoginUnificato = lazy(() => import("./components/LoginUnificato").then(m => ({ default: m.LoginUnificato })));
-const DashboardAgenzia = lazy(() => import("./components/DashboardAgenzia").then(m => ({ default: m.DashboardAgenzia })));
-const GruppoChatPensieri = lazy(() => import("./components/GruppoChatPensieri").then(m => ({ default: m.GruppoChatPensieri })));
-const AdminDashboard = lazy(() => import("./components/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const AssistenteVicini = lazy(() => import("./components/AssistenteVicini").then(m => ({ default: m.AssistenteVicini })));
-const PannelloNotifiche = lazy(() => import("./components/NotificheNucleo").then(m => ({ default: m.PannelloNotifiche })));
+const Imprese = lazy(() => import("./Imprese").then((m) => ({ default: m.Imprese })));
+const Luoghi = lazy(() => import("./Luoghi").then((m) => ({ default: m.Luoghi })));
+const B2C = lazy(() => import("./B2C").then((m) => ({ default: m.B2C })));
+const LoginUnificato = lazy(() => import("./components/LoginUnificato").then((m) => ({ default: m.LoginUnificato })));
+const DashboardAgenzia = lazy(() => import("./components/DashboardAgenzia").then((m) => ({ default: m.DashboardAgenzia })));
+const GruppoChatPensieri = lazy(() => import("./components/GruppoChatPensieri").then((m) => ({ default: m.GruppoChatPensieri })));
+const AdminDashboard = lazy(() => import("./components/AdminDashboard").then((m) => ({ default: m.AdminDashboard })));
+const AssistenteVicini = lazy(() => import("./components/AssistenteVicini").then((m) => ({ default: m.AssistenteVicini })));
+const PannelloNotifiche = lazy(() => import("./components/NotificheNucleo").then((m) => ({ default: m.PannelloNotifiche })));
 
 const NAV = [
   { to: "/bacheca", label: "Bacheca Manifesti", short: "Bacheca", icon: <ScrollText size={16} /> },
@@ -78,10 +79,11 @@ function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* Ogni rotta aggiorna titolo e posizione di scroll, come una pagina autonoma */
+  /* Ogni rotta aggiorna titolo, posizione di scroll e registra la visita anonima */
   useEffect(() => {
+    const segmento = location.pathname.split("/")[1] || "bacheca";
+    const base = "/" + segmento;
     try {
-      const base = "/" + (location.pathname.split("/")[1] ?? "bacheca");
       const titolo = TITOLI[base === "/" ? "/bacheca" : base] ?? TITOLI["/bacheca"];
       document.title = `Vicini — ${titolo} · Provincia di Modena`;
     } catch {
@@ -92,10 +94,22 @@ function Shell() {
     } catch {
       window.scrollTo(0, 0);
     }
-  }, [location.pathname]);
+
+    // Tracciamento anonimo GDPR-safe per il pannello Admin (esclude le navigazioni dell'admin stesso)
+    if (isSupabaseConfigured() && utente?.ruolo !== "admin" && segmento !== "admin") {
+      if (segmento === "manifesto") {
+        supabase.rpc("registra_interazione", { p_evento: "apertura_manifesto" }).then(() => {});
+      } else {
+        supabase.rpc("registra_interazione", { p_evento: `visita_${segmento}` }).then(() => {});
+      }
+    }
+  }, [location.pathname, utente?.ruolo]);
 
   const aggiungiOrdine = useCallback((o: OrdineFiori) => {
     setOrdini((list) => [o, ...list]);
+    if (isSupabaseConfigured()) {
+      supabase.rpc("registra_interazione", { p_evento: "click_fiori" }).then(() => {});
+    }
   }, []);
 
   const aggiungiPensiero = useCallback((manifestoId: string, p: Pensiero) => {
@@ -106,7 +120,6 @@ function Shell() {
     (id: string) => {
       setPrefill({ id, ts: Date.now() });
       navigate("/volonta-nucleo");
-      // La conferma avviene nella sezione Volontà al ricevimento del prefill
     },
     [navigate]
   );
@@ -154,7 +167,7 @@ function Shell() {
           <div className="flex items-center gap-3">
             {/* Pannello Notifiche (solo per utenti loggati) */}
             {utente && <PannelloNotifiche />}
-            
+
             <p className="hidden items-center gap-2 text-[11.5px] text-mist lg:flex">
               <span className="blink-dot inline-block h-1.5 w-1.5 rounded-full bg-bronze-400" />
               Reperibilità 24h · {oggi}
@@ -355,14 +368,14 @@ export default function App() {
     <HelmetProvider>
       <ErrorBoundary>
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-stone-500 text-sm">Caricamento...</div>}>
-        <AuthProvider>
-          <ToastProvider>
-            <Router>
-              <Shell />
-            </Router>
-          </ToastProvider>
-        </AuthProvider>
-              </Suspense>
+          <AuthProvider>
+            <ToastProvider>
+              <Router>
+                <Shell />
+              </Router>
+            </ToastProvider>
+          </AuthProvider>
+        </Suspense>
       </ErrorBoundary>
     </HelmetProvider>
   );
