@@ -13,7 +13,7 @@ import {
   ListFilter,
   LocateFixed,
 } from "lucide-react";
-import { CATEGORIE_LUOGHI, LUOGHI, type CatLuogo, type Luogo } from "./data";
+import { LUOGHI, type CatLuogo, type Luogo } from "./data";
 import { CENTRO_MODENA, GEO } from "./geo";
 import { Badge, Modal, ModalHeader, PageMast, Reveal } from "./lib";
 
@@ -22,10 +22,18 @@ const CAT_STYLES: Record<
   { color: string; soft: string; label: string; Icon: React.ComponentType<{ size?: number | string; className?: string }> }
 > = {
   chiese: { color: "#c7a262", soft: "rgba(199,162,98,0.14)", label: "Chiesa Cattolica", Icon: Church },
-  sanitarie: { color: "#8ea6c8", soft: "rgba(142,166,200,0.13)", label: "Ospedale / Casa Funeraria", Icon: Building2 },
+  sanitarie: { color: "#8ea6c8", soft: "rgba(142,166,200,0.13)", label: "Ospedale / Cimitero / Casa Funeraria", Icon: Building2 },
   ortodosso: { color: "#d8b25c", soft: "rgba(216,178,92,0.15)", label: "Luogo Ortodosso", Icon: Cross },
   musulmano: { color: "#7fbf9a", soft: "rgba(127,191,154,0.13)", label: "Luogo Musulmano", Icon: MoonStar },
 };
+
+const FILTRI_CATEGORIA: { id: CatLuogo | "tutte"; nome: string; breve: string }[] = [
+  { id: "tutte", nome: "Tutti i luoghi", breve: "Tutti" },
+  { id: "chiese", nome: "Chiese e Luoghi di Culto Cattolici", breve: "Chiese" },
+  { id: "sanitarie", nome: "Cimiteri, Ospedali e Case Funerarie", breve: "Cimiteri & Strutture" },
+  { id: "ortodosso", nome: "Comunità Ortodossa", breve: "Ortodossi" },
+  { id: "musulmano", nome: "Comunità Islamica", breve: "Musulmani" },
+];
 
 /* ---------------- Mappa Leaflet + OpenStreetMap ---------------- */
 
@@ -73,14 +81,20 @@ function MappaLeaflet({
     };
   }, []);
 
-  /* marker per i luoghi filtrati */
+  /* marker per i luoghi filtrati e adattamento automatico della visuale */
   useEffect(() => {
     const layer = layerRef.current;
-    if (!layer) return;
+    const map = mapRef.current;
+    if (!layer || !map) return;
     layer.clearLayers();
+
+    const latLngs: L.LatLngExpression[] = [];
+
     luoghi.forEach((l) => {
       const pos = GEO[l.id];
       if (!pos) return;
+      latLngs.push([pos.lat, pos.lng]);
+
       const st = CAT_STYLES[l.categoria];
       const icon = L.divIcon({
         className: "vicini-pin-wrap",
@@ -92,7 +106,17 @@ function MappaLeaflet({
       mk.bindTooltip(l.nome, { direction: "top", offset: [0, -12], opacity: 0.96 });
       mk.on("click", () => onSeleziona(l));
     });
-  }, [luoghi, onSeleziona]);
+
+    // Se ci sono luoghi filtrati, adatta lo zoom della mappa per mostrarli tutti perfettamente ordinati
+    if (latLngs.length > 0 && !focus) {
+      if (latLngs.length === 1) {
+        map.setView(latLngs[0], 14, { animate: true });
+      } else {
+        const bounds = L.latLngBounds(latLngs);
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true });
+      }
+    }
+  }, [luoghi, onSeleziona, focus]);
 
   /* volo sul luogo selezionato dall'elenco */
   useEffect(() => {
@@ -168,30 +192,31 @@ export function Luoghi() {
             I luoghi del <em className="italic text-bronze-300">commiato</em>
           </>
         }
-        sub="Chiese cattoliche di Modena, ospedali e case funerarie, luoghi di culto ortodossi e musulmani: una mappa reale del territorio, con posizioni e schede complete per orientare le famiglie nel momento del bisogno."
+        sub="Chiese cattoliche di Modena, cimiteri, ospedali e case funerarie, luoghi di culto ortodossi e musulmani: una mappa reale del territorio, filtrabile per categoria per orientare le famiglie nel momento del bisogno."
         meta={
           <>
             <span className="flex items-center gap-2">
-              <MapPin size={13} className="text-bronze-400" /> {LUOGHI.length} luoghi geolocalizzati
+              <MapPin size={13} className="text-bronze-400" /> {visibili.length} luoghi visibili
             </span>
             <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
-            <span>4 categorie di luoghi</span>
-            <span className="hidden h-1 w-1 rounded-full bg-bronze-500 sm:inline-block" />
-            <span>Mappa OpenStreetMap</span>
+            <span>Filtro interattivo per categoria</span>
           </>
         }
       />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        {/* filtri categoria */}
+        {/* filtri categoria puliti */}
         <Reveal className="mb-8 flex flex-wrap gap-2">
-          {CATEGORIE_LUOGHI.map((c) => {
+          {FILTRI_CATEGORIA.map((c) => {
             const n = c.id === "tutte" ? LUOGHI.length : LUOGHI.filter((l) => l.categoria === c.id).length;
             const attivo = cat === c.id;
             return (
               <button
                 key={c.id}
-                onClick={() => setCat(c.id)}
+                onClick={() => {
+                  setCat(c.id);
+                  setFocus(null); // resetta il focus singolo quando si cambia categoria
+                }}
                 aria-pressed={attivo}
                 className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition ${
                   attivo
@@ -202,7 +227,7 @@ export function Luoghi() {
                 {c.id !== "tutte" && (
                   <span className="inline-block h-2 w-2 rounded-full" style={{ background: CAT_STYLES[c.id as CatLuogo].color }} />
                 )}
-                {c.breve} <span className="opacity-70">{n}</span>
+                {c.breve} <span className="opacity-70">({n})</span>
               </button>
             );
           })}
@@ -213,15 +238,15 @@ export function Luoghi() {
             <MappaLeaflet luoghi={visibili} onSeleziona={seleziona} focus={focus} />
           </Reveal>
 
-          {/* elenco sincronizzato */}
+          {/* elenco sincronizzato e filtrato */}
           <Reveal delay={120}>
             <div className="flex h-full flex-col rounded-xl border border-line bg-card">
               <div className="flex items-center justify-between border-b border-line-soft px-5 py-3.5">
                 <h3 className="flex items-center gap-2 font-display text-xl font-semibold text-ink">
                   <ListFilter size={16} className="text-bronze-600" />
-                  {CATEGORIE_LUOGHI.find((c) => c.id === cat)?.nome}
+                  {FILTRI_CATEGORIA.find((c) => c.id === cat)?.nome}
                 </h3>
-                <span className="text-[12px] text-ink-faint">{visibili.length} luoghi</span>
+                <span className="text-[12px] text-ink-faint">{visibili.length} risultati</span>
               </div>
               <ul className="nice-scroll max-h-[560px] flex-1 divide-y divide-line-soft overflow-y-auto">
                 {visibili.map((l) => {
@@ -297,7 +322,7 @@ export function Luoghi() {
                   </p>
                   <p className="mt-1.5 text-[13.5px] font-semibold text-ink">{sel.indirizzo}</p>
                 </div>
-                <div className="rounded-lg border border-line bg-paper p-4">
+                <div className="rounded-lg border border-line bg-pad p-4 bg-paper">
                   <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-faint">
                     <Clock3 size={13} className="text-bronze-600" /> Orari
                   </p>
@@ -315,12 +340,12 @@ export function Luoghi() {
                   </a>
                 </div>
                 <a
-                  href={`https://www.google.com/maps/search/${encodeURIComponent(sel.nome + " " + sel.indirizzo)}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sel.nome + " " + sel.indirizzo)}`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center justify-center gap-2 rounded-md bg-night-800 px-4 py-2.5 text-[13px] font-semibold text-paper transition hover:bg-night-700"
                 >
-                  <ExternalLink size={14} /> Indicazioni stradali
+                  <ExternalLink size5={14} size={14} /> Apri in Google Maps
                 </a>
               </div>
             </div>
