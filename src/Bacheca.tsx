@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+  import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -300,53 +300,71 @@ export function Bacheca({
         </div>
 
         {caricamento && (
-          <div className="mb-6 flex items-center justify-center rounded-lg border border-line bg-card p-6">
-            <p className="text-sm text-ink-soft">Caricamento manifesti dal database...</p>
+          <div className="mb-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-48 w-full animate-pulse rounded-xl border border-line bg-card shadow-sm">
+                <div className="flex items-start gap-4 px-5 pt-5">
+                  <div className="h-16 w-16 shrink-0 rounded-full bg-line-soft"></div>
+                  <div className="w-full space-y-2">
+                    <div className="h-5 w-3/4 rounded bg-line-soft"></div>
+                    <div className="h-3 w-1/2 rounded bg-line-soft"></div>
+                    <div className="mt-3 flex gap-2">
+                      <div className="h-4 w-16 rounded bg-line-soft"></div>
+                      <div className="h-4 w-20 rounded bg-line-soft"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
-        <Reveal className="mb-9 flex flex-wrap items-center gap-2">
-          <Link
-            to="/bacheca"
-            aria-pressed={!comuneAttivo}
-            className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
-              !comuneAttivo
-                ? "border-night-800 bg-night-800 text-paper shadow-md"
-                : "border-line bg-card text-ink-soft hover:border-bronze-500 hover:text-bronze-600"
-            }`}
-          >
-            Tutti <span className="ml-1 opacity-70">{manifesti.length}</span>
-          </Link>
-          {COMUNI.map((c) => {
-            const n = counts.get(c) ?? 0;
-            const attivo = comuneAttivo === c;
-            return (
-              <Link
-                key={c}
-                to={`/bacheca/${slug(c)}`}
-                aria-pressed={attivo}
-                className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
-                  attivo
-                    ? "border-night-800 bg-night-800 text-paper shadow-md"
-                    : "border-line bg-card text-ink-soft hover:border-bronze-500 hover:text-bronze-600"
-                } ${n === 0 ? "opacity-50" : ""}`}
-              >
-                {c} <span className="ml-1 opacity-70">{n}</span>
-              </Link>
-            );
-          })}
-          <span className="ml-auto hidden text-[12px] italic text-ink-faint xl:block">
-            Aggiornato oggi alle 08:42 dalle imprese del luogo
-          </span>
-        </Reveal>
+        {!caricamento && (
+          <Reveal className="mb-9 flex flex-wrap items-center gap-2">
+            <Link
+              to="/bacheca"
+              aria-pressed={!comuneAttivo}
+              className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
+                !comuneAttivo
+                  ? "border-night-800 bg-night-800 text-paper shadow-md"
+                  : "border-line bg-card text-ink-soft hover:border-bronze-500 hover:text-bronze-600"
+              }`}
+            >
+              Tutti <span className="ml-1 opacity-70">{manifesti.length}</span>
+            </Link>
+            {COMUNI.map((c) => {
+              const n = counts.get(c) ?? 0;
+              const attivo = comuneAttivo === c;
+              return (
+                <Link
+                  key={c}
+                  to={`/bacheca/${slug(c)}`}
+                  aria-pressed={attivo}
+                  className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
+                    attivo
+                      ? "border-night-800 bg-night-800 text-paper shadow-md"
+                      : "border-line bg-card text-ink-soft hover:border-bronze-500 hover:text-bronze-600"
+                  } ${n === 0 ? "opacity-50" : ""}`}
+                >
+                  {c} <span className="ml-1 opacity-70">{n}</span>
+                </Link>
+              );
+            })}
+            <span className="ml-auto hidden text-[12px] italic text-ink-faint xl:block">
+              Aggiornato oggi alle 08:42 dalle imprese del luogo
+            </span>
+          </Reveal>
+        )}
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {visibili.map((m, i) => (
-            <ManifestoCard key={m.id} m={m} delay={(i % 3) * 90} onOrdine={onNuovoOrdine} onPensiero={onNuovoPensiero} />
-          ))}
-        </div>
+        {!caricamento && (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {visibili.map((m, i) => (
+              <ManifestoCard key={m.id} m={m} delay={(i % 3) * 90} onOrdine={onNuovoOrdine} onPensiero={onNuovoPensiero} />
+            ))}
+          </div>
+        )}
 
-        {visibili.length === 0 && (
+        {!caricamento && visibili.length === 0 && (
           <p className="rounded-lg border border-dashed border-line bg-card p-10 text-center text-sm text-ink-faint">
             Nessun manifesto in pubblicazione in questo comune al momento.
           </p>
@@ -385,10 +403,10 @@ function ManifestoCard({
           <div className="flex items-start gap-4">
             <Monogram initials={initialsOf(m.nome)} />
             <div className="min-w-0">
-              <Link to={`/manifesto/${m.id}`} className="link-rule font-display text-[24px] font-semibold leading-tight text-ink hover:text-bronze-700">
+              <Link to={`/manifesto/${m.id}`} className="link-rule font-display text-[24px] font-bold leading-tight text-ink hover:text-bronze-700">
                 {m.nome}
               </Link>
-              <p className="mt-0.5 text-[13px] text-ink-soft">
+              <p className="mt-0.5 text-[13.5px] font-medium text-ink">
                 di anni {m.anni} · {m.nascita} — {m.morte}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">

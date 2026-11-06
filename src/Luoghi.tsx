@@ -35,7 +35,7 @@ const FILTRI_CATEGORIA: { id: CatLuogo | "tutte"; nome: string; breve: string }[
   { id: "musulmano", nome: "Comunità Islamica", breve: "Musulmani" },
 ];
 
-/* ---------------- Mappa Leaflet + OpenStreetMap ---------------- */
+/* ---------------- Mappa Leaflet + CartoDB ---------------- */
 
 function MappaLeaflet({
   luoghi,
@@ -55,11 +55,16 @@ function MappaLeaflet({
   /* inizializzazione una sola volta */
   useEffect(() => {
     if (!boxRef.current || mapRef.current) return;
+    
+    // FIX: scrollWheelZoom impostato a false per non bloccarsi su mobile
     const map = L.map(boxRef.current, { center: CENTRO_MODENA, zoom: 12, scrollWheelZoom: false });
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    
+    // FIX: Sostituito OpenStreetMap standard con CartoDB Positron per colori eleganti
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     }).addTo(map);
+    
     layerRef.current = L.layerGroup().addTo(map);
     map.on("locationfound", (e: L.LocationEvent) => {
       userRef.current?.remove();
@@ -107,7 +112,6 @@ function MappaLeaflet({
       mk.on("click", () => onSeleziona(l));
     });
 
-    // Se ci sono luoghi filtrati, adatta lo zoom della mappa per mostrarli tutti perfettamente ordinati
     if (latLngs.length > 0 && !focus) {
       if (latLngs.length === 1) {
         map.setView(latLngs[0], 14, { animate: true });
@@ -133,7 +137,8 @@ function MappaLeaflet({
   };
 
   return (
-    <div className="relative z-0 overflow-hidden rounded-xl border border-night-700 shadow-inner">
+    // FIX: Aggiunte classi z-10 e isolate per evitare sovrapposizioni con navbar e bot
+    <div className="relative z-10 isolate overflow-hidden rounded-xl border border-night-700 shadow-inner">
       <div ref={boxRef} className="h-[420px] w-full sm:h-[540px]" aria-label="Mappa dei luoghi del commiato" />
 
       {/* overlay comandi */}
@@ -193,6 +198,7 @@ export function Luoghi() {
           </>
         }
         sub="Chiese cattoliche di Modena, cimiteri, ospedali e case funerarie, luoghi di culto ortodossi e musulmani: una mappa reale del territorio, filtrabile per categoria per orientare le famiglie nel momento del bisogno."
+        bgImage="https://images.unsplash.com/photo-1548625361-9c60e0a5cc08?q=80&w=2000&auto=format&fit=crop"
         meta={
           <>
             <span className="flex items-center gap-2">
@@ -205,7 +211,6 @@ export function Luoghi() {
       />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        {/* filtri categoria puliti */}
         <Reveal className="mb-8 flex flex-wrap gap-2">
           {FILTRI_CATEGORIA.map((c) => {
             const n = c.id === "tutte" ? LUOGHI.length : LUOGHI.filter((l) => l.categoria === c.id).length;
@@ -215,7 +220,7 @@ export function Luoghi() {
                 key={c.id}
                 onClick={() => {
                   setCat(c.id);
-                  setFocus(null); // resetta il focus singolo quando si cambia categoria
+                  setFocus(null); 
                 }}
                 aria-pressed={attivo}
                 className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition ${
@@ -238,7 +243,6 @@ export function Luoghi() {
             <MappaLeaflet luoghi={visibili} onSeleziona={seleziona} focus={focus} />
           </Reveal>
 
-          {/* elenco sincronizzato e filtrato */}
           <Reveal delay={120}>
             <div className="flex h-full flex-col rounded-xl border border-line bg-card">
               <div className="flex items-center justify-between border-b border-line-soft px-5 py-3.5">
@@ -287,7 +291,6 @@ export function Luoghi() {
         </div>
       </div>
 
-      {/* modale luogo */}
       <Modal open={!!sel} onClose={() => setSel(null)} labelledBy="luogo-title" wide>
         {sel && (
           <>
@@ -345,7 +348,7 @@ export function Luoghi() {
                   rel="noreferrer"
                   className="flex items-center justify-center gap-2 rounded-md bg-night-800 px-4 py-2.5 text-[13px] font-semibold text-paper transition hover:bg-night-700"
                 >
-                  <ExternalLink size5={14} size={14} /> Apri in Google Maps
+                  <ExternalLink size={14} /> Apri in Google Maps
                 </a>
               </div>
             </div>

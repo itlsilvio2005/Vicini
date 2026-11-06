@@ -95,7 +95,7 @@ export function AssistenteVicini() {
       {!aperto && (
         <button
           onClick={() => setAperto(true)}
-          className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 shadow-lg hover:bg-bronze-400"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 shadow-xl hover:bg-bronze-400 transition-transform active:scale-95"
           aria-label="Apri l’assistente: hai una domanda?"
         >
           <MessageCircle className="h-5 w-5" />
@@ -107,7 +107,7 @@ export function AssistenteVicini() {
         <div
           role="dialog"
           aria-label="Assistente di Vicini"
-          className="fixed inset-x-2 bottom-2 z-50 flex max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-2xl sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-[24rem]"
+          className="fixed inset-x-3 bottom-3 z-50 flex max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-2xl sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[24rem]"
         >
           <div className="flex items-center justify-between bg-night-800 px-4 py-3 text-paper">
             <div>
