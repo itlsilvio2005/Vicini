@@ -1,4 +1,4 @@
-﻿-- Permette all'admin di inserire, modificare ed eliminare manifesti per qualsiasi agenzia
+-- Permette all'admin di inserire, modificare ed eliminare manifesti per qualsiasi agenzia
 drop policy if exists "Admin gestisce tutti i manifesti" on public.manifesti;
 
 create policy "Admin gestisce tutti i manifesti"
