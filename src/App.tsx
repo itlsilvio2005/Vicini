@@ -16,7 +16,6 @@ import {
   Map as MapIcon,
   HeartHandshake,
   Lock,
-  ShieldCheck,
   LogOut,
 } from "lucide-react";
 import {
@@ -32,6 +31,7 @@ import { AuthProvider, useAuth } from "./lib/auth";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { HelmetProvider } from "react-helmet-async";
 import { Bacheca, ManifestoDettaglio } from "./Bacheca";
+import { Privacy } from "./Privacy";
 const Imprese = lazy(() => import("./Imprese").then((m) => ({ default: m.Imprese })));
 const Luoghi = lazy(() => import("./Luoghi").then((m) => ({ default: m.Luoghi })));
 const B2C = lazy(() => import("./B2C").then((m) => ({ default: m.B2C })));
@@ -260,6 +260,7 @@ function Shell() {
               )
             }
           />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/bacheca" replace />} />
         </Routes>
@@ -322,9 +323,14 @@ function Shell() {
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:segreteria@vicini.mo" className="link-rule text-paper/85 hover:text-bronze-300">
-                    segreteria@vicini.mo
+                  <a href="mailto:info.vicini059@gmail.com" className="link-rule text-paper/85 hover:text-bronze-300">
+                    info.vicini059@gmail.com
                   </a>
+                </li>
+                <li>
+                  <button onClick={() => navigate("/privacy")} className="link-rule text-paper/85 transition hover:text-bronze-300">
+                    Informativa privacy
+                  </button>
                 </li>
                 {utente ? (
                   <li>
@@ -335,18 +341,14 @@ function Shell() {
                       <LogOut size={12} /> Esci ({utente.email})
                     </button>
                   </li>
-                ) : (
-                  <li className="flex items-center gap-1.5 pt-1 text-[11.5px] text-mist/80">
-                    <ShieldCheck size={12} className="text-bronze-500" /> Conformità GDPR
-                  </li>
-                )}
+                ) : null}
               </ul>
             </div>
           </div>
         </div>
         <div className="border-t border-night-800">
           <p className="mx-auto max-w-7xl px-4 py-4 text-[11px] text-mist/70 sm:px-6">
-            Vicini S.r.l. — P.IVA 03845670361 · Via Nonantolana 555, Modena · © 2026 · I dati delle
+            Vicini — progetto per la provincia di Modena · © 2026 · I dati delle
             pianificazioni sono mostrati alle agenzie solo in forma aggregata e anonima.
           </p>
         </div>

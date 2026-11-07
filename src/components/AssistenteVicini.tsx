@@ -149,7 +149,8 @@ export function AssistenteVicini() {
           {!consensoIA && isSupabaseConfigured() && (
             <div className="border-t border-line-soft bg-paper px-3 py-2 text-xs text-ink-soft">
               <p>
-                Per rispondere a domande libere posso usare un assistente con intelligenza artificiale, un servizio gratuito di terzi (Google). In quel caso le tue domande vengono inviate a quel servizio e, nella versione gratuita, possono essere conservate e usate dal fornitore per migliorare i propri servizi. Non scrivere nomi, indirizzi, telefoni o altri dati personali.
+                Per rispondere a domande libere posso usare un assistente con intelligenza artificiale, un servizio gratuito di terzi (Google). In quel caso le tue domande vengono inviate a quel servizio e, nella versione gratuita, possono essere conservate e usate dal fornitore per migliorare i propri servizi. Non scrivere nomi, indirizzi, telefoni o altri dati personali.{' '}
+                <button type="button" onClick={() => navigate('/privacy')} className="underline">Informativa privacy</button>
               </p>
               <button
                 onClick={() => setConsensoIA(true)}
