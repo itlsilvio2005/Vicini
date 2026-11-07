@@ -138,11 +138,11 @@ const ARGOMENTI: Argomento[] = [
   },
   {
     id: 'fiori',
-    parole: ['fiori', 'fiore', 'corona', 'mazzo', 'cesto', 'composizione', 'cuscino', 'rose', 'gigli', 'ordinare', 'ordine', 'omaggio floreale', 'mandare fiori', 'inviare fiori'],
+    parole: ['fiori', 'fiore', 'corona', 'mazzo', 'cesto', 'composizione', 'cuscino', 'rose', 'gigli', 'ordinare', 'ordine', 'omaggio floreale', 'mandare fiori', 'inviare fiori', 'omaggio', 'deporre', 'candela'],
     rispondi: () => ({
       id: 'fiori',
       testo:
-        'Su Vicini non si ordinano fiori online. Per un omaggio floreale puoi chiedere all’agenzia che cura il funerale (trovi telefono e indirizzo nella pagina Imprese) oppure rivolgerti a un fiorista di tua fiducia. Di solito i fiori vanno consegnati con un po’ di anticipo: meglio chiedere subito all’agenzia entro quando.\n\nSe vuoi far sentire la tua vicinanza alla famiglia, puoi anche lasciare un pensiero sul manifesto.',
+        'Su Vicini non si ordinano fiori veri online, ma sul manifesto puoi deporre gratis un omaggio simbolico (fiore bianco, rosa o candela) con il pulsante “Deponi un fiore”: la famiglia vede quante persone hanno partecipato. Per fiori veri puoi chiedere all’agenzia che cura il funerale (trovi telefono e indirizzo nella pagina Imprese) oppure a un fiorista di tua fiducia: meglio chiedere subito entro quando vanno consegnati.\n\nPuoi anche lasciare un pensiero sul manifesto.',
       link: [{ etichetta: 'Contatta un’agenzia', to: '/imprese' }],
       seguiti: ['Come lascio un pensiero per la famiglia?'],
     }),

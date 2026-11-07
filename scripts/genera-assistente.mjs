@@ -16,6 +16,7 @@ const gruppi = Object.fromEntries(GRUPPI_IMPRESE.map((g) => [g.id, g.nome]));
 const testo = [
   `Reperibilità Vicini: ${REPERIBILITA}.`,
   '',
+  'Omaggi virtuali: sotto ogni manifesto c’è il pulsante “Deponi un fiore” (gratuito: fiore bianco, rosa o candela). Sono simbolici, nessun fiore viene consegnato; la famiglia vede quante persone hanno partecipato.',
   'Fiori: su Vicini NON si ordinano fiori online. Per un omaggio floreale ci si rivolge direttamente all’agenzia che cura il funerale o a un fiorista di fiducia.',
   '',
   'Agenzie del territorio (gruppo = zona in cui operano):',
