@@ -8,8 +8,9 @@
 -- generato dal browser, che un malintenzionato può cambiare: per questo c'è
 -- anche un tetto per manifesto):
 --   * massimo 3 omaggi all'ora per dispositivo e per manifesto
---   * massimo 30 omaggi ogni 10 minuti per manifesto
--- Si può rieseguire. Richiede la tabella public.manifesti (colonne id, pubblicato).
+--   * massimo 30 omaggi ogni 10 minuti per manifesto, 10 all'ora per dispositivo
+--     su tutti i manifesti e 200 ogni 10 minuti in totale
+-- Si può rieseguire.
 -- ============================================================================
 
 create table if not exists public.omaggi_virtuali (
@@ -48,15 +49,26 @@ begin
   if char_length(v_disp) < 16 or char_length(v_disp) > 64 then
     raise exception 'Richiesta non valida.';
   end if;
-  if not exists (select 1 from public.manifesti m
-                  where m.id::text = p_manifesto and m.pubblicato = true) then
-    raise exception 'Manifesto non trovato.';
+  -- I manifesti del sito sono ancora dati di esempio nel codice, non righe del
+  -- database: si controlla solo la forma dell'identificativo. Quando i manifesti
+  -- arriveranno da public.manifesti si potrà tornare a verificarne l'esistenza.
+  if coalesce(p_manifesto, '') !~ '^[A-Za-z0-9_-]{1,64}$' then
+    raise exception 'Manifesto non valido.';
   end if;
 
   if (select count(*) from public.omaggi_virtuali o
        where o.manifesto_id = p_manifesto and o.dispositivo = v_disp
          and o.creato_il > now() - interval '1 hour') >= 3 then
     raise exception 'Hai già deposto alcuni omaggi: riprova più tardi.';
+  end if;
+  -- tetto per dispositivo su tutti i manifesti e tetto globale
+  if (select count(*) from public.omaggi_virtuali o
+       where o.dispositivo = v_disp and o.creato_il > now() - interval '1 hour') >= 10 then
+    raise exception 'Hai già deposto alcuni omaggi: riprova più tardi.';
+  end if;
+  if (select count(*) from public.omaggi_virtuali o
+       where o.creato_il > now() - interval '10 minutes') >= 200 then
+    raise exception 'Troppi omaggi in poco tempo: riprova tra qualche minuto.';
   end if;
   if (select count(*) from public.omaggi_virtuali o
        where o.manifesto_id = p_manifesto
@@ -70,7 +82,7 @@ begin
 end;
 $$;
 
--- Conteggi pubblici (solo numeri, nessun nome, solo manifesti pubblicati).
+-- Conteggi pubblici (solo numeri, nessun nome).
 create or replace function public.omaggi_conteggi()
 returns table (manifesto_id text, tipo text, totale bigint)
 language sql
@@ -80,7 +92,6 @@ set search_path = public
 as $$
   select o.manifesto_id, o.tipo, count(*)
     from public.omaggi_virtuali o
-    join public.manifesti m on m.id::text = o.manifesto_id and m.pubblicato = true
    group by o.manifesto_id, o.tipo;
 $$;
 
