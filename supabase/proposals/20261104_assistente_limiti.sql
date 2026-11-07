@@ -2,7 +2,7 @@
 -- PROPOSTA (NON APPLICATA) - Tetto giornaliero per l'assistente con IA
 -- ============================================================================
 -- La Edge Function "assistente" chiama un servizio a pagamento. Questo
--- contatore fissa un tetto di chiamate al giorno (default 300, cambiabile con
+-- contatore fissa un tetto di chiamate al giorno (default 150, cambiabile con
 -- il segreto ASSISTENTE_MAX_GIORNO): superato il tetto l'assistente smette di
 -- rispondere con l'IA e il sito torna alle risposte rapide. Così una raffica di
 -- richieste non può trasformarsi in un conto imprevisto.
@@ -18,7 +18,7 @@ alter table public.assistente_uso enable row level security;
 -- Nessuna policy: anon e authenticated non vedono né scrivono la tabella.
 revoke all on public.assistente_uso from anon, authenticated;
 
-create or replace function public.assistente_conta(p_max integer default 300)
+create or replace function public.assistente_conta(p_max integer default 150)
 returns boolean
 language plpgsql
 security definer
@@ -31,7 +31,7 @@ begin
   values ((now() at time zone 'Europe/Rome')::date, 1)
   on conflict (giorno) do update set chiamate = u.chiamate + 1
   returning u.chiamate into n;
-  return n <= greatest(1, coalesce(p_max, 300));
+  return n <= greatest(1, coalesce(p_max, 150));
 end;
 $$;
 

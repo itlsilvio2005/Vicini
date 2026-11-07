@@ -45,9 +45,9 @@ const PannelloNotifiche = lazy(() => import("./components/NotificheNucleo").then
 const NAV = [
   { to: "/bacheca", label: "Bacheca Manifesti", short: "Bacheca", icon: <ScrollText size={16} /> },
   { to: "/imprese", label: "Le imprese del luogo", short: "Imprese", icon: <Landmark size={16} /> },
-  { to: "/mappa", label: "Mappa & Luoghi del Territorio", short: "Mappa & Luoghi", icon: <MapIcon size={16} /> },
-  { to: "/volonta-nucleo", label: "Le Mie Volontà & Il Nucleo", short: "Volontà & Nucleo", icon: <HeartHandshake size={16} /> },
-  { to: "/area-riservata", label: "Area Riservata", short: "Area Riservata", icon: <Lock size={16} /> },
+  { to: "/mappa", label: "Mappa & Luoghi del Territorio", short: "Mappa", icon: <MapIcon size={16} /> },
+  { to: "/volonta-nucleo", label: "Le Mie Volontà & Il Nucleo", short: "Volontà", icon: <HeartHandshake size={16} /> },
+  { to: "/area-riservata", label: "Area Riservata", short: "Area", icon: <Lock size={16} /> },
 ];
 
 const TITOLI: Record<string, string> = {
@@ -151,20 +151,20 @@ function Shell() {
     <div className="paper-ambient flex min-h-screen flex-col">
       {/* ---------- Header sticky con Tab Bar ---------- */}
       <header className="sticky top-0 z-50 border-b border-night-700 bg-night-900/95 shadow-lg shadow-night-950/30 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pt-3 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 pt-2 sm:gap-4 sm:px-6 sm:pt-3">
           <button onClick={() => navigate("/bacheca")} className="group flex items-center gap-3 text-left">
-            <span className="grid h-10 w-10 place-items-center rounded-lg border border-bronze-500/60 bg-night-800 transition group-hover:border-bronze-400">
+            <span className="grid h-9 w-9 place-items-center rounded-lg sm:h-10 sm:w-10 border border-bronze-500/60 bg-night-800 transition group-hover:border-bronze-400">
               <Flame size={19} className="text-bronze-400" />
             </span>
             <span className="leading-none">
-              <span className="block font-display text-[26px] font-semibold tracking-wide text-paper">Vicini</span>
-              <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.28em] text-mist">
+              <span className="block font-display text-[24px] font-semibold sm:text-[26px] tracking-wide text-paper">Vicini</span>
+              <span className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.28em] text-mist sm:block">
                 Servizi funebri · Modena
               </span>
             </span>
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {/* Pannello Notifiche (solo per utenti loggati) */}
             {utente && <PannelloNotifiche />}
 
@@ -174,17 +174,17 @@ function Shell() {
             </p>
             <a
               href={`tel:${REPERIBILITA.replace(/\s/g, "")}`}
-              className="flex items-center gap-1.5 rounded-md border border-night-600 px-3 py-1.5 text-[12px] font-semibold text-bronze-300 transition hover:border-bronze-500 hover:text-bronze-200"
+              className="flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-md border border-night-600 px-3 py-1.5 text-[13px] font-semibold text-bronze-300 transition hover:border-bronze-500 hover:text-bronze-200"
             >
-              <Phone size={13} /> {REPERIBILITA}
+              <Phone size={14} /> <span className="sm:hidden">Chiama 24h</span><span className="hidden sm:inline">{REPERIBILITA}</span>
             </a>
           </div>
         </div>
 
         {/* Tab bar */}
-        <div className="mt-3 border-t border-night-800">
+        <div className="mt-2 border-t border-night-800 sm:mt-3">
           <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 sm:px-6">
-            <nav className="nice-scroll flex flex-1 gap-1 overflow-x-auto" aria-label="Sezioni della piattaforma">
+            <nav className="nice-scroll flex flex-1 gap-0 overflow-x-auto sm:gap-1" aria-label="Sezioni della piattaforma">
               {NAV.map((t, idx) => {
                 const active = sezioneCorrente === t.to;
                 return (
@@ -192,14 +192,14 @@ function Shell() {
                     key={t.to}
                     onClick={() => navigate(t.to)}
                     aria-current={active ? "page" : undefined}
-                    className={`relative flex shrink-0 items-center gap-2 px-3.5 pb-3 pt-2 text-[12.5px] font-semibold tracking-wide transition-colors sm:text-[13px] ${
+                    className={`relative flex shrink-0 items-center gap-1.5 px-1.5 pb-3 pt-2.5 text-[12.5px] font-semibold tracking-wide transition-colors sm:gap-2 sm:px-3 sm:text-[13px] ${
                       active ? "text-bronze-300" : "text-mist hover:text-paper"
                     }`}
                   >
-                    <span className={`font-display text-[11px] italic ${active ? "text-bronze-400" : "text-mist-dark"}`}>
+                    <span className={`hidden font-display text-[11px] italic sm:inline ${active ? "text-bronze-400" : "text-mist-dark"}`}>
                       {String(idx + 1).padStart(2, "0")}
                     </span>
-                    <span className={active ? "text-bronze-400" : "text-mist-dark"}>{t.icon}</span>
+                    <span className={`${active ? "text-bronze-400" : "hidden text-mist-dark sm:inline"}`}>{t.icon}</span>
                     <span className="hidden md:inline">{t.label}</span>
                     <span className="md:hidden">{t.short}</span>
                     {t.to === "/area-riservata" && utente && (
