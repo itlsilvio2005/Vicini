@@ -2,7 +2,6 @@
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
-  Flower2,
   HeartHandshake,
   Clock3,
   Church,
@@ -13,7 +12,6 @@ import {
   ChevronDown,
   Send,
   CheckCircle2,
-  AlertTriangle,
   Phone,
   Mail,
   BellRing,
@@ -26,11 +24,9 @@ import {
 import {
   agenziaById,
   COMUNI,
-  FIORI,
   URL_BASE,
   type Comune,
   type Manifesto,
-  type OrdineFiori,
   type Pensiero,
 } from "./data";
 import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, SectionHeading, useToast } from "./lib";
@@ -43,7 +39,7 @@ function waLink(m: Manifesto) {
   const text =
     `Manifesto funebre — ${m.nome} (${m.comune}).\n` +
     `Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora} — ${m.funerale.luogo}.\n` +
-    `Per inviare fiori o un pensiero: https://${URL_BASE}/manifesto/${m.id}`;
+    `Per lasciare un pensiero: https://${URL_BASE}/manifesto/${m.id}`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
@@ -142,7 +138,7 @@ function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
           <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-mist">
             Manifesti funebri aggiornati dalle imprese del luogo per i comuni di{" "}
             <strong className="font-semibold text-paper/90">Modena, Nonantola, Vignola, Carpi, Formigine e Sassuolo</strong>:
-            camera ardente, cerimonia e destinazione finale, con invio fiori, cordogli e QR code.
+            camera ardente, cerimonia e destinazione finale, con pensieri di cordoglio e QR code.
           </p>
           <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] capitalize text-mist/90">
             <span className="flex items-center gap-2">
@@ -195,11 +191,9 @@ function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
 
 export function Bacheca({
   manifesti: manifestiProp,
-  onNuovoOrdine,
   onNuovoPensiero,
 }: {
   manifesti: Manifesto[];
-  onNuovoOrdine: (o: OrdineFiori) => void;
   onNuovoPensiero: (manifestoId: string, p: Pensiero) => void;
 }) {
   const { comune } = useParams();
@@ -359,7 +353,7 @@ export function Bacheca({
         {!caricamento && (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {visibili.map((m, i) => (
-              <ManifestoCard key={m.id} m={m} delay={(i % 3) * 90} onOrdine={onNuovoOrdine} onPensiero={onNuovoPensiero} />
+              <ManifestoCard key={m.id} m={m} delay={(i % 3) * 90} onPensiero={onNuovoPensiero} />
             ))}
           </div>
         )}
@@ -380,16 +374,13 @@ function ManifestoCard({
   m,
   delay,
   onPensiero,
-  onOrdine,
 }: {
   m: Manifesto;
   delay: number;
   onPensiero: (id: string, p: Pensiero) => void;
-  onOrdine: (o: OrdineFiori) => void;
 }) {
   const [aperto, setAperto] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [fioriOpen, setFioriOpen] = useState(false);
   const [cordoglioOpen, setCordoglioOpen] = useState(false);
   const agenzia = agenziaById(m.agenzia);
   const IconRito = m.rito === "Musulmano" ? MoonStar : Church;
@@ -487,14 +478,8 @@ function ManifestoCard({
           )}
         </div>
 
-        {/* azioni — gerarchia: Invia Fiori primaria */}
+        {/* azioni */}
         <div className="border-t border-line-soft bg-paper px-5 py-3.5 sm:px-6">
-          <button
-            onClick={() => setFioriOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-3 py-2.5 text-sm font-bold text-night-950 shadow-sm transition hover:bg-bronze-400 active:scale-[0.98]"
-          >
-            <Flower2 size={16} /> Invia Fiori
-          </button>
           <div className="mt-2 flex items-center gap-2">
             <button
               onClick={() => setCordoglioOpen(true)}
@@ -538,7 +523,7 @@ function ManifestoCard({
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-bronze-700">QR Code Manifesto</p>
                   <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">
-                    Inquadra per inviare fiori o cordogli dal cellulare.
+                    Inquadra per lasciare un pensiero dal cellulare.
                   </p>
                   <p className="mt-1.5 font-mono text-[10.5px] text-ink-faint">{URL_BASE}/manifesto/{m.id}</p>
                 </div>
@@ -564,7 +549,6 @@ function ManifestoCard({
         </p>
       </div>
 
-      <FioriModal manifesto={m} open={fioriOpen} onClose={() => setFioriOpen(false)} onSubmitOrder={onOrdine} />
       <CordoglioModal manifesto={m} open={cordoglioOpen} onClose={() => setCordoglioOpen(false)} onInvia={onPensiero} />
     </Reveal>
   );
@@ -574,16 +558,13 @@ function ManifestoCard({
 
 export function ManifestoDettaglio({
   manifesti,
-  onNuovoOrdine,
   onNuovoPensiero,
 }: {
   manifesti: Manifesto[];
-  onNuovoOrdine: (o: OrdineFiori) => void;
   onNuovoPensiero: (manifestoId: string, p: Pensiero) => void;
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [fioriOpen, setFioriOpen] = useState(false);
   const [cordoglioOpen, setCordoglioOpen] = useState(false);
 
   // Prova a caricare i dati dal tag script JSON (per prerendering)
@@ -780,12 +761,6 @@ export function ManifestoDettaglio({
         <div className="space-y-6 lg:sticky lg:top-32 lg:self-start">
           <div className="rounded-xl border border-line bg-card p-6">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-faint">Partecipa al cordoglio</p>
-            <button
-              onClick={() => setFioriOpen(true)}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 shadow-sm transition hover:bg-bronze-400 active:scale-[0.98]"
-            >
-              <Flower2 size={17} /> Invia Fiori
-            </button>
             <div className="mt-2 flex gap-2">
               <button
                 onClick={() => setCordoglioOpen(true)}
@@ -803,10 +778,6 @@ export function ManifestoDettaglio({
                 <WhatsAppIcon />
               </a>
             </div>
-            <p className="mt-3 flex items-start gap-2 rounded-md border border-bronze-600/40 bg-bronze-300/15 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-bronze-700">
-              <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-              I fiori devono essere ordinati almeno <strong>24 ore prima del funerale</strong>.
-            </p>
           </div>
 
           {/* QR manifesto */}
@@ -816,7 +787,7 @@ export function ManifestoDettaglio({
               <QrVisual seed={m.id + m.nome} size={150} />
             </div>
             <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">
-              Inquadra per inviare fiori o cordogli dal cellulare.
+              Inquadra per lasciare un pensiero dal cellulare.
             </p>
             <p className="mt-1.5 font-mono text-[11px] text-ink-faint">{URL_BASE}/manifesto/{m.id}</p>
           </div>
@@ -844,7 +815,6 @@ export function ManifestoDettaglio({
         </div>
       </div>
 
-      <FioriModal manifesto={m} open={fioriOpen} onClose={() => setFioriOpen(false)} onSubmitOrder={onNuovoOrdine} />
       <CordoglioModal manifesto={m} open={cordoglioOpen} onClose={() => setCordoglioOpen(false)} onInvia={onNuovoPensiero} />
     </div>
   );
@@ -894,193 +864,6 @@ function WhatsAppIcon() {
       <path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.7-1.2A9 9 0 1 0 12 3Z" />
       <path d="M8.5 9.5c.5 2.5 3.5 5.5 6 6l1.5-1.5-2-1.2-1 .6c-1-.5-2-1.5-2.5-2.5l.6-1-1.2-2Z" fill="currentColor" stroke="none" />
     </svg>
-  );
-}
-
-/* ---------------- Modale Invia Fiori ---------------- */
-
-function FioriModal({
-  manifesto,
-  open,
-  onClose,
-  onSubmitOrder,
-}: {
-  manifesto: Manifesto;
-  open: boolean;
-  onClose: () => void;
-  onSubmitOrder: (o: OrdineFiori) => void;
-}) {
-  const toast = useToast();
-  const [composizione, setComposizione] = useState(FIORI[0].nome);
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [nastro, setNastro] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [done, setDone] = useState(false);
-  const [caricamento, setCaricamento] = useState(false);
-
-  const agenzia = agenziaById(manifesto.agenzia);
-  const prezzo = FIORI.find((f) => f.nome === composizione)?.prezzo ?? 0;
-
-  const chiudi = () => {
-    onClose();
-    setTimeout(() => {
-      setDone(false);
-      setNome(""); setEmail(""); setTelefono(""); setNastro(""); setErrors({});
-    }, 300);
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const errs: Record<string, string> = {};
-    if (nome.trim().length < 2) errs.nome = "Inserisci il nome del mittente.";
-    if (!/^\S+@\S+\.\S+$/.test(email)) errs.email = "Inserisci un'email valida: è obbligatoria per la fatturazione.";
-    if (telefono.replace(/\D/g, "").length < 8) errs.telefono = "Inserisci un telefono valido: è obbligatorio per la fatturazione.";
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
-    setCaricamento(true);
-
-    const ordine: OrdineFiori = {
-      id: `ord-${Date.now()}`,
-      defunto: manifesto.nome,
-      comune: manifesto.comune,
-      dataFunerale: `${manifesto.funerale.giorno.split(",")[0]} · ${manifesto.funerale.ora}`,
-      composizione,
-      importo: prezzo,
-      nastro: nastro.trim() || undefined,
-      cliente: { nome: nome.trim(), email: email.trim(), telefono: telefono.trim() },
-      stato: "Da evadere",
-      fatturaInviata: false,
-      agenzia: manifesto.agenzia,
-      canale: "Sito Vicini",
-    };
-
-    // Se Supabase è configurato, salva nel database
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase.from('ordini_fiori').insert([{
-        manifesto_id: manifesto.id,
-        composizione: ordine.composizione,
-        importo: ordine.importo,
-        nastro: ordine.nastro || null,
-        cliente_nome: ordine.cliente.nome,
-        cliente_email: ordine.cliente.email,
-        cliente_telefono: ordine.cliente.telefono,
-        stato: 'Da evadere',
-        fattura_inviata: false,
-      }]);
-
-      if (error) {
-        console.error('Errore salvataggio ordine:', error);
-        toast("Errore nel salvataggio dell'ordine. Riprova.");
-        setCaricamento(false);
-        return;
-      }
-    }
-
-    // Salva anche in memoria (fallback o aggiornamento UI)
-    onSubmitOrder(ordine);
-    setDone(true);
-    setCaricamento(false);
-    toast(`Richiesta fiori inviata a ${agenzia.nome}. Riceverai la fattura via email.`);
-  };
-
-  return (
-    <Modal open={open} onClose={chiudi} labelledBy="fiori-title">
-      <ModalHeader
-        id="fiori-title"
-        onClose={chiudi}
-        title={<span className="flex items-center gap-2"><Flower2 size={20} className="text-bronze-600" /> Invia fiori</span>}
-        sub={`In memoria di ${manifesto.nome} — ${manifesto.comune} · a cura di ${agenzia.nome}`}
-      />
-
-      {done ? (
-        <div className="px-6 py-10 text-center">
-          <CheckCircle2 size={44} className="mx-auto text-bronze-500" />
-          <h4 className="mt-4 font-display text-2xl font-semibold text-ink">Richiesta inviata</h4>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
-            <strong>{agenzia.nome}</strong> preparerà «{composizione}» e ti contatterà per la fatturazione all'indirizzo{" "}
-            <strong>{email}</strong>.
-          </p>
-          <div className="mx-auto mt-5 flex max-w-sm items-start gap-2.5 rounded-lg border border-bronze-600/40 bg-bronze-300/15 px-4 py-3 text-left text-[12.5px] text-bronze-700">
-            <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-            <span>
-              I fiori devono essere ordinati almeno <strong>24 ore prima del funerale</strong> (ore {manifesto.funerale.ora} del{" "}
-              {manifesto.funerale.giorno}).
-            </span>
-          </div>
-          <button onClick={chiudi} className="mt-6 rounded-md bg-night-800 px-5 py-2.5 text-sm font-semibold text-paper transition hover:bg-night-700">
-            Chiudi
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="space-y-4 px-6 py-5" noValidate>
-          <div className="flex items-start gap-2.5 rounded-lg border border-bronze-600/40 bg-bronze-300/15 px-4 py-3 text-[12.5px] leading-snug text-bronze-700">
-            <AlertTriangle size={15} className="mt-0.5 shrink-0" />
-            <p>
-              <strong>Avviso:</strong> i fiori devono essere ordinati almeno <strong>24 ore prima del funerale</strong>. Funerale:{" "}
-              {manifesto.funerale.giorno}, ore {manifesto.funerale.ora}.
-            </p>
-          </div>
-
-          <Field label="Composizione floreale" required>
-            <select value={composizione} onChange={(e) => setComposizione(e.target.value)} className={inputCls()}>
-              {FIORI.map((f) => (
-                <option key={f.nome} value={f.nome}>
-                  {f.nome} — {f.prezzo} €
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Nome del mittente" required error={errors.nome}>
-            <input value={nome} onChange={(e) => setNome(e.target.value)} className={inputCls(!!errors.nome)} placeholder="Es. Famiglia Barbieri" />
-          </Field>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Email" required error={errors.email} hint="per la fatturazione">
-              <div className="relative">
-                <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`${inputCls(!!errors.email)} pl-9`} placeholder="nome@esempio.it" />
-              </div>
-            </Field>
-            <Field label="Telefono" required error={errors.telefono} hint="per la fatturazione">
-              <div className="relative">
-                <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
-                <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} className={`${inputCls(!!errors.telefono)} pl-9`} placeholder="3xx xxx xxxx" />
-              </div>
-            </Field>
-          </div>
-
-          <Field label="Dedica per il nastro" hint="facoltativa">
-            <input value={nastro} onChange={(e) => setNastro(e.target.value)} className={inputCls()} placeholder="«Con affetto — …»" maxLength={80} />
-          </Field>
-
-          <p className="text-[11.5px] leading-relaxed text-ink-faint">
-            I dati di fatturazione (email e telefono) saranno trasmessi esclusivamente a {agenzia.nome} per l'emissione del
-            documento fiscale. Importo indicativo: <strong className="text-ink-soft">{prezzo} €</strong> IVA inclusa, consegna al
-            luogo della cerimonia compresa.
-          </p>
-
-          <button
-            type="submit"
-            disabled={caricamento}
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 transition hover:bg-bronze-400 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {caricamento ? (
-              <>
-                <Loader2 size={15} className="animate-spin" /> Invio...
-              </>
-            ) : (
-              <>
-                <Send size={15} /> Invia richiesta all'impresa
-              </>
-            )}
-          </button>
-        </form>
-      )}
-    </Modal>
   );
 }
 
