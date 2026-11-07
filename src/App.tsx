@@ -105,13 +105,6 @@ function Shell() {
     }
   }, [location.pathname, utente?.ruolo]);
 
-  const aggiungiOrdine = useCallback((o: OrdineFiori) => {
-    setOrdini((list) => [o, ...list]);
-    if (isSupabaseConfigured()) {
-      supabase.rpc("registra_interazione", { p_evento: "click_fiori" }).then(() => {});
-    }
-  }, []);
-
   const aggiungiPensiero = useCallback((manifestoId: string, p: Pensiero) => {
     setManifesti((list) => list.map((m) => (m.id === manifestoId ? { ...m, pensieri: [p, ...m.pensieri] } : m)));
   }, []);
@@ -232,15 +225,15 @@ function Shell() {
           <Route path="/" element={<Navigate to="/bacheca" replace />} />
           <Route
             path="/bacheca"
-            element={<Bacheca manifesti={manifesti} onNuovoOrdine={aggiungiOrdine} onNuovoPensiero={aggiungiPensiero} />}
+            element={<Bacheca manifesti={manifesti} onNuovoPensiero={aggiungiPensiero} />}
           />
           <Route
             path="/bacheca/:comune"
-            element={<Bacheca manifesti={manifesti} onNuovoOrdine={aggiungiOrdine} onNuovoPensiero={aggiungiPensiero} />}
+            element={<Bacheca manifesti={manifesti} onNuovoPensiero={aggiungiPensiero} />}
           />
           <Route
             path="/manifesto/:id"
-            element={<ManifestoDettaglio manifesti={manifesti} onNuovoOrdine={aggiungiOrdine} onNuovoPensiero={aggiungiPensiero} />}
+            element={<ManifestoDettaglio manifesti={manifesti} onNuovoPensiero={aggiungiPensiero} />}
           />
           <Route path="/imprese" element={<Imprese onScegli={scegliAgenzia} />} />
           <Route path="/mappa" element={<Luoghi />} />

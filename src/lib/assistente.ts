@@ -1,4 +1,4 @@
-import { AGENZIE, FIORI, REPERIBILITA, eur } from '../data';
+import { AGENZIE, REPERIBILITA } from '../data';
 
 /* ============================================================================
    ASSISTENTE DI VICINI — risposte a domande frequenti dei visitatori.
@@ -27,7 +27,6 @@ export const DOMANDE_RAPIDE = [
   'È appena morto un familiare, cosa devo fare?',
   'Quali documenti servono?',
   'Quanto costa un funerale?',
-  'Come posso mandare dei fiori?',
   'Come lascio un pensiero per la famiglia?',
   'Quali agenzie ci sono nella mia zona?',
 ];
@@ -101,16 +100,16 @@ const ARGOMENTI: Argomento[] = [
     id: 'costi',
     parole: ['costa', 'costo', 'costi', 'prezzo', 'prezzi', 'quanto si spende', 'spesa', 'preventivo', 'tariffe', 'quanto viene', 'economico', 'pagare'],
     rispondi: (testo) => {
-      // "quanto costa mandare dei fiori?" riguarda il listino, non il funerale
+      // "quanto costa mandare dei fiori?" riguarda i fiori, non il funerale
       if (/\b(fior|coron|rose|gigli|cuscin|cesto|mazzo)/.test(normalizza(testo))) {
         return ARGOMENTI.find((a) => a.id === 'fiori')!.rispondi(testo);
       }
       return {
       id: 'costi',
       testo:
-        'Non posso darti una cifra seria senza sapere cosa serve: il costo cambia molto con il rito, il tipo di cassa, il trasporto, la sepoltura o la cremazione, gli addobbi floreali e le tasse del comune.\n\nIl consiglio è di chiedere all’agenzia un preventivo scritto e dettagliato, voce per voce, e di confrontarlo anche con un’altra agenzia se vuoi. Un’agenzia seria te lo spiega senza fretta.\n\nPer i fiori, invece, i prezzi sono quelli del nostro listino (vedi “Come posso mandare dei fiori?”).',
+        'Non posso darti una cifra seria senza sapere cosa serve: il costo cambia molto con il rito, il tipo di cassa, il trasporto, la sepoltura o la cremazione, gli addobbi floreali e le tasse del comune.\n\nIl consiglio è di chiedere all’agenzia un preventivo scritto e dettagliato, voce per voce, e di confrontarlo anche con un’altra agenzia se vuoi. Un’agenzia seria te lo spiega senza fretta.\n\nPer i fiori rivolgiti direttamente all’agenzia: su Vicini non si ordinano online.',
       link: [{ etichetta: 'Contatta un’agenzia', to: '/imprese' }],
-      seguiti: ['Come posso mandare dei fiori?'],
+      seguiti: ['Quali agenzie ci sono nella mia zona?'],
       };
     },
   },
@@ -143,10 +142,8 @@ const ARGOMENTI: Argomento[] = [
     rispondi: () => ({
       id: 'fiori',
       testo:
-        'Puoi ordinare un omaggio floreale direttamente dalla pagina del manifesto della persona, nella Bacheca. Il listino attuale:\n' +
-        FIORI.map((f) => `• ${f.nome}: ${eur(f.prezzo)}`).join('\n') +
-        '\n\nPuoi aggiungere un nastro con una dedica. L’ordine viene preso in carico dall’agenzia che cura il funerale.',
-      link: [{ etichetta: 'Vai alla Bacheca manifesti', to: '/bacheca' }],
+        'Su Vicini non si ordinano fiori online. Per un omaggio floreale puoi chiedere all’agenzia che cura il funerale (trovi telefono e indirizzo nella pagina Imprese) oppure rivolgerti a un fiorista di tua fiducia. Di solito i fiori vanno consegnati con un po’ di anticipo: meglio chiedere subito all’agenzia entro quando.\n\nSe vuoi far sentire la tua vicinanza alla famiglia, puoi anche lasciare un pensiero sul manifesto.',
+      link: [{ etichetta: 'Contatta un’agenzia', to: '/imprese' }],
       seguiti: ['Come lascio un pensiero per la famiglia?'],
     }),
   },
@@ -158,7 +155,7 @@ const ARGOMENTI: Argomento[] = [
       testo:
         'Apri il manifesto della persona dalla Bacheca e scrivi il tuo pensiero nello spazio dedicato: lo leggeranno la famiglia e chi segue il manifesto. Ti basta indicare il tuo nome e, se vuoi, il legame con la persona.\n\nI messaggi vengono controllati per evitare contenuti offensivi. Se il tuo non compare subito, riprova con parole più semplici o contatta l’agenzia.',
       link: [{ etichetta: 'Vai alla Bacheca manifesti', to: '/bacheca' }],
-      seguiti: ['Come posso mandare dei fiori?'],
+      seguiti: ['Quali agenzie ci sono nella mia zona?'],
     }),
   },
   {
