@@ -32,6 +32,7 @@ import {
 import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, SectionHeading, useToast } from "./lib";
 import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
+import { OmaggiVirtuali } from "./components/OmaggiVirtuali";
 
 /* ---------------- helpers ---------------- */
 
@@ -480,6 +481,7 @@ function ManifestoCard({
 
         {/* azioni */}
         <div className="border-t border-line-soft bg-paper px-5 py-3.5 sm:px-6">
+          <OmaggiVirtuali id={m.id} nome={m.nome} />
           <div className="mt-2 flex items-center gap-2">
             <button
               onClick={() => setCordoglioOpen(true)}
@@ -761,6 +763,7 @@ export function ManifestoDettaglio({
         <div className="space-y-6 lg:sticky lg:top-32 lg:self-start">
           <div className="rounded-xl border border-line bg-card p-6">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-faint">Partecipa al cordoglio</p>
+            <div className="mt-3"><OmaggiVirtuali id={m.id} nome={m.nome} /></div>
             <div className="mt-2 flex gap-2">
               <button
                 onClick={() => setCordoglioOpen(true)}
