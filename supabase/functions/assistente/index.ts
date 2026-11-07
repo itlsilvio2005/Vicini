@@ -5,7 +5,7 @@
 // ============================================================================
 
 // <<CONOSCENZA
-export const CONOSCENZA = "Reperibilità Vicini: 059 203 4060.\n\nListino fiori (ordinabili dalla pagina del manifesto, con nastro e dedica opzionali):\n- Composizione di gigli bianchi: 120,00 €\n- Cuscino di fiori di stagione: 90,00 €\n- Corona floreale con nastro: 180,00 €\n- Cesto bianco e verde: 70,00 €\n- Mazzo di rose chiare: 60,00 €\n\nAgenzie del territorio (gruppo = zona in cui operano):\n- Onoranze Funebri Pecorari — tel. 059 364 218 — Via Nonantolana, 555 — 41122 Modena (MO) — zone: Modena Città, Vignola & Nonantola\n- Onoranze Funebri Borsari — tel. 059 826 115 — Strada Cimitero San Cataldo, 131 — 41123 Modena (MO) — zone: Modena Città\n- Onoranze Funebri Farri — tel. 059 301 577 — Viale Gaetano Moreali, 229 — 41124 Modena (MO) — zone: Modena Città\n- Onoranze Funebri Gianni Gibellini — tel. 059 373 892 — Via del Pozzo, 101/a — 41124 Modena (MO) — zone: Modena Città\n- Onoranze Funebri ROFFI — tel. 059 352 046 — Via Giardini, 452 — 41124 Modena (MO) — zone: Modena Città\n- Onoranze Funebri Croce Blu — tel. 059 366 022 — Via del Lancillotto, 10 — 41122 Modena (MO) — zone: Modena Città\n- Onoranze Funebri San Martino — tel. 059 512 340 — Via Don Adelmo Martinelli, 23 — 41043 Formigine (MO) — zone: Formigine\n- Onoranze Funebri Gibellini — tel. 059 558 130 — Via Giardini Nord, 33 — 41043 Formigine (MO) — zone: Formigine\n- Onoranze Funebri Salvioli — tel. 059 642 873 — Corso Alberto Pio, 68 — 41012 Carpi (MO) — zone: Carpi\n- Onoranze Funebri Bellodi — tel. 059 655 410 — Via Cattani, 45 — 41012 Carpi (MO) — zone: Carpi\n- Onoranze Funebri Lugli — tel. 059 661 224 — Via Pezzana, 8 — 41012 Carpi (MO) — zone: Carpi\n- Onoranze Funebri De Pietri — tel. 0536 807 315 — Via Radici in Piano, 27 — 41049 Sassuolo (MO) — zone: Sassuolo\n- Onoranze Funebri Gibellini & Falcinelli — tel. 0536 884 502 — Via Mazzini, 74 — 41049 Sassuolo (MO) — zone: Sassuolo\n- Onoranze Funebri Muratori — tel. 059 771 368 — Via Libertà, 55 — 41058 Vignola (MO) · sede anche a Nonantola, Via Marconi 3 — zone: Vignola & Nonantola\n\nIl sito offre: Bacheca manifesti (camera ardente, cerimonia, pensieri, ordine fiori), Imprese del luogo, Mappa e luoghi (chiese, moschee, strutture), Volontà e Nucleo (account privato gratuito per lasciare scritte le proprie volontà), Area riservata per le agenzie approvate da Vicini. Riti previsti: cattolico, civile, musulmano, ortodosso.";
+export const CONOSCENZA = "Reperibilità Vicini: 059 203 4060.\n\nListino fiori (ordinabili dalla pagina del manifesto, con nastro e dedica opzionali):\n- Composizione di gigli bianchi: 120,00 €\n- Cuscino di fiori di stagione: 90,00 €\n- Corona floreale con nastro: 180,00 €\n- Cesto bianco e verde: 70,00 €\n- Mazzo di rose chiare: 60,00 €\n\nAgenzie del territorio (gruppo = zona in cui operano):\n- Onoranze Funebri Pecorari — tel. 059 364 218 — Via Nonantolana, 555 — 41122 Modena (MO) — zone: Modena Città, Vignola & Nonantola\n- Onoranze Funebri Borsari — tel. 059 826 115 — Strada Cimitero San Cataldo, 131 — 41123 Modena (MO) — zone: Modena Città\n- Onoranze Funebri Farri — tel. 059 301 577 — Viale Gaetano Moreali, 229 — 41124 Modena (MO) — zone: Modena Città\n- Onoranze Funebri Gianni Gibellini — tel. 059 373 892 — Via del Pozzo, 101/a — 41124 Modena (MO) — zone: Modena Città\n- Onoranze Funebri ROFFI — tel. 059 352 046 — Via Giardini, 452 — 41124 Modena (MO) — zone: Modena Città\n- Onoranze Funebri Croce Blu — tel. 059 366 022 — Via del Lancillotto, 10 — 41122 Modena (MO) — zone: Modena Città\n- Onoranze Funebri San Martino — tel. 059 512 340 — Via Don Adelmo Martinelli, 23 — 41043 Formigine (MO) — zone: Formigine\n- Onoranze Funebri Gibellini — tel. 059 558 130 — Via Giardini Nord, 33 — 41043 Formigine (MO) — zone: Formigine\n- Onoranze Funebri Salvioli — tel. 059 642 873 — Corso Alberto Pio, 68 — 41012 Carpi (MO) — zone: Carpi\n- Onoranze Funebri Bellodi — tel. 059 655 410 — Via Cattani, 45 — 41012 Carpi (MO) — zone: Carpi\n- Onoranze Funebri Lugli — tel. 059 661 224 — Via Pezzana, 8 — 41012 Carpi (MO) — zone: Carpi\n- Onoranze Funebri De Pietri — tel. 0536 807 315 — Via Radici in Piano, 27 — 41049 Sassuolo (MO) — zone: Sassuolo\n- Onoranze Funebri Gibellini & Falcinelli — tel. 0536 884 502 — Via Mazzini, 74 — 41049 Sassuolo (MO) — zone: Sassuolo\n- Onoranze Funebri Muratori — tel. 059 771 368 — Via Libertà, 55 — 41058 Vignola (MO) · sede anche a Nonantola, Via Marconi 3 — zone: Vignola & Nonantola\n\nIl sito offre: Bacheca manifesti (camera ardente, cerimonia, pensieri, ordine fiori), Imprese del luogo, Mappa e luoghi (chiese, moschee, strutture), Volontà e Nucleo (account privato gratuito per lasciare scritte le proprie volontà), Area riservata per le agenzie approvate da Vicini. Riti previsti: cattolico, civile, musulmano, ortodosso.";
 // CONOSCENZA>>
 
 export interface Msg { role: 'user' | 'assistant'; content: string }
@@ -34,6 +34,14 @@ Come rispondi
 CONOSCENZA
 ${CONOSCENZA}`;
 
+/** Toglie dai messaggi i dati personali più evidenti prima che escano verso il fornitore di IA. */
+export function oscuraDatiPersonali(t: string): string {
+  return t
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[email]')
+    .replace(/\b[A-Za-z]{6}\d{2}[A-Za-z]\d{2}[A-Za-z]\d{3}[A-Za-z]\b/g, '[codice fiscale]')
+    .replace(/(?:\+?\d[\s./-]?){9,}/g, '[numero]');
+}
+
 export function pulisciMessaggi(corpo: unknown): Msg[] | null {
   const lista = (corpo as { messaggi?: unknown })?.messaggi;
   if (!Array.isArray(lista) || lista.length === 0) return null;
@@ -42,7 +50,7 @@ export function pulisciMessaggi(corpo: unknown): Msg[] | null {
     const ruolo = (m as Msg)?.role;
     const testo = (m as Msg)?.content;
     if ((ruolo !== 'user' && ruolo !== 'assistant') || typeof testo !== 'string') return null;
-    const t = testo.replace(/\s+/g, ' ').trim().slice(0, MAX_CARATTERI);
+    const t = oscuraDatiPersonali(testo.replace(/\s+/g, ' ').trim().slice(0, MAX_CARATTERI));
     if (t) out.push({ role: ruolo, content: t });
   }
   while (out.length && out[0].role !== 'user') out.shift();
@@ -80,7 +88,8 @@ const origineConsentita = (origine: string | null, ammessi: string | undefined):
   if (!lista.length) return true;
   if (!origine) return false;
   if (lista.includes(origine)) return true;
-  if (lista.some((d) => d.includes('vercel.app')) && (origine.endsWith('.vercel.app') || origine.startsWith('http://localhost:'))) {
+  // Anteprime di Vercel del TUO account (non un qualsiasi sito *.vercel.app, che chiunque può creare) e prove in locale.
+  if (lista.some((d) => d.includes('vercel.app')) && (/^https:\/\/vicini[a-z0-9-]*-silvio14\.vercel\.app$/.test(origine) || /^http:\/\/localhost:\d+$/.test(origine))) {
     return true;
   }
   return false;
@@ -145,7 +154,12 @@ export async function gestisci(req: Request, d: Dipendenze): Promise<Response> {
             role: m.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: m.content }],
           })),
-          generationConfig: { maxOutputTokens: MAX_TOKEN_RISPOSTA, temperature: 0.2 },
+          generationConfig: {
+            maxOutputTokens: MAX_TOKEN_RISPOSTA,
+            temperature: 0.2,
+            // senza "pensiero" interno: altrimenti consuma il limite di token e la risposta esce vuota
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
         signal: ctrl.signal,
       });
@@ -195,7 +209,7 @@ if (Deno_ && typeof Deno_.serve === 'function' && Deno_.env?.get('ASSISTENTE_TES
           const r = await fetch(`${url}/rest/v1/rpc/assistente_conta`, {
             method: 'POST',
             headers: { apikey: key, authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-            body: JSON.stringify({ p_max: Number(Deno_.env.get('ASSISTENTE_MAX_GIORNO') ?? '300') }),
+            body: JSON.stringify({ p_max: Number(Deno_.env.get('ASSISTENTE_MAX_GIORNO') ?? '150') }),
           });
           return r.ok && (await r.json()) === true;
         } catch {

@@ -42,7 +42,7 @@ begin
   from public.agenzie a
   order by 5 desc, a.nome;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_approva_agenzia(p_utente uuid)
  RETURNS void
@@ -68,7 +68,7 @@ begin
     raise exception 'Nessuna richiesta di agenzia in attesa per questo account.';
   end if;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_richieste_agenzia()
  RETURNS TABLE(utente_id uuid, email text, nome_completo text, richiesta_il timestamp with time zone)
@@ -89,7 +89,7 @@ begin
      and u.raw_user_meta_data ->> 'ruolo' = 'agenzia'
    order by p.created_at desc;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_statistiche_sito(p_giorni integer DEFAULT 30)
  RETURNS jsonb
@@ -134,7 +134,7 @@ BEGIN
     'volonta_registrate', v_volonta_attive
   );
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.agenzia_mio_andamento(p_giorni integer DEFAULT 30)
  RETURNS TABLE(agenzia_id uuid, nome text, email text, iscritta_il timestamp with time zone, manifesti_periodo bigint, manifesti_totali bigint, pensieri_periodo bigint, ordini_periodo bigint, importo_ordini_periodo numeric, ultimo_manifesto timestamp with time zone)
@@ -194,7 +194,7 @@ begin
      or lower(a.email) = lower(v_email)
   limit 1;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.assistente_conta(p_max integer DEFAULT 300)
  RETURNS boolean
@@ -211,7 +211,7 @@ begin
   returning u.chiamate into n;
   return n <= greatest(1, coalesce(p_max, 300));
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.cerca_codice_nucleo(p_codice text)
  RETURNS TABLE(user_id uuid, codice text, nome_completo text, comune text, anno_nascita integer)
@@ -222,7 +222,7 @@ AS $function$
   FROM public.codici_nucleo
   WHERE upper(trim(codice)) = upper(trim(p_codice))
   LIMIT 1;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.is_admin()
  RETURNS boolean
@@ -234,7 +234,7 @@ AS $function$
     select 1 from public.profilo_utenti
      where id = auth.uid() and ruolo = 'admin'
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.ottieni_mio_codice_nucleo(p_nome text DEFAULT NULL::text)
  RETURNS text
@@ -268,7 +268,7 @@ BEGIN
 
   RETURN v_codice;
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.registra_interazione(p_evento text)
  RETURNS void
@@ -284,4 +284,4 @@ BEGIN
   ON CONFLICT (giorno, evento)
   DO UPDATE SET conteggio = public.statistiche_giornaliere.conteggio + 1;
 END;
-$function$
+$function$;
