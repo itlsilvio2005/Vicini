@@ -125,7 +125,7 @@ const ARGOMENTI: Argomento[] = [
   },
   {
     id: 'cremazione',
-    parole: ['cremazion', 'cremare', 'ceneri', 'urna', 'crematorio', 'sepoltura', 'inumazion', 'tumulazion', 'loculo', 'cimitero', 'terra o'],
+    parole: ['cremazion', 'cremare', 'ceneri', 'urna', 'crematorio', 'sepoltura', 'inumazion', 'tumulazion', 'loculo', 'cimitero', 'terra o', 'seppellire', 'sepolto', 'sepolta', 'tomba'],
     rispondi: () => ({
       id: 'cremazione',
       testo:
@@ -134,6 +134,50 @@ const ARGOMENTI: Argomento[] = [
         ' Se vuoi lasciare scritte le tue scelte, puoi farlo nella sezione Volontà.',
       link: [{ etichetta: 'Le mie volontà', to: '/volonta-nucleo' }],
       seguiti: ['Cosa sono le volontà anticipate?'],
+    }),
+  },
+  {
+    id: 'sostegno',
+    parole: ['mi sento solo', 'mi sento sola', 'non ce la faccio', 'non riesco a smettere di piangere', 'sono distrutto', 'sono distrutta', 'mi manca', 'dolore', 'disperato', 'disperata', 'non so come andare avanti', 'come si fa ad andare avanti'],
+    rispondi: () => ({
+      id: 'sostegno',
+      testo:
+        'Mi dispiace tanto. Quello che senti è comprensibile: dopo una perdita il dolore può arrivare a ondate, e non esiste un modo giusto di viverlo.\n\nQualche cosa che può aiutare: parlarne con una persona di fiducia, non restare soli nei primi giorni, lasciare alla famiglia o all’agenzia le pratiche pesanti. Se il peso resta forte, il medico di famiglia può indicarti un servizio di sostegno al lutto nella tua zona. Puoi anche parlare con una persona al Telefono Amico Italia: 02 2327 2327.\n\nSe senti di essere in pericolo, chiama subito il 112.',
+      seguiti: ['È appena morto un familiare, cosa devo fare?'],
+    }),
+  },
+  {
+    id: 'dichiarazione',
+    parole: ['dichiarazione di morte', 'denuncia di morte', 'stato civile', 'ufficiale di stato civile', 'registrare il decesso', 'comunicare il decesso', 'atto di morte', 'certificato di morte'],
+    rispondi: () => ({
+      id: 'dichiarazione',
+      testo:
+        'La morte va dichiarata all’ufficio di stato civile del comune, di norma entro 24 ore dal decesso, con il certificato del medico che l’ha constatata. Nella pratica se ne occupa quasi sempre l’agenzia funebre, che prepara e consegna i documenti: tu devi solo darle i dati della persona scomparsa.\n\nPer copie di certificati (di morte, di residenza) dopo, ci si rivolge allo stato civile del comune o all’agenzia. I tempi possono variare da comune a comune.',
+      link: [{ etichetta: 'Vedi le agenzie del territorio', to: '/imprese' }],
+      seguiti: ['Quali documenti servono?'],
+    }),
+  },
+  {
+    id: 'chi-paga',
+    parole: ['chi paga', 'chi deve pagare', 'come si paga', 'pagamento', 'a rate', 'pagare a rate', 'dilazione', 'non ho soldi', 'non possiamo permettercelo', 'spese del funerale', 'quanto si paga all agenzia'],
+    rispondi: () => ({
+      id: 'chi-paga',
+      testo:
+        'Di norma le spese le sostiene chi incarica l’agenzia, di solito i familiari più stretti o gli eredi. Prima di firmare chiedi un preventivo scritto, voce per voce, e verifica cosa è incluso. Puoi chiedere anche un secondo preventivo.\n\nSe le disponibilità sono limitate, dillo apertamente all’agenzia: spesso esistono soluzioni più essenziali. Per eventuali contributi o rimborsi (comune, assicurazioni, ente previdenziale) conviene informarsi subito perché le regole cambiano caso per caso.',
+      link: [{ etichetta: 'Contatta un’agenzia', to: '/imprese' }],
+      seguiti: ['Quanto costa un funerale?'],
+    }),
+  },
+  {
+    id: 'parlare-persona',
+    parole: ['parlare con una persona', 'parlare con qualcuno', 'operatore', 'persona vera', 'chiamare', 'numero verde', 'contattarvi', 'contattare vicini'],
+    rispondi: () => ({
+      id: 'parlare-persona',
+      testo:
+        'Se preferisci parlare con una persona, chiama la reperibilità di Vicini: ' +
+        REPERIBILITA +
+        '. Oppure chiama direttamente un’agenzia del tuo comune: molte sono raggiungibili a qualsiasi ora.',
+      link: [{ etichetta: 'Vedi le agenzie del territorio', to: '/imprese' }],
     }),
   },
   {
@@ -300,7 +344,7 @@ export function rispondi(testoUtente: string): Risposta {
 /* Quando chiamare l'IA: solo per domande libere. Le risposte esatte (listino,
    agenzie per comune, saluti, crisi personale, privacy) restano locali: sono
    gratis, immediate e senza rischio di errori. */
-const SEMPRE_LOCALI = new Set(['emergenza-persona', 'fiori', 'agenzie', 'saluto', 'grazie', 'privacy', 'sono-agenzia']);
+const SEMPRE_LOCALI = new Set(['emergenza-persona', 'sostegno', 'parlare-persona', 'fiori', 'agenzie', 'saluto', 'grazie', 'privacy', 'sono-agenzia']);
 export function usaIntelligenzaArtificiale(testo: string, locale: Risposta): boolean {
   if (SEMPRE_LOCALI.has(locale.id)) return false;
   const parole = normalizza(testo).split(' ').filter(Boolean).length;
