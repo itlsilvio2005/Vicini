@@ -394,18 +394,18 @@ export function PageMast({
         </>
       )}
       
-      <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6">
+      <div className="relative mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-12">
         <p className="text-[10.5px] font-semibold uppercase tracking-[0.26em] text-bronze-300">
           {kicker}
         </p>
-        <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.03] sm:text-5xl lg:text-[54px]">
+        <h1 className="mt-3 font-display text-[32px] font-semibold leading-[1.05] sm:mt-4 sm:text-5xl lg:text-[54px]">
           {title}
         </h1>
-        <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-mist">
+        <p className="mt-3 max-w-xl text-[14.5px] leading-relaxed text-mist sm:mt-4">
           {sub}
         </p>
         {meta && (
-          <p className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-mist/90">
+          <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-mist sm:mt-6">
             {meta}
           </p>
         )}

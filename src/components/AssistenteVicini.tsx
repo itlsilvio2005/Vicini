@@ -95,11 +95,11 @@ export function AssistenteVicini() {
       {!aperto && (
         <button
           onClick={() => setAperto(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-bronze-500 px-4 py-3 text-sm font-bold text-night-950 shadow-xl hover:bg-bronze-400 transition-transform active:scale-95"
+          className="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-bronze-500 text-sm sm:bottom-6 sm:right-6 sm:h-auto sm:w-auto sm:px-4 sm:py-3 font-bold text-night-950 shadow-xl hover:bg-bronze-400 transition-transform active:scale-95"
           aria-label="Apri l’assistente: hai una domanda?"
         >
           <MessageCircle className="h-5 w-5" />
-          Hai una domanda?
+          <span className="hidden sm:inline">Hai una domanda?</span>
         </button>
       )}
 
