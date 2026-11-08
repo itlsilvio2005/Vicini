@@ -902,20 +902,28 @@ function CordoglioModal({
 
     // Se Supabase è configurato, salva nel database
     if (isSupabaseConfigured()) {
-      const { error } = await supabase.from('pensieri').insert([{
-        manifesto_id: manifesto.id,
-        nome: nome.trim(),
-        relazione: relazione.trim() || null,
-        testo: testo.trim(),
-        approvato: true,
-      }]);
+      const èUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(manifesto.id);
+      if (èUuid) {
+        const { error } = await supabase.rpc('lascia_pensiero', {
+          p_manifesto: manifesto.id,
+          p_nome: nome.trim(),
+          p_relazione: relazione.trim() || null,
+          p_testo: testo.trim(),
+        });
 
-      if (error) {
-        console.error('Errore salvataggio pensiero:', error);
-        toast("Errore nel salvataggio del pensiero. Riprova.");
-        setCaricamento(false);
-        return;
+        if (error) {
+          console.error('Errore salvataggio pensiero:', error);
+          const m = String(error.message || '');
+          toast(
+            /filtro di moderazione|Troppi pensieri|limite massimo/i.test(m)
+              ? m
+              : "Errore nel salvataggio del pensiero. Riprova.",
+          );
+          setCaricamento(false);
+          return;
+        }
       }
+      // Manifesti di esempio (id non UUID): il pensiero resta solo sulla pagina.
     }
 
     // Salva anche in memoria (fallback o aggiornamento UI)
