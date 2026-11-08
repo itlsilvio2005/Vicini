@@ -33,6 +33,7 @@ import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal,
 import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { OmaggiVirtuali } from "./components/OmaggiVirtuali";
+import { usePensieriDi } from "./lib/pensieri";
 
 /* ---------------- helpers ---------------- */
 
@@ -383,6 +384,7 @@ function ManifestoCard({
   const [aperto, setAperto] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [cordoglioOpen, setCordoglioOpen] = useState(false);
+  const pensieriM = usePensieriDi(m);
   const agenzia = agenziaById(m.agenzia);
   const IconRito = m.rito === "Musulmano" ? MoonStar : Church;
 
@@ -468,12 +470,12 @@ function ManifestoCard({
             </div>
           </div>
 
-          {m.pensieri.length > 0 && (
+          {pensieriM.length > 0 && (
             <blockquote className="mt-4 border-l-2 border-bronze-500 bg-paper px-3.5 py-2.5 text-[12.5px] italic leading-relaxed text-ink-soft">
-              «{m.pensieri[0].testo}»
+              «{pensieriM[0].testo}»
               <footer className="mt-1 text-[11px] not-italic text-ink-faint">
-                — {m.pensieri[0].nome}, {m.pensieri[0].quando} · {m.pensieri.length}{" "}
-                {m.pensieri.length === 1 ? "pensiero" : "pensieri"}
+                — {pensieriM[0].nome}, {pensieriM[0].quando} · {pensieriM.length}{" "}
+                {pensieriM.length === 1 ? "pensiero" : "pensieri"}
               </footer>
             </blockquote>
           )}
@@ -618,6 +620,7 @@ export function ManifestoDettaglio({
 
   // Usa i dati preload se disponibili, altrimenti cerca nei manifesti
   const m = manifestoPreload || manifesti.find((x) => x.id === id);
+  const pensieriM = usePensieriDi(m);
   if (!m) return <Navigate to="/bacheca" replace />;
 
   const agenzia = agenziaById(m.agenzia);
@@ -737,15 +740,15 @@ export function ManifestoDettaglio({
           ) : (
             <>
               <h3 className="mt-10 flex items-center gap-3 font-display text-2xl font-semibold text-ink">
-                <HeartHandshake size={19} className="text-bronze-600" /> Pensieri e cordogli ({m.pensieri.length})
+                <HeartHandshake size={19} className="text-bronze-600" /> Pensieri e cordogli ({pensieriM.length})
               </h3>
               <ul className="mt-4 space-y-3">
-                {m.pensieri.length === 0 && (
+                {pensieriM.length === 0 && (
                   <li className="rounded-lg border border-dashed border-line bg-card p-6 text-center text-[13px] italic text-ink-faint">
                     Nessun pensiero pubblicato: lascia tu il primo.
                   </li>
                 )}
-                {m.pensieri.map((p, i) => (
+                {pensieriM.map((p, i) => (
                   <li key={i} className="rounded-lg border border-line-soft bg-card px-5 py-4 text-[13.5px] italic leading-relaxed text-ink-soft">
                     «{p.testo}»
                     <span className="mt-1.5 block text-[11.5px] not-italic text-ink-faint">
@@ -884,6 +887,7 @@ function CordoglioModal({
   onInvia: (id: string, p: Pensiero) => void;
 }) {
   const toast = useToast();
+  const pensieriM = usePensieriDi(manifesto);
   const [nome, setNome] = useState("");
   const [relazione, setRelazione] = useState("");
   const [testo, setTesto] = useState("");
@@ -926,11 +930,11 @@ function CordoglioModal({
       // Manifesti di esempio (id non UUID): il pensiero resta solo sulla pagina.
     }
 
-    // Salva anche in memoria (fallback o aggiornamento UI)
-    onInvia(manifesto.id, { nome: nome.trim(), relazione: relazione.trim() || undefined, testo: testo.trim(), quando: "Adesso" });
+    // Il pensiero NON compare subito: resta in attesa di approvazione.
     setNome(""); setRelazione(""); setTesto("");
     setCaricamento(false);
-    toast("Il tuo pensiero è stato pubblicato sul manifesto.");
+    onClose();
+    toast("Grazie. Il tuo pensiero è stato inviato e comparirà sul manifesto dopo l’approvazione della famiglia.");
   };
 
   return (
@@ -939,7 +943,7 @@ function CordoglioModal({
         id="cordoglio-title"
         onClose={onClose}
         title={<span className="flex items-center gap-2"><HeartHandshake size={20} className="text-bronze-600" /> Lascia un pensiero</span>}
-        sub={`In memoria di ${manifesto.nome} — visibile sul manifesto digitale`}
+        sub={`In memoria di ${manifesto.nome} — sarà pubblicato dopo l’approvazione della famiglia`}
       />
       <form onSubmit={submit} className="space-y-4 px-6 py-5" noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -961,13 +965,13 @@ function CordoglioModal({
           />
         </Field>
 
-        {manifesto.pensieri.length > 0 && (
+        {pensieriM.length > 0 && (
           <div>
             <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-ink-faint">
-              Pensieri già lasciati ({manifesto.pensieri.length})
+              Pensieri già lasciati ({pensieriM.length})
             </p>
             <ul className="nice-scroll max-h-44 space-y-2 overflow-y-auto pr-1">
-              {manifesto.pensieri.map((p, i) => (
+              {pensieriM.map((p, i) => (
                 <li key={i} className="rounded-md border border-line-soft bg-paper px-3.5 py-2.5 text-[12.5px] italic leading-relaxed text-ink-soft">
                   «{p.testo}»
                   <span className="mt-1 block text-[11px] not-italic text-ink-faint">
@@ -987,11 +991,11 @@ function CordoglioModal({
         >
           {caricamento ? (
             <>
-              <Loader2 size={15} className="animate-spin" /> Pubblicazione...
+              <Loader2 size={15} className="animate-spin" /> Invio...
             </>
           ) : (
             <>
-              <Send size={15} /> Pubblica il pensiero
+              <Send size={15} /> Invia il pensiero
             </>
           )}
         </button>

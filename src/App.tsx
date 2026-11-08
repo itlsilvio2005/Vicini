@@ -32,6 +32,7 @@ import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { HelmetProvider } from "react-helmet-async";
 import { Bacheca, ManifestoDettaglio } from "./Bacheca";
 import { Privacy } from "./Privacy";
+import { Famiglia } from "./Famiglia";
 const Imprese = lazy(() => import("./Imprese").then((m) => ({ default: m.Imprese })));
 const Luoghi = lazy(() => import("./Luoghi").then((m) => ({ default: m.Luoghi })));
 const B2C = lazy(() => import("./B2C").then((m) => ({ default: m.B2C })));
@@ -261,6 +262,7 @@ function Shell() {
             }
           />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/famiglia/:token" element={<Famiglia />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/bacheca" replace />} />
         </Routes>
