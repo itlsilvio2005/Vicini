@@ -1,4 +1,5 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { ModerazionePensieri } from './ModerazionePensieri';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { Navigate } from 'react-router-dom';
@@ -355,6 +356,10 @@ export function AdminDashboard() {
           ))}
         </ul>
       )}
+
+      <div className="mb-10 mt-10">
+        <ModerazionePensieri />
+      </div>
 
       {mostraFormManifesto && (
         <FormManifesto

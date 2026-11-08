@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { useNavigate } from 'react-router-dom';
 import { supabase, Agenzia } from '../lib/supabase';
-import { LogOut, FileText, User, Archive, BarChart3, Loader2 } from 'lucide-react';
+import { LogOut, FileText, User, Archive, BarChart3, Loader2, HeartHandshake } from 'lucide-react';
 import { BachecaManifestiAgenzia } from './BachecaManifestiAgenzia';
 import { ProfiloAgenzia } from './ProfiloAgenzia';
 import { ArchivioAgenzia } from './ArchivioAgenzia';
 import { BackofficeAgenzia } from './BackofficeAgenzia';
+import { ModerazionePensieri } from './ModerazionePensieri';
 
-type SezioneDashboard = 'bacheca' | 'profilo' | 'archivio' | 'backoffice';
+type SezioneDashboard = 'bacheca' | 'pensieri' | 'profilo' | 'archivio' | 'backoffice';
 
 export function DashboardAgenzia() {
   const { utente, logout } = useAuth();
@@ -163,6 +164,17 @@ function DashboardContent({
               Bacheca Manifesti
             </button>
             <button
+              onClick={() => setSezioneAttiva('pensieri')}
+              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 ${
+                sezioneAttiva === 'pensieri'
+                  ? 'border-bronze-500 text-bronze-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <HeartHandshake className="w-5 h-5" />
+              Pensieri
+            </button>
+            <button
               onClick={() => setSezioneAttiva('profilo')}
               className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors border-b-2 ${
                 sezioneAttiva === 'profilo'
@@ -204,6 +216,7 @@ function DashboardContent({
         {sezioneAttiva === 'bacheca' && (
           <BachecaManifestiAgenzia agenziaId={agenzia.id} />
         )}
+        {sezioneAttiva === 'pensieri' && <ModerazionePensieri />}
         {sezioneAttiva === 'profilo' && (
           <ProfiloAgenzia agenzia={agenzia} onAggiornato={onAggiornato} />
         )}

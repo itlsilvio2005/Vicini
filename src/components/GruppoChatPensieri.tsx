@@ -17,6 +17,7 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
   const [caricamento, setCaricamento] = useState(true);
   const [invio, setInvio] = useState(false);
   const [errore, setErrore] = useState('');
+  const [inviato, setInviato] = useState(false);
   const [mostraQR, setMostraQR] = useState(false);
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
 
     setInvio(true);
     setErrore('');
+    setInviato(false);
 
     const { error } = await supabase.from('pensieri').insert([
       {
@@ -82,6 +84,7 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
       setErrore('Errore durante l\'invio: ' + error.message);
     } else {
       setNuovoTesto('');
+      setInviato(true);
     }
     setInvio(false);
   };
@@ -187,6 +190,11 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
       {/* Form Invio */}
       {utente ? (
         <form onSubmit={handleInvia} className="border-t border-gray-200 p-6">
+          {inviato && (
+            <p className="mb-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Grazie. Il tuo pensiero comparirà dopo l’approvazione della famiglia.
+            </p>
+          )}
           {errore && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
