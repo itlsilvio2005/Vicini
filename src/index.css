@@ -266,3 +266,22 @@ body {
   html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; }
 }
+
+
+/* ---- Telefono: scorrimento e tocco più fluidi ---- */
+html { -webkit-text-size-adjust: 100%; }
+a, button, [role="button"], summary { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+@media (max-width: 639px) {
+  /* Sotto i 16px iPhone ingrandisce la pagina quando tocchi un campo. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+  /* Le card fuori schermo non vengono disegnate finché non servono. */
+  main article {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 460px;
+  }
+}

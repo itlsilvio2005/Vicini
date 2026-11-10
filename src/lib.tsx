@@ -89,7 +89,7 @@ export function Modal({
     >
       <div className="anim-fade absolute inset-0 bg-night-950/70 backdrop-blur-[3px]" onClick={onClose} />
       <div
-        className={`anim-rise relative max-h-[92vh] w-full overflow-y-auto nice-scroll rounded-t-2xl border border-line bg-card shadow-2xl sm:rounded-xl ${
+        className={`anim-rise relative max-h-[92dvh] w-full overflow-y-auto nice-scroll rounded-t-2xl border border-line bg-card shadow-2xl sm:rounded-xl ${
           wide ? "sm:max-w-3xl" : "sm:max-w-lg"
         }`}
       >
