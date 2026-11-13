@@ -30,7 +30,7 @@ import {
 import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, SectionHeading, useToast } from "./lib";
 import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
-import { daRiga, infoAgenzia, useManifesti } from "./lib/manifesti";
+import { infoAgenzia, useManifesti } from "./lib/manifesti";
 import { OmaggiVirtuali } from "./components/OmaggiVirtuali";
 import { usePensieriDi } from "./lib/pensieri";
 
@@ -505,19 +505,7 @@ export function ManifestoDettaglio() {
   const [cordoglioOpen, setCordoglioOpen] = useState(false);
   const { manifesti, stato } = useManifesti();
 
-  // Dati incorporati nella pagina dal prerender (se presenti), poi l'elenco dal database.
-  const preload = useMemo<Manifesto | null>(() => {
-    const tag = typeof document !== "undefined" ? document.getElementById("manifesto-data") : null;
-    if (!tag?.textContent) return null;
-    try {
-      const m = daRiga(JSON.parse(tag.textContent));
-      return m.id === id ? m : null;
-    } catch {
-      return null;
-    }
-  }, [id]);
-
-  const m = manifesti.find((x) => x.id === id) ?? preload ?? undefined;
+  const m = manifesti.find((x) => x.id === id);
   const pensieriM = usePensieriDi(m);
 
   // Finché l'elenco si sta caricando non si manda via il visitatore (un link diretto non deve finire in bacheca).
