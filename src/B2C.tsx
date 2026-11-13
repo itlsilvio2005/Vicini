@@ -70,9 +70,10 @@ interface VolontaSalvata {
 }
 
 const RELAZIONI = ["Coniuge", "Figlio/a", "Genitore", "Fratello/Sorella", "Nipote", "Compagno/a", "Amico/a stretto", "Altro"];
-const MEMBRI_INIZIALI: Membro[] = [
-  { id: "n1", nome: "Lina Bonetti ved. Malagoli", relazione: "Genitore", comune: "Nonantola", contatto: "marco.malagoli@gmail.com", annoNascita: 1942 },
-];
+// Il familiare di esempio esiste solo in sviluppo: in produzione l'elenco parte vuoto.
+const MEMBRI_INIZIALI: Membro[] = import.meta.env.DEV
+  ? [{ id: "n1", nome: "Lina Bonetti ved. Malagoli", relazione: "Genitore", comune: "Nonantola", contatto: "marco.malagoli@gmail.com", annoNascita: 1942 }]
+  : [];
 
 function saveLS(key: string, value: unknown) {
   try {
@@ -1106,7 +1107,7 @@ function Nucleo() {
                         value={nome}
                         onChange={(e) => setNome(e.target.value)}
                         className={inputCls(!!errors.nome)}
-                        placeholder="Es. Lina Bonetti"
+                        placeholder="Es. Maria Rossi"
                       />
                     </Field>
                     <Field label="Anno nascita" error={errors.annoNascita} hint="evita omonimie">

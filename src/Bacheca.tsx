@@ -22,16 +22,15 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  agenziaById,
   COMUNI,
   URL_BASE,
   type Comune,
   type Manifesto,
-  type Pensiero,
 } from "./data";
 import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal, SectionHeading, useToast } from "./lib";
 import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
+import { daRiga, infoAgenzia, useManifesti } from "./lib/manifesti";
 import { OmaggiVirtuali } from "./components/OmaggiVirtuali";
 import { usePensieriDi } from "./lib/pensieri";
 
@@ -191,76 +190,10 @@ function BachecaBand({ manifesti }: { manifesti: Manifesto[] }) {
 
 /* ---------------- Bacheca (tab 1) ---------------- */
 
-export function Bacheca({
-  manifesti: manifestiProp,
-  onNuovoPensiero,
-}: {
-  manifesti: Manifesto[];
-  onNuovoPensiero: (manifestoId: string, p: Pensiero) => void;
-}) {
+export function Bacheca() {
   const { comune } = useParams();
-  const [manifesti, setManifesti] = useState<Manifesto[]>(manifestiProp);
-  const [caricamento, setCaricamento] = useState(false);
-
-  // Carica manifesti da Supabase se configurato
-  useEffect(() => {
-    if (isSupabaseConfigured()) {
-      setCaricamento(true);
-      supabase
-        .from('manifesti')
-        .select(`
-          *,
-          agenzie!inner(
-            id,
-            nome,
-            indirizzo,
-            telefono,
-            email
-          )
-        `)
-        .eq('pubblicato', true)
-        .order('pubblicato_il', { ascending: false })
-        .then(({ data, error }: { data: any[] | null; error: any }) => {
-          if (error) {
-            console.error('Errore caricamento manifesti:', error);
-          } else if (data && data.length > 0) {
-            // Converti dati Supabase nel formato Manifesto
-            const manifestiConvertiti: Manifesto[] = data.map((m: any) => ({
-              id: m.id,
-              nome: m.nome_defunto,
-              anni: m.anni,
-              nascita: m.data_nascita || '',
-              morte: m.data_morte || '',
-              comune: m.comune as any,
-              rito: m.rito as any,
-              cameraArdente: {
-                luogo: m.camera_ardente_luogo || '',
-                indirizzo: m.camera_ardente_indirizzo || '',
-                orari: m.camera_ardente_orari || '',
-                indicazioni: m.camera_ardente_indicazioni || '',
-              },
-              funerale: {
-                giorno: m.funerale_giorno || '',
-                ora: m.funerale_ora || '',
-                luogo: m.funerale_luogo || '',
-                indirizzo: m.funerale_indirizzo || '',
-                dettagli: m.funerale_dettagli || '',
-              },
-              commiato: {
-                tipo: m.commiato_tipo as any || 'Cremazione',
-                luogo: m.commiato_luogo || '',
-                cimitero: m.commiato_cimitero || '',
-              },
-              agenzia: m.agenzie?.id || 'pecorari',
-              pubblicato: m.pubblicato_il ? new Date(m.pubblicato_il).toLocaleDateString('it-IT') : 'Oggi',
-              pensieri: [], // I pensieri vengono caricati separatamente
-            }));
-            setManifesti(manifestiConvertiti);
-          }
-          setCaricamento(false);
-        });
-    }
-  }, []);
+  const { manifesti, stato } = useManifesti();
+  const caricamento = stato === "caricamento";
 
   const comuneAttivo = useMemo(() => {
     if (!comune) return null;
@@ -355,14 +288,22 @@ export function Bacheca({
         {!caricamento && (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {visibili.map((m, i) => (
-              <ManifestoCard key={m.id} m={m} delay={(i % 3) * 90} onPensiero={onNuovoPensiero} />
+              <ManifestoCard key={m.id} m={m} delay={(i % 3) * 90} />
             ))}
           </div>
         )}
 
-        {!caricamento && visibili.length === 0 && (
+        {stato === "errore" && (
+          <p role="alert" className="rounded-lg border border-dashed border-line bg-card p-10 text-center text-sm text-ink-faint">
+            Non riusciamo a caricare i manifesti in questo momento. Riprova tra poco oppure chiama la reperibilità.
+          </p>
+        )}
+
+        {stato === "ok" && visibili.length === 0 && (
           <p className="rounded-lg border border-dashed border-line bg-card p-10 text-center text-sm text-ink-faint">
-            Nessun manifesto in pubblicazione in questo comune al momento.
+            {comuneAttivo
+              ? "Nessun manifesto in pubblicazione in questo comune al momento."
+              : "Nessun manifesto in pubblicazione al momento."}
           </p>
         )}
       </div>
@@ -375,17 +316,15 @@ export function Bacheca({
 function ManifestoCard({
   m,
   delay,
-  onPensiero,
 }: {
   m: Manifesto;
   delay: number;
-  onPensiero: (id: string, p: Pensiero) => void;
 }) {
   const [aperto, setAperto] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [cordoglioOpen, setCordoglioOpen] = useState(false);
   const pensieriM = usePensieriDi(m);
-  const agenzia = agenziaById(m.agenzia);
+  const agenzia = infoAgenzia(m);
   const IconRito = m.rito === "Musulmano" ? MoonStar : Church;
 
   return (
@@ -553,77 +492,46 @@ function ManifestoCard({
         </p>
       </div>
 
-      <CordoglioModal manifesto={m} open={cordoglioOpen} onClose={() => setCordoglioOpen(false)} onInvia={onPensiero} />
+      <CordoglioModal manifesto={m} open={cordoglioOpen} onClose={() => setCordoglioOpen(false)} />
     </Reveal>
   );
 }
 
 /* ---------------- Pagina completa manifesto (rotta SEO) ---------------- */
 
-export function ManifestoDettaglio({
-  manifesti,
-  onNuovoPensiero,
-}: {
-  manifesti: Manifesto[];
-  onNuovoPensiero: (manifestoId: string, p: Pensiero) => void;
-}) {
+export function ManifestoDettaglio() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [cordoglioOpen, setCordoglioOpen] = useState(false);
+  const { manifesti, stato } = useManifesti();
 
-  // Prova a caricare i dati dal tag script JSON (per prerendering)
-  const [manifestoPreload, setManifestoPreload] = useState<Manifesto | null>(null);
-  
-  useEffect(() => {
-    // Cerca il tag script con i dati del manifesto
-    const scriptTag = document.getElementById('manifesto-data');
-    if (scriptTag && scriptTag.textContent) {
-      try {
-        const data = JSON.parse(scriptTag.textContent);
-        // Converti dal formato database al formato Manifesto
-        const manifesto: Manifesto = {
-          id: data.id,
-          nome: data.nome_defunto,
-          anni: data.anni,
-          nascita: data.data_nascita || '',
-          morte: data.data_morte || '',
-          comune: data.comune,
-          rito: data.rito,
-          cameraArdente: {
-            luogo: data.camera_ardente_luogo || '',
-            indirizzo: data.camera_ardente_indirizzo || '',
-            orari: data.camera_ardente_orari || '',
-            indicazioni: data.camera_ardente_indicazioni || '',
-          },
-          funerale: {
-            giorno: data.funerale_giorno || '',
-            ora: data.funerale_ora || '',
-            luogo: data.funerale_luogo || '',
-            indirizzo: data.funerale_indirizzo || '',
-            dettagli: data.funerale_dettagli || '',
-          },
-          commiato: {
-            tipo: data.commiato_tipo || 'Cremazione',
-            luogo: data.commiato_luogo || '',
-            cimitero: data.commiato_cimitero || '',
-          },
-          agenzia: data.agenzia_id || 'pecorari',
-          pubblicato: data.pubblicato_il ? new Date(data.pubblicato_il).toLocaleDateString('it-IT') : 'Oggi',
-          pensieri: [],
-        };
-        setManifestoPreload(manifesto);
-      } catch (e) {
-        console.error('Errore parsing manifesto-data:', e);
-      }
+  // Dati incorporati nella pagina dal prerender (se presenti), poi l'elenco dal database.
+  const preload = useMemo<Manifesto | null>(() => {
+    const tag = typeof document !== "undefined" ? document.getElementById("manifesto-data") : null;
+    if (!tag?.textContent) return null;
+    try {
+      const m = daRiga(JSON.parse(tag.textContent));
+      return m.id === id ? m : null;
+    } catch {
+      return null;
     }
   }, [id]);
 
-  // Usa i dati preload se disponibili, altrimenti cerca nei manifesti
-  const m = manifestoPreload || manifesti.find((x) => x.id === id);
+  const m = manifesti.find((x) => x.id === id) ?? preload ?? undefined;
   const pensieriM = usePensieriDi(m);
+
+  // Finché l'elenco si sta caricando non si manda via il visitatore (un link diretto non deve finire in bacheca).
+  if (!m && stato === "caricamento") {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-24 text-center text-sm text-ink-faint" role="status">
+        <Loader2 className="mx-auto mb-3 animate-spin" size={22} />
+        Caricamento del manifesto…
+      </div>
+    );
+  }
   if (!m) return <Navigate to="/bacheca" replace />;
 
-  const agenzia = agenziaById(m.agenzia);
+  const agenzia = infoAgenzia(m);
   const IconRito = m.rito === "Musulmano" ? MoonStar : Church;
 
   return (
@@ -821,7 +729,7 @@ export function ManifestoDettaglio({
         </div>
       </div>
 
-      <CordoglioModal manifesto={m} open={cordoglioOpen} onClose={() => setCordoglioOpen(false)} onInvia={onNuovoPensiero} />
+      <CordoglioModal manifesto={m} open={cordoglioOpen} onClose={() => setCordoglioOpen(false)} />
     </div>
   );
 }
@@ -879,12 +787,10 @@ function CordoglioModal({
   manifesto,
   open,
   onClose,
-  onInvia,
 }: {
   manifesto: Manifesto;
   open: boolean;
   onClose: () => void;
-  onInvia: (id: string, p: Pensiero) => void;
 }) {
   const toast = useToast();
   const pensieriM = usePensieriDi(manifesto);

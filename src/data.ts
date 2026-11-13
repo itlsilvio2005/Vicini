@@ -354,6 +354,8 @@ export interface Manifesto {
   funerale: { giorno: string; ora: string; luogo: string; indirizzo: string; dettagli: string };
   commiato: { tipo: "Tumulazione" | "Cremazione" | "Inumazione"; luogo: string; cimitero: string };
   agenzia: string;
+  /** Dati dell'agenzia letti dal database (assenti nei manifesti di esempio). */
+  agenziaInfo?: { nome: string; indirizzo: string; telefono: string; email: string };
   pubblicato: string;
   pensieri: Pensiero[];
 }

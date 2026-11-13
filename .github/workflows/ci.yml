@@ -41,7 +41,7 @@ jobs:
 
       - name: Nessuna credenziale demo nel bundle di produzione
         run: |
-          if grep -rlE "test123456|eba41f64-3173|9f564219-7250|agenzia@vicini\.mo" dist/assets; then
+          if grep -rlE "test123456|eba41f64-3173|9f564219-7250|agenzia@vicini\.mo|Anna Benassi|Ben Youssef|Giuseppe Malagoli|Lina Bonetti|rita\.sacchetti|p\.manfredini|marco\.malagoli|anna\.prandini|baraldicostruzioni" dist/assets; then
             echo "::error::Credenziali o dati demo trovati nel bundle di produzione (vedi file sopra)."
             exit 1
           fi

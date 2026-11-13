@@ -18,14 +18,7 @@ import {
   Lock,
   LogOut,
 } from "lucide-react";
-import {
-  MANIFESTI,
-  ORDINI_INIZIALI,
-  REPERIBILITA,
-  type Manifesto,
-  type OrdineFiori,
-  type Pensiero,
-} from "./data";
+import { REPERIBILITA } from "./data";
 import { ErrorBoundary, ToastProvider, useToast } from "./lib";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
@@ -73,8 +66,6 @@ const historyDisponibile = (() => {
 
 function Shell() {
   const { utente, logout } = useAuth();
-  const [manifesti, setManifesti] = useState<Manifesto[]>(MANIFESTI);
-  const [ordini, setOrdini] = useState<OrdineFiori[]>(ORDINI_INIZIALI);
   const [prefill, setPrefill] = useState<{ id: string; ts: number } | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
@@ -106,10 +97,6 @@ function Shell() {
     }
   }, [location.pathname, utente?.ruolo]);
 
-  const aggiungiPensiero = useCallback((manifestoId: string, p: Pensiero) => {
-    setManifesti((list) => list.map((m) => (m.id === manifestoId ? { ...m, pensieri: [p, ...m.pensieri] } : m)));
-  }, []);
-
   const scegliAgenzia = useCallback(
     (id: string) => {
       setPrefill({ id, ts: Date.now() });
@@ -117,10 +104,6 @@ function Shell() {
     },
     [navigate]
   );
-
-  const fatturaInviata = useCallback((id: string) => {
-    setOrdini((list) => list.map((o) => (o.id === id ? { ...o, fatturaInviata: true } : o)));
-  }, []);
 
   const esci = useCallback(async () => {
     await logout();
@@ -226,15 +209,15 @@ function Shell() {
           <Route path="/" element={<Navigate to="/bacheca" replace />} />
           <Route
             path="/bacheca"
-            element={<Bacheca manifesti={manifesti} onNuovoPensiero={aggiungiPensiero} />}
+            element={<Bacheca />}
           />
           <Route
             path="/bacheca/:comune"
-            element={<Bacheca manifesti={manifesti} onNuovoPensiero={aggiungiPensiero} />}
+            element={<Bacheca />}
           />
           <Route
             path="/manifesto/:id"
-            element={<ManifestoDettaglio manifesti={manifesti} onNuovoPensiero={aggiungiPensiero} />}
+            element={<ManifestoDettaglio />}
           />
           <Route path="/imprese" element={<Imprese onScegli={scegliAgenzia} />} />
           <Route path="/mappa" element={<Luoghi />} />
