@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /admin
+Disallow: /area-privata
+Disallow: /area-riservata
+Disallow: /dashboard-agenzia
+Disallow: /famiglia/

@@ -57,7 +57,8 @@ const TITOLI: Record<string, string> = {
    URL puliti dove possibile, router in memoria come fallback sicuro. */
 const historyDisponibile = (() => {
   try {
-    window.history.pushState({}, "", window.location.href);
+    // replaceState: verifica che la History API funzioni senza aggiungere una voce alla cronologia
+    window.history.replaceState(window.history.state, "", window.location.href);
     return true;
   } catch {
     return false;
