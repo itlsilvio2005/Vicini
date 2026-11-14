@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "predev": "node scripts/copy-tesseract.mjs",
+    "prebuild": "node scripts/copy-tesseract.mjs",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit"
   },
@@ -11,13 +13,16 @@
     "@fontsource/archivo": "^5.3.0",
     "@fontsource/cormorant-garamond": "^5.3.0",
     "@supabase/supabase-js": "^2.116.0",
+    "@tesseract.js-data/ita": "1.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.294.0",
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^3.0.0",
-    "react-router-dom": "^7.18.5"
+    "react-router-dom": "^7.18.5",
+    "tesseract.js": "5.1.1",
+    "tesseract.js-core": "5.1.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.7",

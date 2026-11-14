@@ -116,7 +116,7 @@ export function B2C({ prefillAgenzia }: { prefillAgenzia: { id: string; ts: numb
           </>
         }
         sub="Due strumenti riservati: registra come desideri sia organizzato il tuo funerale e gestisci il tuo Elenco Nucleo tramite Codice Personale o inserimento diretto per ricevere avvisi tempestivi sui nuovi manifesti."
-        bgImage="https://images.unsplash.com/photo-1583311652391-72921cc26c48?q=80&w=2000&auto=format&fit=crop"
+        bgImage="/images/nucleo.jpg"
         meta={
           <>
             <span>Codice ID personale univoco</span>

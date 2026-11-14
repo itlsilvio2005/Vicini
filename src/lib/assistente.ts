@@ -1,5 +1,8 @@
 import { AGENZIE, REPERIBILITA } from '../data';
 
+/** Email per i dati personali (informativa privacy). Si può cambiare con VITE_CONTATTO_EMAIL. */
+const EMAIL_CONTATTO = (import.meta.env.VITE_CONTATTO_EMAIL as string | undefined) || 'info.vicini059@gmail.com';
+
 /* ============================================================================
    ASSISTENTE DI VICINI — risposte a domande frequenti dei visitatori.
    Nessuna intelligenza artificiale esterna: il testo scritto dall'utente resta
@@ -287,7 +290,7 @@ const ARGOMENTI: Argomento[] = [
     rispondi: () => ({
       id: 'privacy',
       testo:
-        'Questa chat funziona nel tuo browser: quello che scrivi qui non viene inviato né salvato da nessuna parte. I dati che lasci su Vicini (pensieri, ordini, account) servono al funzionamento del servizio. Per richieste sui tuoi dati scrivi a segreteria@vicini.mo.',
+        'Questa chat funziona nel tuo browser: quello che scrivi qui non viene inviato né salvato da nessuna parte. I dati che lasci su Vicini (pensieri, ordini, account) servono al funzionamento del servizio. Per richieste sui tuoi dati scrivi a ' + EMAIL_CONTATTO + '.',
     }),
   },
   {

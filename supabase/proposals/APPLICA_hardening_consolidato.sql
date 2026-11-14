@@ -1383,6 +1383,29 @@ select policyname, cmd, roles from pg_policies
 
 
 -- ############################################################################
+-- 10. Pensieri approvati di un manifesto (per il Gruppo Pensieri sul sito)
+-- ############################################################################
+-- Il sito non legge più la tabella pensieri direttamente: passa da questa funzione,
+-- che restituisce solo i pensieri approvati e nessun dato dell'autore (user_id).
+create or replace function public.pensieri_del_manifesto(p_manifesto text)
+returns table (id uuid, nome text, relazione text, testo text, creato_il timestamptz)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select p.id, p.nome, p.relazione, p.testo, p.creato_il
+  from public.pensieri p
+  where p.approvato = true
+    and p.manifesto_id::text = p_manifesto
+  order by p.creato_il desc
+  limit 200;
+$$;
+revoke all on function public.pensieri_del_manifesto(text) from public;
+grant execute on function public.pensieri_del_manifesto(text) to anon, authenticated;
+
+
+-- ############################################################################
 -- VERIFICA (esegui prima e dopo, confronta i risultati)
 -- ############################################################################
 -- 1) Un utente può cambiarsi il ruolo? Dopo il file deve esistere il trigger.

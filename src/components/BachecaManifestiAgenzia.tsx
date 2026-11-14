@@ -480,24 +480,26 @@ export function FormManifesto({
     try {
       const { dataUrl } = await comprimiImmagine(file, 1400, 0.9);
 
-      if (!(window as any).Tesseract) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Impossibile caricare il motore OCR. Controlla le impostazioni CSP in Vercel.'));
-          document.head.appendChild(script);
-        });
-      }
-
-      const Tesseract = (window as any).Tesseract;
-      const result = await Tesseract.recognize(dataUrl, 'ita', {
-        logger: (m: any) => {
+      // OCR locale: worker, motore e lingua italiana vengono da /tesseract/ (copiati dal build),
+      // nessun script esterno: così funziona con la CSP del sito.
+      const { createWorker } = await import('tesseract.js');
+      const worker = await createWorker('ita', 1, {
+        workerPath: '/tesseract/worker.min.js',
+        corePath: '/tesseract/',
+        langPath: '/tesseract/lang/',
+        workerBlobURL: false,
+        logger: (m: { status: string; progress: number }) => {
           if (m.status === 'recognizing text' && typeof m.progress === 'number') {
             setProgressoOcr(Math.round(m.progress * 100));
           }
         },
       });
+      let result;
+      try {
+        result = await worker.recognize(dataUrl);
+      } finally {
+        await worker.terminate();
+      }
 
       const testoEstratto: string = result?.data?.text || '';
       if (!testoEstratto.trim()) {

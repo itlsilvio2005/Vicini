@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import {
   COMUNI,
-  URL_BASE,
+  urlPubblico,
   type Comune,
   type Manifesto,
 } from "./data";
@@ -31,6 +31,7 @@ import { Badge, Field, inputCls, Modal, ModalHeader, Monogram, QrVisual, Reveal,
 import { GruppoChatPensieri } from "./components/GruppoChatPensieri";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { infoAgenzia, useManifesti } from "./lib/manifesti";
+import { CampoTrappola, bersaglioBot } from "./components/CampoTrappola";
 import { OmaggiVirtuali } from "./components/OmaggiVirtuali";
 import { usePensieriDi } from "./lib/pensieri";
 
@@ -40,7 +41,7 @@ function waLink(m: Manifesto) {
   const text =
     `Manifesto funebre — ${m.nome} (${m.comune}).\n` +
     `Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora} — ${m.funerale.luogo}.\n` +
-    `Per lasciare un pensiero: https://${URL_BASE}/manifesto/${m.id}`;
+    `Per lasciare un pensiero: ${urlPubblico()}/manifesto/${m.id}`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
@@ -97,7 +98,7 @@ function Candle({ className = "h-32 sm:h-40" }: { className?: string }) {
 }
 
 const MASTHEAD_IMG =
-  "https://image.qwenlm.ai/generated-images/ddb71b0c-1804-4b23-a5c3-fdf4dcef67eb/_result.png";
+  "/images/bacheca-hero.png";
 
 /* ---------------- Band di apertura ---------------- */
 
@@ -468,7 +469,7 @@ function ManifestoCard({
                   <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">
                     Inquadra per lasciare un pensiero dal cellulare.
                   </p>
-                  <p className="mt-1.5 font-mono text-[10.5px] text-ink-faint">{URL_BASE}/manifesto/{m.id}</p>
+                  <p className="mt-1.5 font-mono text-[10.5px] text-ink-faint">{urlPubblico().replace(/^https?:\/\//, "")}/manifesto/{m.id}</p>
                 </div>
                 <ChevronDown
                   size={16}
@@ -691,7 +692,7 @@ export function ManifestoDettaglio() {
             <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">
               Inquadra per lasciare un pensiero dal cellulare.
             </p>
-            <p className="mt-1.5 font-mono text-[11px] text-ink-faint">{URL_BASE}/manifesto/{m.id}</p>
+            <p className="mt-1.5 font-mono text-[11px] text-ink-faint">{urlPubblico().replace(/^https?:\/\//, "")}/manifesto/{m.id}</p>
           </div>
 
           {/* agenzia */}
@@ -788,8 +789,14 @@ function CordoglioModal({
   const [err, setErr] = useState<Record<string, string>>({});
   const [caricamento, setCaricamento] = useState(false);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (bersaglioBot(e.currentTarget)) {
+      // Bot: fingiamo l'invio e non salviamo nulla.
+      setNome(""); setRelazione(""); setTesto("");
+      onClose();
+      return;
+    }
     const errs: Record<string, string> = {};
     if (nome.trim().length < 2) errs.nome = "Indica il tuo nome o quello della famiglia.";
     if (testo.trim().length < 5) errs.testo = "Scrivi qualche parola di cordoglio.";
@@ -839,7 +846,8 @@ function CordoglioModal({
         title={<span className="flex items-center gap-2"><HeartHandshake size={20} className="text-bronze-600" /> Lascia un pensiero</span>}
         sub={`In memoria di ${manifesto.nome} — sarà pubblicato dopo l’approvazione della famiglia`}
       />
-      <form onSubmit={submit} className="space-y-4 px-6 py-5" noValidate>
+      <form onSubmit={submit} className="relative space-y-4 px-6 py-5" noValidate>
+        <CampoTrappola />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nome" required error={err.nome}>
             <input value={nome} onChange={(e) => setNome(e.target.value)} className={inputCls(!!err.nome)} placeholder="Nome e cognome o famiglia" />
