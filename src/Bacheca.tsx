@@ -20,6 +20,7 @@ import {
   ArrowRight,
   CalendarClock,
   Loader2,
+  Link2,
 } from "lucide-react";
 import {
   agenziaById,
@@ -43,6 +44,40 @@ function waLink(m: Manifesto) {
     `Funerale: ${m.funerale.giorno}, ore ${m.funerale.ora} — ${m.funerale.luogo}.\n` +
     `Per lasciare un pensiero: https://${URL_BASE}/manifesto/${m.id}`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
+function urlManifesto(m: Manifesto) {
+  return `https://${URL_BASE}/manifesto/${m.id}`;
+}
+
+/** Condivisione nativa (menu del telefono) o, in alternativa, copia del link negli appunti. */
+function CopiaLinkBtn({ m, className = "" }: { m: Manifesto; className?: string }) {
+  const toast = useToast();
+  const condividi = async () => {
+    const url = urlManifesto(m);
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: `Manifesto funebre — ${m.nome}`, text: `Manifesto funebre di ${m.nome} (${m.comune}).`, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      toast("Link copiato. Ora puoi incollarlo dove vuoi.", "info");
+    } catch (e) {
+      // L'utente può chiudere il menu di condivisione: non è un errore da mostrare.
+      if ((e as DOMException)?.name === "AbortError") return;
+      toast("Non sono riuscito a copiare il link. Selezionalo dalla pagina e copialo a mano.");
+    }
+  };
+  return (
+    <button
+      onClick={condividi}
+      aria-label="Condividi o copia il link del manifesto"
+      title="Condividi o copia il link"
+      className={className}
+    >
+      <Link2 size={16} />
+    </button>
+  );
 }
 
 function initialsOf(nome: string) {
@@ -278,8 +313,24 @@ export function Bacheca({
 
   const visibili = comuneAttivo ? manifesti.filter((m) => m.comune === comuneAttivo) : manifesti;
 
+  const titoloPagina = comuneAttivo
+    ? `Manifesti funebri a ${comuneAttivo} · Vicini`
+    : "Manifesti funebri · Provincia di Modena · Vicini";
+  const descrizionePagina = comuneAttivo
+    ? `Manifesti funebri e annunci di cordoglio nel comune di ${comuneAttivo}: orari dei funerali, camere ardenti e pensieri per le famiglie.`
+    : "Manifesti funebri della provincia di Modena: Modena, Nonantola, Vignola, Carpi, Formigine, Sassuolo. Orari dei funerali e pensieri per le famiglie.";
+  const urlPagina = `https://${URL_BASE}/bacheca${comuneAttivo ? `/${slug(comuneAttivo)}` : ""}`;
+
   return (
     <div>
+      <Helmet>
+        <title>{titoloPagina}</title>
+        <meta name="description" content={descrizionePagina} />
+        <link rel="canonical" href={urlPagina} />
+        <meta property="og:title" content={titoloPagina} />
+        <meta property="og:description" content={descrizionePagina} />
+        <meta property="og:url" content={urlPagina} />
+      </Helmet>
       <BachecaBand manifesti={manifesti} />
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
@@ -501,6 +552,10 @@ function ManifestoCard({
             >
               <WhatsAppIcon />
             </a>
+            <CopiaLinkBtn
+              m={m}
+              className="grid h-9 w-9 place-items-center rounded-md border border-line bg-card text-ink-soft transition hover:border-bronze-500 hover:text-bronze-600 active:scale-95"
+            />
             <button
               onClick={() => setQrOpen((v) => !v)}
               aria-expanded={qrOpen}
@@ -523,7 +578,7 @@ function ManifestoCard({
           >
             <div className="overflow-hidden">
               <div className="flex items-center gap-4 rounded-lg border border-dashed border-bronze-500/60 bg-card p-3.5">
-                <QrVisual seed={m.id + m.nome} />
+                <QrVisual url={urlManifesto(m)} />
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-bronze-700">QR Code Manifesto</p>
                   <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">
@@ -783,6 +838,10 @@ export function ManifestoDettaglio({
               >
                 <WhatsAppIcon />
               </a>
+              <CopiaLinkBtn
+                m={m}
+                className="grid h-10 w-10 place-items-center rounded-md border border-line bg-paper text-ink-soft transition hover:border-bronze-500 hover:text-bronze-600"
+              />
             </div>
           </div>
 
@@ -790,7 +849,7 @@ export function ManifestoDettaglio({
           <div className="rounded-xl border border-dashed border-bronze-500/60 bg-card p-6 text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-bronze-700">QR Code Manifesto</p>
             <div className="mt-3 flex justify-center">
-              <QrVisual seed={m.id + m.nome} size={150} />
+              <QrVisual url={urlManifesto(m)} size={150} />
             </div>
             <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">
               Inquadra per lasciare un pensiero dal cellulare.

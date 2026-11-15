@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import { X } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 /* ================= Reveal on scroll ================= */
 
@@ -241,57 +242,14 @@ export function Monogram({ initials: ini, size = 76 }: { initials: string; size?
   );
 }
 
-/* ================= Pseudo-QR (deterministic) ================= */
+/* ================= QR code reale ================= */
 
-function seeded(str: string) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return () => {
-    h = Math.imul(h ^ (h >>> 15), h | 1);
-    h ^= h + Math.imul(h ^ (h >>> 7), h | 61);
-    return ((h ^ (h >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-export function QrVisual({ seed, size = 116 }: { seed: string; size?: number }) {
-  const N = 21;
-  const rnd = seeded(seed);
-  const cells: boolean[] = [];
-  for (let i = 0; i < N * N; i++) cells.push(rnd() > 0.52);
-
-  const inFinder = (r: number, c: number) =>
-    (r < 8 && c < 8) || (r < 8 && c >= N - 8) || (r >= N - 8 && c < 8);
-
-  const finder = (r0: number, c0: number) => (
-    <g key={`f${r0}${c0}`}>
-      <rect x={c0} y={r0} width={7} height={7} fill="#1c2b45" />
-      <rect x={c0 + 1} y={r0 + 1} width={5} height={5} fill="#fbf8f0" />
-      <rect x={c0 + 2} y={r0 + 2} width={3} height={3} fill="#1c2b45" />
-    </g>
-  );
-
+/** QR code scansionabile che punta a `url` (usa qrcode.react). */
+export function QrVisual({ url, size = 116 }: { url: string; size?: number }) {
   return (
-    <svg viewBox="-2 -2 25 25" width={size} height={size} className="rounded-sm" role="img" aria-label={`QR code del manifesto`}>
-      <rect x={-2} y={-2} width={25} height={25} fill="#fbf8f0" />
-      {cells.map((on, i) => {
-        const r = Math.floor(i / N);
-        const c = i % N;
-        if (inFinder(r, c)) return null;
-        if (r === 6 || c === 6) {
-          return (i % 2 === 0) ? (
-            <rect key={i} x={c} y={r} width={0.92} height={0.92} fill="#1c2b45" />
-          ) : null;
-        }
-        return on ? <rect key={i} x={c} y={r} width={0.92} height={0.92} fill="#1c2b45" /> : null;
-      })}
-      {finder(0, 0)}
-      {finder(0, N - 7)}
-      {finder(N - 7, 0)}
-      <rect x={13} y={13} width={3} height={3} fill="#b08a45" />
-    </svg>
+    <span className="inline-block rounded-sm bg-[#fbf8f0] p-1.5" role="img" aria-label="QR code del manifesto">
+      <QRCodeSVG value={url} size={size} level="M" bgColor="#fbf8f0" fgColor="#1c2b45" marginSize={0} />
+    </span>
   );
 }
 
