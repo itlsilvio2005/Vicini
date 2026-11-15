@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/manifesto/:id", "destination": "/api/manifesto?id=:id" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

@@ -2,6 +2,7 @@
 import { supabase, Manifesto, isSupabaseConfigured } from '../lib/supabase';
 import { Plus, Edit2, Trash2, Loader2, AlertCircle, Sparkles, Camera, Upload, Zap, Image as ImageIcon, CheckCircle2, X } from 'lucide-react';
 import { COMUNI, RITI } from '../data';
+import { KitFamiglia } from './KitFamiglia';
 
 interface Props {
   agenziaId: string;
@@ -366,6 +367,12 @@ export function BachecaManifestiAgenzia({ agenziaId }: Props) {
                 <span>Creato: {new Date(manifesto.created_at).toLocaleDateString('it-IT')}</span>
                 <span>Aggiornato: {new Date(manifesto.updated_at).toLocaleDateString('it-IT')}</span>
               </div>
+
+              <KitFamiglia
+                manifestoId={manifesto.id}
+                nomeDefunto={manifesto.nome_defunto}
+                pubblicato={manifesto.pubblicato}
+              />
             </div>
           ))}
         </div>

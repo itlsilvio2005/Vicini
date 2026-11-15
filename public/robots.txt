@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard-agenzia
+Disallow: /area-riservata
+Disallow: /area-privata
+
+Sitemap: https://vicini.mo/sitemap.xml
