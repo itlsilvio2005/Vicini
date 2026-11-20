@@ -720,7 +720,7 @@ export function FormManifesto({
                   <label className="block text-sm font-semibold text-gray-900 mb-2">
                     Assegna all'Agenzia Funebre *
                   </label>
-                  <select
+                  <select aria-label="Agenzia funebre"
                     value={agenziaSelezionata}
                     onChange={(e) => setAgenziaSelezionata(e.target.value)}
                     className="w-full px-4 py-2 border border-bronze-300 rounded-lg bg-white focus:ring-2 focus:ring-bronze-500 shadow-sm"
@@ -769,7 +769,7 @@ export function FormManifesto({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Comune *</label>
-                    <select
+                    <select aria-label="Comune"
                       value={formData.comune}
                       onChange={(e) => setFormData({ ...formData, comune: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bronze-500"
@@ -779,7 +779,7 @@ export function FormManifesto({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Rito *</label>
-                    <select
+                    <select aria-label="Rito"
                       value={formData.rito}
                       onChange={(e) => setFormData({ ...formData, rito: e.target.value as any })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bronze-500"
@@ -889,7 +889,7 @@ export function FormManifesto({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1">Tipo</label>
-                    <select
+                    <select aria-label="Tipo"
                       value={formData.commiato_tipo}
                       onChange={(e) => setFormData({ ...formData, commiato_tipo: e.target.value as TipoCommiato })}
                       className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm"

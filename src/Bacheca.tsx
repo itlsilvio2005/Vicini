@@ -304,7 +304,7 @@ export function Bacheca() {
           <Reveal className="mb-9 flex flex-wrap items-center gap-2">
             <Link
               to="/bacheca"
-              aria-pressed={!comuneAttivo}
+              aria-current={!comuneAttivo ? "page" : undefined}
               className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
                 !comuneAttivo
                   ? "border-night-800 bg-night-800 text-paper shadow-md"
@@ -320,7 +320,7 @@ export function Bacheca() {
                 <Link
                   key={c}
                   to={`/bacheca/${slug(c)}`}
-                  aria-pressed={attivo}
+                  aria-current={attivo ? "page" : undefined}
                   className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-all duration-200 ${
                     attivo
                       ? "border-night-800 bg-night-800 text-paper shadow-md"
