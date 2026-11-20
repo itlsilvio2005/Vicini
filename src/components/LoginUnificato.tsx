@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { useNavigate } from 'react-router-dom';
@@ -79,6 +80,10 @@ export function LoginUnificato() {
 
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center p-4">
+      <Helmet>
+        <title>Accedi | Vicini</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
       <div className="max-w-md w-full">
         {/* Header con logo */}
         <div className="text-center mb-8">

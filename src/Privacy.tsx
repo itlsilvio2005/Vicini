@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { PageMast } from "./lib";
 
 const EMAIL = "info.vicini059@gmail.com";
@@ -14,6 +15,11 @@ function Sezione({ titolo, children }: { titolo: string; children: React.ReactNo
 export function Privacy() {
   return (
     <div>
+      <Helmet>
+        <title>Privacy e dati personali | Vicini</title>
+        <meta name="description" content="Informativa sul trattamento dei dati personali di Vicini: cosa raccogliamo, perché e per quanto tempo." />
+        <link rel="canonical" href={`${window.location.origin}/privacy`} />
+      </Helmet>
       <PageMast
         kicker="Informativa sul trattamento dei dati"
         title={<>Privacy e <em className="italic text-bronze-300">dati personali</em></>}
@@ -24,7 +30,7 @@ export function Privacy() {
 
         <Sezione titolo="Chi tratta i tuoi dati">
           <p>
-            Il titolare del trattamento è <strong className="text-ink">Silvio Berlusconi Boahene</strong> (Modena), gestore di Vicini, piattaforma dei servizi funebri per la
+            Il titolare del trattamento è <strong className="text-ink">Silvio Boahene</strong> (Modena), gestore di Vicini, piattaforma dei servizi funebri per la
             provincia di Modena. Per qualsiasi richiesta sui tuoi dati scrivi a{" "}
             <a href={`mailto:${EMAIL}`} className="font-semibold text-bronze-700 underline">{EMAIL}</a>.
           </p>
