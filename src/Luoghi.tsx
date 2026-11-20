@@ -56,6 +56,7 @@ function MappaVettoriale({
   useEffect(() => {
     if (!boxRef.current || mapRef.current) return;
 
+    maplibregl.setWorkerUrl("/assets/maplibre-gl-worker.mjs");
     const map = new maplibregl.Map({
       container: boxRef.current,
       style: "https://tiles.openfreemap.org/styles/positron",
