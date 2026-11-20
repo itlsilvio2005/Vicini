@@ -20,11 +20,11 @@ export function Privacy() {
         sub="Cosa raccogliamo, perché, per quanto tempo e come puoi chiederne la modifica o la cancellazione. In parole semplici."
       />
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <p className="text-[12.5px] text-ink-faint">Ultimo aggiornamento: 13 novembre 2026</p>
+        <p className="text-[12.5px] text-ink-faint">Ultimo aggiornamento: 20 novembre 2026</p>
 
         <Sezione titolo="Chi tratta i tuoi dati">
           <p>
-            Il titolare del trattamento è <strong className="text-ink">Vicini</strong>, piattaforma dei servizi funebri per la
+            Il titolare del trattamento è <strong className="text-ink">Silvio Berlusconi Boahene</strong> (Modena), gestore di Vicini, piattaforma dei servizi funebri per la
             provincia di Modena. Per qualsiasi richiesta sui tuoi dati scrivi a{" "}
             <a href={`mailto:${EMAIL}`} className="font-semibold text-bronze-700 underline">{EMAIL}</a>.
           </p>
