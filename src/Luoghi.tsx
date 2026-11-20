@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import {
   Church,
   MoonStar,
@@ -35,9 +35,9 @@ const FILTRI_CATEGORIA: { id: CatLuogo | "tutte"; nome: string; breve: string }[
   { id: "musulmano", nome: "Comunità Islamica", breve: "Musulmani" },
 ];
 
-/* ---------------- Mappa Leaflet + CartoDB ---------------- */
+/* ---------------- Mappa MapLibre GL + OpenFreeMap ---------------- */
 
-function MappaLeaflet({
+function MappaVettoriale({
   luoghi,
   onSeleziona,
   focus,
@@ -47,38 +47,26 @@ function MappaLeaflet({
   focus: Luogo | null;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const layerRef = useRef<L.LayerGroup | null>(null);
-  const userRef = useRef<L.CircleMarker | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
 
   /* inizializzazione una sola volta */
   useEffect(() => {
     if (!boxRef.current || mapRef.current) return;
-    
-    // FIX: scrollWheelZoom impostato a false per non bloccarsi su mobile
-    const map = L.map(boxRef.current, { center: CENTRO_MODENA, zoom: 12, scrollWheelZoom: false });
-    
-    // FIX: Sostituito OpenStreetMap standard con CartoDB Positron per colori eleganti
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(map);
-    
-    layerRef.current = L.layerGroup().addTo(map);
-    map.on("locationfound", (e: L.LocationEvent) => {
-      userRef.current?.remove();
-      userRef.current = L.circleMarker(e.latlng, {
-        radius: 8,
-        color: "#ddc38d",
-        weight: 3,
-        fillColor: "#b08a45",
-        fillOpacity: 0.9,
-      }).addTo(map);
-      userRef.current.bindTooltip("La tua posizione", { direction: "top" });
-      setGeoMsg("Posizione trovata: la mappa è centrata su di te.");
+
+    const map = new maplibregl.Map({
+      container: boxRef.current,
+      style: "https://tiles.openfreemap.org/styles/positron",
+      center: [CENTRO_MODENA[1], CENTRO_MODENA[0]], // MapLibre usa [lng, lat]
+      zoom: 12,
+      attributionControl: { compact: true },
     });
-    map.on("locationerror", () => setGeoMsg("Geolocalizzazione non disponibile in questo browser."));
+
+    map.scrollZoom.disable();
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+
     mapRef.current = map;
     return () => {
       map.remove();
@@ -88,36 +76,52 @@ function MappaLeaflet({
 
   /* marker per i luoghi filtrati e adattamento automatico della visuale */
   useEffect(() => {
-    const layer = layerRef.current;
     const map = mapRef.current;
-    if (!layer || !map) return;
-    layer.clearLayers();
+    if (!map) return;
 
-    const latLngs: L.LatLngExpression[] = [];
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+
+    const bounds = new maplibregl.LngLatBounds();
+    let count = 0;
 
     luoghi.forEach((l) => {
       const pos = GEO[l.id];
       if (!pos) return;
-      latLngs.push([pos.lat, pos.lng]);
+      count++;
+      bounds.extend([pos.lng, pos.lat]);
 
       const st = CAT_STYLES[l.categoria];
-      const icon = L.divIcon({
-        className: "vicini-pin-wrap",
-        html: `<span class="vicini-pin" style="--pin:${st.color}"></span>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11],
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "vicini-pin-wrap cursor-pointer border-0 bg-transparent p-0";
+      el.title = l.nome;
+      el.setAttribute("aria-label", l.nome);
+      el.innerHTML = `<span class="vicini-pin" style="--pin:${st.color}"></span>`;
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onSeleziona(l);
       });
-      const mk = L.marker([pos.lat, pos.lng], { icon, title: l.nome }).addTo(layer);
-      mk.bindTooltip(l.nome, { direction: "top", offset: [0, -12], opacity: 0.96 });
-      mk.on("click", () => onSeleziona(l));
+
+      const popup = new maplibregl.Popup({
+        offset: 14,
+        closeButton: false,
+        closeOnClick: false,
+      }).setText(l.nome);
+
+      el.addEventListener("mouseenter", () => popup.setLngLat([pos.lng, pos.lat]).addTo(map));
+      el.addEventListener("mouseleave", () => popup.remove());
+
+      const mk = new maplibregl.Marker({ element: el }).setLngLat([pos.lng, pos.lat]).addTo(map);
+      markersRef.current.push(mk);
     });
 
-    if (latLngs.length > 0 && !focus) {
-      if (latLngs.length === 1) {
-        map.setView(latLngs[0], 14, { animate: true });
+    if (count > 0 && !focus) {
+      if (count === 1) {
+        const pos = GEO[luoghi[0].id];
+        if (pos) map.flyTo({ center: [pos.lng, pos.lat], zoom: 14, duration: 700 });
       } else {
-        const bounds = L.latLngBounds(latLngs);
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14, animate: true });
+        map.fitBounds(bounds, { padding: 55, maxZoom: 14, duration: 700 });
       }
     }
   }, [luoghi, onSeleziona, focus]);
@@ -126,18 +130,35 @@ function MappaLeaflet({
   useEffect(() => {
     if (!focus || !mapRef.current) return;
     const pos = GEO[focus.id];
-    if (pos) mapRef.current.flyTo([pos.lat, pos.lng], 15, { duration: 0.9 });
+    if (pos) {
+      mapRef.current.flyTo({ center: [pos.lng, pos.lat], zoom: 15, duration: 900 });
+    }
   }, [focus]);
 
   const localizzami = () => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !navigator.geolocation) {
+      setGeoMsg("Geolocalizzazione non disponibile in questo browser.");
+      return;
+    }
     setGeoMsg("Ricerca della posizione in corso…");
-    map.locate({ setView: true, maxZoom: 14, timeout: 8000 });
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const lngLat: [number, number] = [p.coords.longitude, p.coords.latitude];
+        userMarkerRef.current?.remove();
+        const dot = document.createElement("div");
+        dot.style.cssText =
+          "width:16px;height:16px;border-radius:9999px;background:#b08a45;border:3px solid #ddc38d;box-shadow:0 0 0 4px rgba(176,138,69,0.25);";
+        userMarkerRef.current = new maplibregl.Marker({ element: dot }).setLngLat(lngLat).addTo(map);
+        map.flyTo({ center: lngLat, zoom: 14, duration: 900 });
+        setGeoMsg("Posizione trovata: la mappa è centrata su di te.");
+      },
+      () => setGeoMsg("Geolocalizzazione non disponibile o negata."),
+      { timeout: 8000 }
+    );
   };
 
   return (
-    // FIX: Aggiunte classi z-10 e isolate per evitare sovrapposizioni con navbar e bot
     <div className="relative z-10 isolate overflow-hidden rounded-xl border border-night-700 shadow-inner">
       <div ref={boxRef} className="h-[420px] w-full sm:h-[540px]" aria-label="Mappa dei luoghi del commiato" />
 
@@ -160,7 +181,7 @@ function MappaLeaflet({
       </div>
 
       {geoMsg && (
-        <p className="anim-fade absolute bottom-3 left-3 rounded-md border border-night-600 bg-night-900/95 px-3 py-1.5 text-[11.5px] text-mist shadow-lg backdrop-blur">
+        <p className="anim-fade absolute bottom-12 left-3 rounded-md border border-night-600 bg-night-900/95 px-3 py-1.5 text-[11.5px] text-mist shadow-lg backdrop-blur">
           {geoMsg}
         </p>
       )}
@@ -220,7 +241,7 @@ export function Luoghi() {
                 key={c.id}
                 onClick={() => {
                   setCat(c.id);
-                  setFocus(null); 
+                  setFocus(null);
                 }}
                 aria-pressed={attivo}
                 className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[13px] font-semibold transition ${
@@ -240,7 +261,7 @@ export function Luoghi() {
 
         <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
           <Reveal>
-            <MappaLeaflet luoghi={visibili} onSeleziona={seleziona} focus={focus} />
+            <MappaVettoriale luoghi={visibili} onSeleziona={seleziona} focus={focus} />
           </Reveal>
 
           <Reveal delay={120}>
@@ -325,7 +346,7 @@ export function Luoghi() {
                   </p>
                   <p className="mt-1.5 text-[13.5px] font-semibold text-ink">{sel.indirizzo}</p>
                 </div>
-                <div className="rounded-lg border border-line bg-pad p-4 bg-paper">
+                <div className="rounded-lg border border-line bg-paper p-4">
                   <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-faint">
                     <Clock3 size={13} className="text-bronze-600" /> Orari
                   </p>
