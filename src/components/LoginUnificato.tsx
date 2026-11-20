@@ -123,10 +123,12 @@ export function LoginUnificato() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegistrazione && (
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-ink-faint mb-2">
+                <label htmlFor="login-nome" className="block text-xs font-bold uppercase tracking-wider text-ink-faint mb-2">
                   Nome Completo
                 </label>
                 <input
+                  id="login-nome"
+                  autoComplete="name"
                   type="text"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
@@ -138,11 +140,13 @@ export function LoginUnificato() {
             )}
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-ink-faint mb-2">
+              <label htmlFor="login-email" className="block text-xs font-bold uppercase tracking-wider text-ink-faint mb-2">
                 <Mail className="inline-block w-4 h-4 mr-2 text-bronze-600" />
                 Email
               </label>
               <input
+                id="login-email"
+                autoComplete="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -153,18 +157,20 @@ export function LoginUnificato() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-ink-faint mb-2">
+              <label htmlFor="login-password" className="block text-xs font-bold uppercase tracking-wider text-ink-faint mb-2">
                 <Lock className="inline-block w-4 h-4 mr-2 text-bronze-600" />
                 Password
               </label>
               <input
+                id="login-password"
+                autoComplete={isRegistrazione ? "new-password" : "current-password"}
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-line bg-paper rounded-md text-ink focus:ring-2 focus:ring-bronze-500 focus:border-bronze-500 transition"
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
 

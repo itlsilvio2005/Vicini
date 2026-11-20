@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   FileCheck2,
   MoonStar,
@@ -70,9 +71,10 @@ interface VolontaSalvata {
 }
 
 const RELAZIONI = ["Coniuge", "Figlio/a", "Genitore", "Fratello/Sorella", "Nipote", "Compagno/a", "Amico/a stretto", "Altro"];
-const MEMBRI_INIZIALI: Membro[] = [
-  { id: "n1", nome: "Lina Bonetti ved. Malagoli", relazione: "Genitore", comune: "Nonantola", contatto: "marco.malagoli@gmail.com", annoNascita: 1942 },
-];
+// Il familiare di esempio esiste solo in sviluppo: in produzione l'elenco parte vuoto.
+const MEMBRI_INIZIALI: Membro[] = import.meta.env.DEV
+  ? [{ id: "n1", nome: "Lina Bonetti ved. Malagoli", relazione: "Genitore", comune: "Nonantola", contatto: "marco.malagoli@gmail.com", annoNascita: 1942 }]
+  : [];
 
 function saveLS(key: string, value: unknown) {
   try {
@@ -114,7 +116,7 @@ export function B2C({ prefillAgenzia }: { prefillAgenzia: { id: string; ts: numb
           </>
         }
         sub="Due strumenti riservati: registra come desideri sia organizzato il tuo funerale e gestisci il tuo Elenco Nucleo tramite Codice Personale o inserimento diretto per ricevere avvisi tempestivi sui nuovi manifesti."
-        bgImage="https://images.unsplash.com/photo-1583311652391-72921cc26c48?q=80&w=2000&auto=format&fit=crop"
+        bgImage="/images/nucleo.jpg"
         meta={
           <>
             <span>Codice ID personale univoco</span>
@@ -158,6 +160,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
   const [musica, setMusica] = useState("");
   const [allestimento, setAllestimento] = useState("");
   const [note, setNote] = useState("");
+  const [consenso, setConsenso] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [riepilogo, setRiepilogo] = useState<VolontaSalvata | null>(null);
   const [salvata, setSalvata] = useState<VolontaSalvata | null>(null);
@@ -259,6 +262,7 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
     if (!rito) errs.rito = "Seleziona il rito.";
     if (musulmano && !moschea) errs.moschea = "Seleziona il luogo di preghiera.";
     if (!destinazione) errs.destinazione = "Indica la destinazione finale.";
+    if (!consenso) errs.consenso = "Per salvare le tue volontà serve il consenso al trattamento dei dati.";
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       toast("Compila i campi obbligatori evidenziati.", "info");
@@ -614,6 +618,23 @@ function Volonta({ prefill }: { prefill: { id: string; ts: number } | null }) {
           </Field>
         </div>
 
+
+        <label className="mt-6 flex items-start gap-3 text-[13px] leading-relaxed text-ink-soft">
+          <input
+            type="checkbox"
+            checked={consenso}
+            onChange={(e) => setConsenso(e.target.checked)}
+            aria-invalid={!!errors.consenso}
+            className="mt-1 h-4 w-4 shrink-0 accent-bronze-600"
+          />
+          <span>
+            Acconsento al trattamento dei dati che inserisco, comprese le informazioni sul rito religioso, come descritto
+            nell'<Link to="/privacy" className="font-semibold text-bronze-700 underline">informativa privacy</Link>. Posso ritirare
+            il consenso in qualsiasi momento.
+            {errors.consenso && <span role="alert" className="mt-1 block font-semibold text-red-700">{errors.consenso}</span>}
+          </span>
+        </label>
+
         <button
           type="submit"
           className="mt-7 flex w-full items-center justify-center gap-2 rounded-md bg-night-800 px-5 py-3.5 text-sm font-bold text-paper transition hover:bg-night-700 active:scale-[0.99]"
@@ -698,6 +719,7 @@ function Nucleo() {
   const [relazione, setRelazione] = useState("");
   const [comune, setComune] = useState<Comune | "">("");
   const [contatto, setContatto] = useState("");
+  const [consensoNucleo, setConsensoNucleo] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Carica il Codice ID personale e l'Elenco Nucleo
@@ -770,6 +792,10 @@ function Nucleo() {
   const aggiungi = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
+    if (!consensoNucleo) {
+      setErrors({ consenso: "Per aggiungere una persona serve il consenso al trattamento dei dati." });
+      return;
+    }
 
     let nomeFinale = nome.trim();
     let comuneFinale = comune as Comune;
@@ -1106,7 +1132,7 @@ function Nucleo() {
                         value={nome}
                         onChange={(e) => setNome(e.target.value)}
                         className={inputCls(!!errors.nome)}
-                        placeholder="Es. Lina Bonetti"
+                        placeholder="Es. Maria Rossi"
                       />
                     </Field>
                     <Field label="Anno nascita" error={errors.annoNascita} hint="evita omonimie">
@@ -1182,6 +1208,23 @@ function Nucleo() {
                   <Smartphone size={14} className="text-bronze-600" /> Controllo anti-omonimia attivo
                 </span>
               </div>
+
+
+        <label className="mt-1 flex items-start gap-3 text-[13px] leading-relaxed text-ink-soft">
+          <input
+            type="checkbox"
+            checked={consensoNucleo}
+            onChange={(e) => setConsensoNucleo(e.target.checked)}
+            aria-invalid={!!errors.consenso}
+            className="mt-1 h-4 w-4 shrink-0 accent-bronze-600"
+          />
+          <span>
+            Acconsento al trattamento dei dati che inserisco, comprese le informazioni sul rito religioso, come descritto
+            nell'<Link to="/privacy" className="font-semibold text-bronze-700 underline">informativa privacy</Link>. Posso ritirare
+            il consenso in qualsiasi momento.
+            {errors.consenso && <span role="alert" className="mt-1 block font-semibold text-red-700">{errors.consenso}</span>}
+          </span>
+        </label>
 
               <button
                 type="submit"

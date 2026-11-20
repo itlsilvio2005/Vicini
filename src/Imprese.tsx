@@ -18,7 +18,7 @@ export function Imprese({ onScegli }: { onScegli: (id: string) => void }) {
           </>
         }
         sub="Tutte le imprese funebri accreditate sulla piattaforma, organizzate per comune di riferimento. L'elenco non costituisce alcuna classifica o priorità: ogni famiglia sceglie liberamente l'impresa di fiducia."
-        bgImage="https://images.unsplash.com/photo-1572947645840-c59ce1121d51?q=80&w=2000&auto=format&fit=crop"
+        bgImage="/images/imprese.jpg"
         meta={
           <>
             <span>{AGENZIE.length} imprese accreditate</span>

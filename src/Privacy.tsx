@@ -20,7 +20,7 @@ export function Privacy() {
         sub="Cosa raccogliamo, perché, per quanto tempo e come puoi chiederne la modifica o la cancellazione. In parole semplici."
       />
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <p className="text-[12.5px] text-ink-faint">Ultimo aggiornamento: 7 novembre 2026</p>
+        <p className="text-[12.5px] text-ink-faint">Ultimo aggiornamento: 13 novembre 2026</p>
 
         <Sezione titolo="Chi tratta i tuoi dati">
           <p>
@@ -59,6 +59,19 @@ export function Privacy() {
               approva ogni agenzia prima di attivarla.
             </li>
           </ul>
+        </Sezione>
+
+        <Sezione titolo="Dati salvati sul tuo dispositivo e servizi esterni">
+          <p>
+            Non usiamo cookie di profilazione né pubblicità. Se compili le volontà o il Nucleo <strong className="text-ink">senza
+            accedere con un account</strong>, quanto scrivi viene tenuto solo nella memoria del tuo browser (non arriva a noi) e
+            resta lì finché non lo cancelli: su un dispositivo condiviso, accedi con un account o svuota i dati del sito.
+          </p>
+          <p>
+            Per mostrare la mappa il tuo browser contatta i servizi di mappe OpenStreetMap e CARTO, e per alcune fotografie del
+            sito contatta Unsplash: questi servizi vedono il tuo indirizzo IP e il tipo di browser. Le foto caricate dalle agenzie
+            sono ospitate da Supabase.
+          </p>
         </Sezione>
 
         <Sezione titolo="L’assistente con intelligenza artificiale">

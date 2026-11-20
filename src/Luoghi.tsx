@@ -198,7 +198,7 @@ export function Luoghi() {
           </>
         }
         sub="Chiese cattoliche di Modena, cimiteri, ospedali e case funerarie, luoghi di culto ortodossi e musulmani: una mappa reale del territorio, filtrabile per categoria per orientare le famiglie nel momento del bisogno."
-        bgImage="https://images.unsplash.com/photo-1548625361-9c60e0a5cc08?q=80&w=2000&auto=format&fit=crop"
+        bgImage="/images/luoghi.jpg"
         meta={
           <>
             <span className="flex items-center gap-2">

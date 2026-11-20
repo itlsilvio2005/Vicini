@@ -58,3 +58,6 @@ Thumbs.db
 scripts/convert-svg-to-jpg.js
 .next/
 *.log
+
+# OCR: file copiati da node_modules durante il build (non vanno nel repo)
+/public/tesseract/

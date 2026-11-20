@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { ChevronDown, Copy, Download, Printer, Send } from 'lucide-react';
-import { URL_BASE } from '../data';
 
 interface Props {
   manifestoId: string;
@@ -27,7 +26,7 @@ export function KitFamiglia({ manifestoId, nomeDefunto, pubblicato }: Props) {
   const [aperto, setAperto] = useState(false);
   const [copiato, setCopiato] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
-  const url = `https://${URL_BASE}/manifesto/${manifestoId}`;
+  const url = `${window.location.origin}/manifesto/${manifestoId}`;
 
   const svgQr = () => qrRef.current?.querySelector('svg')?.outerHTML ?? '';
 

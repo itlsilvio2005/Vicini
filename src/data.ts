@@ -354,6 +354,8 @@ export interface Manifesto {
   funerale: { giorno: string; ora: string; luogo: string; indirizzo: string; dettagli: string };
   commiato: { tipo: "Tumulazione" | "Cremazione" | "Inumazione"; luogo: string; cimitero: string };
   agenzia: string;
+  /** Dati dell'agenzia letti dal database (assenti nei manifesti di esempio). */
+  agenziaInfo?: { nome: string; indirizzo: string; telefono: string; email: string };
   pubblicato: string;
   pensieri: Pensiero[];
 }
@@ -544,7 +546,15 @@ export const PAESI_RIMPATRIO = [
 ];
 
 export const REPERIBILITA = "059 203 4060";
-export const URL_BASE = "vicini.mo";
+/**
+ * Indirizzo pubblico del sito, usato per QR code e link di condivisione.
+ * Di default è l'indirizzo da cui il sito viene aperto; VITE_PUBLIC_URL lo fissa se serve.
+ */
+export function urlPubblico(): string {
+  const configurato = import.meta.env.VITE_PUBLIC_URL as string | undefined;
+  const base = configurato || (typeof window !== "undefined" ? window.location.origin : "");
+  return base.replace(/\/$/, "");
+}
 
 export const eur = (n: number) =>
   new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" }).format(n);

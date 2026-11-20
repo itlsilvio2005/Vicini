@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { CampoTrappola, bersaglioBot } from "./CampoTrappola";
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Send, X } from 'lucide-react';
@@ -222,10 +223,15 @@ export function AssistenteVicini() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              if (bersaglioBot(e.currentTarget)) {
+                setTesto(""); // bot: nessuna richiesta all'assistente
+                return;
+              }
               invia(testo);
             }}
-            className="flex shrink-0 gap-2 border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+            className="relative flex shrink-0 gap-2 border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           >
+            <CampoTrappola />
             <input
               ref={campo}
               value={testo}

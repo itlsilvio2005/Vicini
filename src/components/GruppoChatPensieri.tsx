@@ -1,65 +1,72 @@
 import { useState, useEffect } from 'react';
-import { supabase, Pensiero } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { filtraTesto, MESSAGGI_FILTRO } from '../lib/filtro-offese';
+import { CampoTrappola, bersaglioBot } from './CampoTrappola';
 import { Send, Loader2, AlertCircle, MessageCircle, QrCode, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { urlPubblico } from '../data';
 
 interface Props {
   manifestoId: string;
   manifestoNome: string;
 }
 
+/** Pensiero approvato, come lo restituisce la funzione pensieri_del_manifesto (niente dati dell'autore). */
+interface PensieroPubblico {
+  id: string;
+  nome: string;
+  relazione: string | null;
+  testo: string;
+  creato_il: string;
+}
+
 export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
   const { utente } = useAuth();
-  const [pensieri, setPensieri] = useState<Pensiero[]>([]);
-  const [nuovoTesto, setNuovoTesto] = useState('');
+  const [pensieri, setPensieri] = useState<PensieroPubblico[]>([]);
   const [caricamento, setCaricamento] = useState(true);
+  const [nuovoTesto, setNuovoTesto] = useState('');
+  const [nomeVisibile, setNomeVisibile] = useState(utente?.nome_completo ?? '');
   const [invio, setInvio] = useState(false);
   const [errore, setErrore] = useState('');
   const [inviato, setInviato] = useState(false);
   const [mostraQR, setMostraQR] = useState(false);
 
   useEffect(() => {
-    caricaPensieri();
-    
-    // Subscribe ai nuovi pensieri in real-time
-    const subscription = supabase
-      .channel('pensieri-channel')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pensieri', filter: `manifesto_id=eq.${manifestoId}` }, (payload) => {
-        setPensieri(prev => [payload.new as Pensiero, ...prev]);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
+    void caricaPensieri();
   }, [manifestoId]);
 
+  // Legge solo i pensieri già approvati, tramite funzione: nessun accesso diretto alla tabella.
   const caricaPensieri = async () => {
-    const { data, error } = await supabase
-      .from('pensieri')
-      .select('*')
-      .eq('manifesto_id', manifestoId)
-      .eq('approvato', true)
-      .order('creato_il', { ascending: false });
-
+    const { data, error } = await supabase.rpc('pensieri_del_manifesto', { p_manifesto: manifestoId });
     if (error) {
       console.error('Errore caricamento pensieri:', error);
     } else {
-      setPensieri(data || []);
+      setPensieri((data as PensieroPubblico[]) || []);
     }
     setCaricamento(false);
   };
 
-  const handleInvia = async (e: React.FormEvent) => {
+  const handleInvia = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (bersaglioBot(e.currentTarget)) {
+      // Il bot crede di aver inviato: non salviamo nulla.
+      setNuovoTesto('');
+      setInviato(true);
+      return;
+    }
     if (!utente) {
       setErrore('Devi essere autenticato per lasciare un pensiero');
       return;
     }
 
-    // Filtro anti-offese
+    const nome = nomeVisibile.trim();
+    if (nome.length < 2) {
+      setErrore('Scrivi il nome che vuoi far vedere (almeno 2 lettere).');
+      return;
+    }
+
+    // Filtro anti-offese lato client (il database lo ricontrolla comunque).
     const risultato = filtraTesto(nuovoTesto);
     if (!risultato.approvato) {
       setErrore(MESSAGGI_FILTRO[risultato.livello]);
@@ -70,18 +77,21 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
     setErrore('');
     setInviato(false);
 
-    const { error } = await supabase.from('pensieri').insert([
-      {
-        manifesto_id: manifestoId,
-        user_id: utente.id,
-        nome: utente.nome_completo || utente.email,
-        testo: nuovoTesto,
-        approvato: true,
-      },
-    ]);
+    // Il pensiero entra in coda: compare solo dopo l'approvazione di famiglia o agenzia.
+    const { error } = await supabase.rpc('lascia_pensiero', {
+      p_manifesto: manifestoId,
+      p_nome: nome,
+      p_relazione: null,
+      p_testo: nuovoTesto.trim(),
+    });
 
     if (error) {
-      setErrore('Errore durante l\'invio: ' + error.message);
+      const m = String(error.message || '');
+      setErrore(
+        /moderazione|Troppi pensieri|molti pensieri|Indica il tuo nome|non trovato/i.test(m)
+          ? m
+          : 'Non è stato possibile inviare il pensiero. Riprova tra poco.',
+      );
     } else {
       setNuovoTesto('');
       setInviato(true);
@@ -89,7 +99,7 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
     setInvio(false);
   };
 
-  const urlCondivisione = `${window.location.origin}/manifesto/${manifestoId}`;
+  const urlCondivisione = `${urlPubblico()}/manifesto/${manifestoId}`;
 
   if (caricamento) {
     return (
@@ -130,6 +140,7 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
               <button
                 onClick={() => setMostraQR(false)}
                 className="text-gray-400 hover:text-gray-600"
+                aria-label="Chiudi"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -148,7 +159,7 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
         </div>
       )}
 
-      {/* Lista Pensieri */}
+      {/* Lista Pensieri (solo approvati) */}
       <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
         {pensieri.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
@@ -157,18 +168,16 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
             <p className="text-sm">Sii il primo a lasciare un ricordo</p>
           </div>
         ) : (
-          pensieri.map(pensiero => (
+          pensieri.map((pensiero) => (
             <div key={pensiero.id} className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-bronze-500 rounded-full flex items-center justify-center text-white font-bold">
+                <div className="w-10 h-10 bg-bronze-500 rounded-full flex items-center justify-center text-white font-bold" aria-hidden="true">
                   {pensiero.nome.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-gray-900">{pensiero.nome}</span>
-                    {pensiero.relazione && (
-                      <span className="text-xs text-gray-500">· {pensiero.relazione}</span>
-                    )}
+                    {pensiero.relazione && <span className="text-xs text-gray-500">· {pensiero.relazione}</span>}
                   </div>
                   <p className="text-gray-700">{pensiero.testo}</p>
                   <p className="text-xs text-gray-400 mt-2">
@@ -189,53 +198,60 @@ export function GruppoChatPensieri({ manifestoId, manifestoNome }: Props) {
 
       {/* Form Invio */}
       {utente ? (
-        <form onSubmit={handleInvia} className="border-t border-gray-200 p-6">
+        <form onSubmit={handleInvia} className="relative border-t border-gray-200 p-6">
+          <CampoTrappola />
           {inviato && (
-            <p className="mb-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              Grazie. Il tuo pensiero comparirà dopo l’approvazione della famiglia.
+            <p role="status" className="mb-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Grazie. Il tuo pensiero comparirà dopo l’approvazione della famiglia o dell’agenzia.
             </p>
           )}
           {errore && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">
+            <div role="alert" className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{errore}</span>
             </div>
           )}
-          <div className="flex gap-3">
+          <label className="mb-3 block">
+            <span className="mb-1 block text-sm font-medium text-gray-700">Il tuo nome (visibile agli altri)</span>
             <input
               type="text"
-              value={nuovoTesto}
-              onChange={(e) => setNuovoTesto(e.target.value)}
-              placeholder="Lascia un pensiero..."
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bronze-500"
+              value={nomeVisibile}
+              onChange={(e) => setNomeVisibile(e.target.value)}
+              maxLength={80}
+              autoComplete="name"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bronze-500"
               disabled={invio}
             />
+          </label>
+          <div className="flex gap-3">
+            <label className="flex-1">
+              <span className="sr-only">Scrivi il tuo pensiero</span>
+              <input
+                type="text"
+                value={nuovoTesto}
+                onChange={(e) => setNuovoTesto(e.target.value)}
+                maxLength={400}
+                placeholder="Lascia un pensiero..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bronze-500"
+                disabled={invio}
+              />
+            </label>
             <button
               type="submit"
               disabled={invio || !nuovoTesto.trim()}
               className="px-6 py-3 bg-bronze-500 text-white rounded-lg font-medium hover:bg-bronze-600 disabled:opacity-50 flex items-center gap-2"
             >
-              {invio ? (
-                <Loader2 className="animate-spin w-5 h-5" />
-              ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  Invia
-                </>
-              )}
+              {invio ? <Loader2 className="animate-spin w-5 h-5" /> : (<><Send className="w-5 h-5" />Invia</>)}
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            I messaggi vengono moderati automaticamente per garantire un ambiente rispettoso
+            I messaggi vengono moderati prima di essere pubblicati.
           </p>
         </form>
       ) : (
         <div className="border-t border-gray-200 p-6 text-center">
           <p className="text-gray-600 mb-2">Accedi per lasciare un pensiero</p>
-          <a
-            href="/login"
-            className="inline-block px-6 py-2 bg-bronze-500 text-white rounded-lg font-medium hover:bg-bronze-600"
-          >
+          <a href="/login" className="inline-block px-6 py-2 bg-bronze-500 text-white rounded-lg font-medium hover:bg-bronze-600">
             Accedi
           </a>
         </div>

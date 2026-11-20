@@ -28,6 +28,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // esistono SOLO in sviluppo. Vite sostituisce import.meta.env.DEV con `false`
 // nella build di produzione, quindi questo codice non finisce nel bundle.
 const DEMO_ABILITATA = import.meta.env.DEV;
+/** Messaggi di Supabase Auth (in inglese) tradotti per i visitatori. */
+function messaggioAuth(msg: string): string {
+  const m = (msg || '').toLowerCase();
+  if (m.includes('invalid login credentials')) return 'Email o password non corrette.';
+  if (m.includes('email not confirmed')) return "Conferma prima il tuo indirizzo email: ti abbiamo scritto un link.";
+  if (m.includes('already registered') || m.includes('already been registered')) return 'Non è stato possibile completare la registrazione. Prova ad accedere o a recuperare la password.';
+  if (m.includes('rate limit') || m.includes('too many')) return 'Troppi tentativi. Riprova tra qualche minuto.';
+  if (m.includes('password') && (m.includes('weak') || m.includes('at least'))) return 'La password è troppo debole: usa almeno 8 caratteri con lettere e numeri.';
+  if (m.includes('network') || m.includes('fetch')) return 'Connessione assente o instabile. Riprova.';
+  return 'Operazione non riuscita. Riprova tra poco.';
+}
+
 const MSG_NON_CONFIGURATO = 'Servizio non disponibile al momento. Riprova più tardi.';
 
 // ============================================================================
@@ -149,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabaseAttivo) return { error: MSG_NON_CONFIGURATO };
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
+    if (error) return { error: messaggioAuth(error.message) };
     return {};
   }
 
@@ -179,11 +191,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        data: { ruolo },
+        data: { ruolo, nome: (nome || '').trim().slice(0, 120) },
       },
     });
 
-    if (error) return { error: error.message };
+    if (error) return { error: messaggioAuth(error.message) };
     return {};
   }
 
