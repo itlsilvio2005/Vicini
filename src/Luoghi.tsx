@@ -60,7 +60,7 @@ function MappaLeaflet({
     const map = L.map(boxRef.current, { center: CENTRO_MODENA, zoom: 12, scrollWheelZoom: false });
     
     // FIX: Sostituito OpenStreetMap standard con CartoDB Positron per colori eleganti
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
     }).addTo(map);
